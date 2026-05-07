@@ -140,7 +140,7 @@ export default function GameDashboard() {
               className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-6"
               style={{ fontFamily: "'Cinzel', serif", textShadow: "0px 4px 20px rgba(250, 204, 21, 0.4)" }}
             >
-              HAPPY 10th<br/>ANNIVERSARY
+              HAPPY <br/>ANNIVERSARY
             </h1>
             <p className="text-white text-2xl md:text-4xl font-bold tracking-[0.2em] mb-12">
               SEDULUR 16
