@@ -1,0 +1,560 @@
+[
+    {
+        "id": 1,
+        "nama_tempat": "Lapangan Rektorat Universitas Pembangunan Nasional Veteran Yogyakarta",
+        "kordinat": [
+            -7.761577424961661,
+            110.40952356563832
+        ],
+        "clue": "Papermob Angkatan 2016"
+    },
+    {
+        "id": 2,
+        "nama_tempat": "TAMAN TEKNIK LINGKUNGAN",
+        "kordinat": [
+            -7.761805981617047,
+            110.4104033301464
+        ],
+        "clue": "Kumpul Kumpul Setelah Kelas dan Bertukar Informasi serta donor darah gratis"
+    },
+    {
+        "id": 3,
+        "nama_tempat": "Loket Pembayaran UKT",
+        "kordinat": [
+            -7.762034538148177,
+            110.4100868295002
+        ],
+        "clue": "Scrapbook dan kadang Tempat Rapat Angkatan"
+    },
+    {
+        "id": 4,
+        "nama_tempat": "Lapangan Sepak Bola UPN",
+        "kordinat": [
+            -7.762773359588421,
+            110.40918560730185
+        ],
+        "clue": "Upacara HUT UPN"
+    },
+    {
+        "id": 5,
+        "nama_tempat": "Taman Barat UPN",
+        "kordinat": [
+            -7.761917602298241,
+            110.40905149681298
+        ],
+        "clue": "Scrapbook dan Tempat Jelajah Kampus Saat Semester 2"
+    },
+    {
+        "id": 6,
+        "nama_tempat": "Auditorium W.R. Supratman - UPN �Veteran� Yogyakarta",
+        "kordinat": [
+            -7.761259815195737,
+            110.4080234662802
+        ],
+        "clue": "Tempat Rapat Favorit"
+    },
+    {
+        "id": 7,
+        "nama_tempat": "Kontrakan Pertama Angkatan 2016",
+        "kordinat": [
+            -7.772909436269436,
+            110.42529499540726
+        ],
+        "clue": "Kontrakan Angkatan 2016 #1"
+    },
+    {
+        "id": 8,
+        "nama_tempat": "Embung Tambakboyo",
+        "kordinat": [
+            -7.756082151268445,
+            110.41502332733772
+        ],
+        "clue": "Tempat Olahraga atau Tempat Digalakin diatas"
+    },
+    {
+        "id": 9,
+        "nama_tempat": "Warung Makan Anggrek",
+        "kordinat": [
+            -7.763145430599122,
+            110.40457225500009
+        ],
+        "clue": "Tempat Ngelaprak Favorit sampai Dini Hari #Gilaanjir"
+    },
+    {
+        "id": 10,
+        "nama_tempat": "Ledok Gebang",
+        "kordinat": [
+            -7.743962246238385,
+            110.41460371677358
+        ],
+        "clue": "Kalau Gak Salah Tempat Setelah Meet Up Pertama"
+    },
+    {
+        "id": 11,
+        "nama_tempat": "Secangkir Jawa",
+        "kordinat": [
+            -7.745641939304554,
+            110.4164919918153
+        ],
+        "clue": "Bertemu Senior, Tempat Rapat, dan Tempat Ngelaprak"
+    },
+    {
+        "id": 12,
+        "nama_tempat": "Merapi Paintball",
+        "kordinat": [
+            -7.600440852247662,
+            110.43880797044665
+        ],
+        "clue": "Tempat Meet Up Pertama"
+    },
+    {
+        "id": 13,
+        "nama_tempat": "Taman Lampion Kaliurang",
+        "kordinat": [
+            -7.592613731595247,
+            110.42516089173593
+        ],
+        "clue": "Tempat Dikumpulkan (seringnya) Senior"
+    },
+    {
+        "id": 14,
+        "nama_tempat": "Villa Abmarina",
+        "kordinat": [
+            -7.601802076061857,
+            110.42318678601048
+        ],
+        "clue": "Anniversary Pertama"
+    },
+    {
+        "id": 15,
+        "nama_tempat": "Bunker Kaliadem",
+        "kordinat": [
+            -7.582489309792647,
+            110.44799185360415
+        ],
+        "clue": "Liburan orang yang gak pulang (Cek Line)"
+    },
+    {
+        "id": 16,
+        "nama_tempat": "Desa Tirtomartani",
+        "kordinat": [
+            -7.757973657392843,
+            110.47099448197736
+        ],
+        "clue": "Praktikum Lapangan SIL"
+    },
+    {
+        "id": 17,
+        "nama_tempat": "Komp. RRI Pro 2 Yogyakarta",
+        "kordinat": [
+            -7.779574555692615,
+            110.38799620445397
+        ],
+        "clue": "Inagurasi 2016"
+    },
+    {
+        "id": 18,
+        "nama_tempat": "Sungai Pajak",
+        "kordinat": [
+            -7.765695622682507,
+            110.41543613635523
+        ],
+        "clue": "Susur Sungai Dekat Kantor Pajak dan Lapangan Bioling"
+    },
+    {
+        "id": 19,
+        "nama_tempat": "Lapangan Fakultas Pertanian",
+        "kordinat": [
+            -7.762379375828685,
+            110.40997012428375
+        ],
+        "clue": "Tempat Lomba HUT Teknik Lingkungan"
+    },
+    {
+        "id": 20,
+        "nama_tempat": "Fotokopi Cahaya",
+        "kordinat": [
+            -7.764804389251181,
+            110.41119215066995
+        ],
+        "clue": "Tempat Favorit Ngeprint Laprak"
+    },
+    {
+        "id": 21,
+        "nama_tempat": "Kontrakan Kedua Angkatan 2016",
+        "kordinat": [
+            -7.76658831016971,
+            110.42271961446318
+        ],
+        "clue": "Kontrakan Angkatan 2016 #2"
+    },
+    {
+        "id": 22,
+        "nama_tempat": "Kontrakan Terakhir Angkatan 2016",
+        "kordinat": [
+            -7.753529481166435,
+            110.43970733361576
+        ],
+        "clue": "Kontrakan Angkatan 2016 #3"
+    },
+    {
+        "id": 23,
+        "nama_tempat": "BATAN",
+        "kordinat": [
+            -7.778683737455172,
+            110.4147614485496
+        ],
+        "clue": "Praktikum Lapangan PLP tentang Limbah Berbahaya dan Beracun"
+    },
+    {
+        "id": 24,
+        "nama_tempat": "Taman Kuliner",
+        "kordinat": [
+            -7.754613816261316,
+            110.39471998272955
+        ],
+        "clue": "Tempat Berkumpul untuk Dikumpulkan Pertama Kali Sebelum Pertama Kali Masuk Kuliah"
+    },
+    {
+        "id": 25,
+        "nama_tempat": "TPA Piyungan",
+        "kordinat": [
+            -7.86871199691068,
+            110.42916820035956
+        ],
+        "clue": "Praktikum Lapangan PLP tentang Open Dumping"
+    },
+    {
+        "id": 26,
+        "nama_tempat": "Balai Sabo",
+        "kordinat": [
+            -7.7601878455724735,
+            110.42881414938932
+        ],
+        "clue": "Praktikum Lapangan Mekanika Fluida"
+    },
+    {
+        "id": 27,
+        "nama_tempat": "Pantai Parangkusumo",
+        "kordinat": [
+            -8.023257192823024,
+            110.3251389465849
+        ],
+        "clue": "Penyematan Korsa 2016"
+    },
+    {
+        "id": 28,
+        "nama_tempat": "Masjid Darussalam Parangkusumo",
+        "kordinat": [
+            -8.021297093937553,
+            110.32450058087475
+        ],
+        "clue": "Langkah Sebelum di Sematkan Korsa"
+    },
+    {
+        "id": 29,
+        "nama_tempat": "Gumuk Pasir Parangkusumo",
+        "kordinat": [
+            -8.01835472873794,
+            110.31948074674402
+        ],
+        "clue": "Penjelasan Pak Andi tentang Geomorfologi di Gurun"
+    },
+    {
+        "id": 30,
+        "nama_tempat": "Pantai Pandan Payung",
+        "kordinat": [
+            -8.017653547784787,
+            110.31048998212252
+        ],
+        "clue": "Pertama Kali Turun dari Kendaraan memulai Prosesi Penyematan Korsa 2016"
+    },
+    {
+        "id": 31,
+        "nama_tempat": "Pantai Wohkudu",
+        "kordinat": [
+            -8.099096656628866,
+            110.44026119983927
+        ],
+        "clue": "Liburan Bareng Bareng #1 (Pantai)"
+    },
+    {
+        "id": 32,
+        "nama_tempat": "Pantai Greweng",
+        "kordinat": [
+            -8.19748446172971,
+            110.71886210987145
+        ],
+        "clue": "Liburan Bareng Bareng #2 (Pantai)"
+    },
+    {
+        "id": 33,
+        "nama_tempat": "Pantai Siung",
+        "kordinat": [
+            -8.181810193077501,
+            110.68345695134141
+        ],
+        "clue": "Liburan Bareng Bareng #3 (Pantai)"
+    },
+    {
+        "id": 34,
+        "nama_tempat": "Museum Karst",
+        "kordinat": [
+            -8.041127844437623,
+            110.7825064620646
+        ],
+        "clue": "Setelah Kuliah Lapangan Pertama mampir ke Museum"
+    },
+    {
+        "id": 35,
+        "nama_tempat": "GEOSITE JOKO TUWO",
+        "kordinat": [
+            -7.760150334300567,
+            110.67401649601842
+        ],
+        "clue": "Kuliah Lapangan Pertama dalam pemetaan bekas tambang"
+    },
+    {
+        "id": 36,
+        "nama_tempat": "Bayat",
+        "kordinat": [
+            -7.764085933957258,
+            110.66953255079497
+        ],
+        "clue": "Tempat Kuliah Lapangan Pertama (Puncak)"
+    },
+    {
+        "id": 37,
+        "nama_tempat": "Grojogan Sewu Waterfall",
+        "kordinat": [
+            -7.752158366995691,
+            110.1352794263753
+        ],
+        "clue": "Perjalanan Jalan Jalan ke Curug (Cek Line)"
+    },
+    {
+        "id": 38,
+        "nama_tempat": "Wana Tirta Mangrove Forests",
+        "kordinat": [
+            -7.893481383260418,
+            110.01966549541103
+        ],
+        "clue": "Lapangan Bioling Tentang Mangrove"
+    },
+    {
+        "id": 39,
+        "nama_tempat": "Kebumen Geopark Karangsambung",
+        "kordinat": [
+            -7.54667940571149,
+            109.67363907701514
+        ],
+        "clue": "Kuliah Lapangan Kedua Basecamp"
+    },
+    {
+        "id": 40,
+        "nama_tempat": "Desa Kaligeding",
+        "kordinat": [
+            -7.586455857114655,
+            109.67458321482648
+        ],
+        "clue": "Pemetaan Kuliah Lapangan Kelomopok A"
+    },
+    {
+        "id": 41,
+        "nama_tempat": "Desa Pencil",
+        "kordinat": [
+            -7.602195256692251,
+            109.68089177023904
+        ],
+        "clue": "Pemetaan Kuliah Lapangan Kelomopok B"
+    },
+    {
+        "id": 42,
+        "nama_tempat": "Madukismo Sugar Factory",
+        "kordinat": [
+            -7.8321792677595745,
+            110.34547879499823
+        ],
+        "clue": "Praktikum Lapangan PLP tentang Molases dan Lain Lain"
+    },
+    {
+        "id": 43,
+        "nama_tempat": "Desa Kalitirto",
+        "kordinat": [
+            -7.793063628607319,
+            110.45860363927737
+        ],
+        "clue": "Praktikum Lapangan Hidrologi Lingkungan Tentang Infiltrasi"
+    },
+    {
+        "id": 44,
+        "nama_tempat": "Desa Tegaltirto",
+        "kordinat": [
+            -7.807689905018203,
+            110.44255330142263
+        ],
+        "clue": "Praktikum Lapangan Hidrologi Lingkungan Tentang Debit"
+    },
+    {
+        "id": 45,
+        "nama_tempat": "Hutan Pinus Mangunan",
+        "kordinat": [
+            -7.9247666195670075,
+            110.43105198965245
+        ],
+        "clue": "Jalan Jalan Se Angkatan 2016"
+    },
+    {
+        "id": 46,
+        "nama_tempat": "Praktikum Lapangan Geotek Lingkungan",
+        "kordinat": [
+            -7.894506905830115,
+            110.39417698216133
+        ],
+        "clue": "Praktikum Lapangan Geotek Lingkungan dekat Rumah Pancang"
+    },
+    {
+        "id": 47,
+        "nama_tempat": "Oil Field Tjepu",
+        "kordinat": [
+            -7.06010626623551,
+            111.58514754737087
+        ],
+        "clue": "Ekskursi Lingkungan Pertama Kali Berhenti"
+    },
+    {
+        "id": 48,
+        "nama_tempat": "PT Surabaya Industrial Estate Rungkut (SIER)",
+        "kordinat": [
+            -7.332600621597253,
+            112.73871200141004
+        ],
+        "clue": "Ekskursi Lingkungan di Surabaya Sebelum Menyeberang"
+    },
+    {
+        "id": 49,
+        "nama_tempat": "Pelabuhan Gilimanuk Bali",
+        "kordinat": [
+            -8.164476909164078,
+            114.43687283104012
+        ],
+        "clue": "Ekskursi Lingkungan Pertama Kali menapakan kaki di Bali"
+    },
+    {
+        "id": 50,
+        "nama_tempat": "Tanah Lot",
+        "kordinat": [
+            -8.618244407311044,
+            115.08918609385897
+        ],
+        "clue": "Pantai Pertama di Bali"
+    },
+    {
+        "id": 51,
+        "nama_tempat": "TPA Suwung",
+        "kordinat": [
+            -8.722100616679974,
+            115.22170866951514
+        ],
+        "clue": "TPA diubah menjadi Listrik dan Proses Restorasi menjadi Taman"
+    },
+    {
+        "id": 52,
+        "nama_tempat": "Danau Bedugul",
+        "kordinat": [
+            -8.268370326744183,
+            115.16669119637804
+        ],
+        "clue": "Sebelum Perjalanan dari Bali Pulang Berhenti dulu di Danau"
+    },
+    {
+        "id": 53,
+        "nama_tempat": "Bada Riset dan Observasi Laut (BROL) di Bali",
+        "kordinat": [
+            -8.393316272154118,
+            114.62822894232907
+        ],
+        "clue": "Badan Riset dan Observasi Laut (BROL) di Bali"
+    },
+    {
+        "id": 54,
+        "nama_tempat": "Praktikum Lapangan Kartografi dan Perpetaan",
+        "kordinat": [
+            -7.801321297903772,
+            110.51224630184825
+        ],
+        "clue": "Tempat Memulai Perjalanan GPS dan Non GPS di Praktikum Lapangan Karto"
+    },
+    {
+        "id": 55,
+        "nama_tempat": "Praktikum Lapangan Mineralogi Petrologi Stopsite I",
+        "kordinat": [
+            -7.7655877747518804,
+            110.28396196752578
+        ],
+        "clue": "Stopsite I Lapangan Minpet Cuy di Sidoluhur Lho"
+    },
+    {
+        "id": 56,
+        "nama_tempat": "Praktikum Lapangan Mineralogi Petrologi Stopsite II dan III",
+        "kordinat": [
+            -7.735660729884659,
+            110.20089674053827
+        ],
+        "clue": "Stopsite II dan III Lapangan Minpet Cuy di Sungai Desa Kalisonggo Lho"
+    },
+    {
+        "id": 57,
+        "nama_tempat": "Praktikum Lapangan Mineralogi Petrologi Stopsite IV",
+        "kordinat": [
+            -7.8357502202281175,
+            110.17125922519715
+        ],
+        "clue": "Stopsite IV Lapangan Minpet Cuy di Sungai Serang di Kecamatan Pengasih Lho"
+    },
+    {
+        "id": 58,
+        "nama_tempat": "Praktikum Lapangan Mineralogi Petrologi Stopsite V",
+        "kordinat": [
+            -7.821814555915267,
+            110.13362062436447
+        ],
+        "clue": "Stopsite V Lapangan Minpet Cuy di Sungai Serang di Kecamatan Pengasih Lho"
+    },
+    {
+        "id": 59,
+        "nama_tempat": "Praktikum Lapangan Geomorfologi Stopsite I",
+        "kordinat": [
+            -7.773038831737036,
+            110.4771723386903
+        ],
+        "clue": "Stopsite I Lapangan Geomorfo Cuy di Sungai Opak Desa Pelemsari Lho"
+    },
+    {
+        "id": 60,
+        "nama_tempat": "Praktikum Lapangan Geomorfologi Stopsite II",
+        "kordinat": [
+            -7.783483102266695,
+            110.49088805403218
+        ],
+        "clue": "Stopsite II Lapangan Geomorfo Cuy di Pinggir Jalan Desa Sambirejo Lho"
+    },
+    {
+        "id": 61,
+        "nama_tempat": "Praktikum Lapangan Geomorfologi Stopsite III",
+        "kordinat": [
+            -7.789464943041261,
+            110.51931059636146
+        ],
+        "clue": "Stopsite III Lapangan Geomorfo Cuy di Gunung Ijo Lho"
+    },
+    {
+        "id": 62,
+        "nama_tempat": "Praktikum Lapangan Geomorfologi Stopsite IV",
+        "kordinat": [
+            -7.84839452381104,
+            110.53812285403271
+        ],
+        "clue": "Stopsite IV Lapangan Geomorfo Cuy di Gunung Nglanggran Lho"
+    }
+]
