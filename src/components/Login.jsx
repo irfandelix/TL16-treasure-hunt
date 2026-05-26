@@ -31,13 +31,44 @@ export default function Login({ onLoginSuccess }) {
       return;
     }
 
+    let isAdminStatus = data.is_admin; // Ambil status awal dari database alumni
+
+    // --- GEMBOK PASSKEY ADMIN VIA DATABASE ---
+    if (nim === '114160066') {
+      const passkeyInput = window.prompt('Masukkan Passkey Admin:');
+      
+      // Jika prompt di-cancel atau dikosongi
+      if (!passkeyInput) {
+        setError('Akses admin dibatalkan.');
+        setLoading(false);
+        return;
+      }
+
+      // Tarik passkey rahasia dari tabel app_settings
+      const { data: settings } = await supabase
+        .from('app_settings')
+        .select('admin_passkey')
+        .eq('id', 1)
+        .single();
+
+      // Bandingkan inputan dengan passkey di database
+      if (settings && passkeyInput === settings.admin_passkey) {
+        isAdminStatus = true;
+      } else {
+        setError('Passkey salah! Akses admin ditolak.');
+        setLoading(false);
+        return; // Hentikan login
+      }
+    }
+
     // Simpan sesi di localStorage perangkat
     localStorage.setItem('user_nim', data.nim);
     localStorage.setItem('user_nama', data.nama);
-    localStorage.setItem('is_admin', data.is_admin);
+    localStorage.setItem('is_admin', isAdminStatus.toString());
 
     setLoading(false);
-    onLoginSuccess(data); // Beritahu dashboard kalau login sukses
+    // Beritahu dashboard kalau login sukses dengan status admin terbaru
+    onLoginSuccess({ ...data, is_admin: isAdminStatus });
   };
 
   return (
