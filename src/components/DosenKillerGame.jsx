@@ -519,7 +519,7 @@ export default function DosenKillerGame() {
               </div>
               <div className="flex gap-4 items-start">
                  <span className="text-2xl drop-shadow">🥱</span>
-                 <div><span className="text-slate-400 font-black tracking-wider block mb-0.5">WARGA BIASA</span> <span className="text-slate-300 leading-relaxed">Tidak punya skill khusus di malam hari. Tugasmu berdiskusi di Live Chat siang hari, mencari kejanggalan, dan mem-voting Dosen Killer yang menyamar.</span></div>
+                 <div><span className="text-slate-400 font-black tracking-wider block mb-0.5">MAHASISWA BIASA</span> <span className="text-slate-300 leading-relaxed">Tidak punya skill khusus di malam hari. Tugasmu berdiskusi di Live Chat siang hari, mencari kejanggalan, dan mem-voting Dosen Killer yang menyamar.</span></div>
               </div>
             </div>
           </div>
