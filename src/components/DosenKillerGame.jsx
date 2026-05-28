@@ -12,7 +12,7 @@ export default function DosenKillerGame() {
   const [roomCode, setRoomCode] = useState(''); 
   const [inputRoomCode, setInputRoomCode] = useState('');
   const [isInRoom, setIsInRoom] = useState(false);
-  const [showAdminWarning, setShowAdminWarning] = useState(false); // STATE BARU UNTUK POP-UP ADMIN
+  const [showAdminWarning, setShowAdminWarning] = useState(false);
 
   // --- STATE GLOBAL GAME ---
   const [faseGame, setFaseGame] = useState('LOBBY'); 
@@ -22,6 +22,12 @@ export default function DosenKillerGame() {
   // --- STATE PEMAIN (KAMU) ---
   const [peranKu, setPeranKu] = useState(null);
   const [isHidup, setIsHidup] = useState(true);
+  const [intelSuspects, setIntelSuspects] = useState([]); 
+
+  // --- STATE CHAT KHUSUS DOSEN KILLER ---
+  const [dkChat, setDkChat] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const chatEndRef = useRef(null);
 
   // --- REFS UNTUK MESIN BOT AGAR TIDAK STALE ---
   const dbStateRef = useRef(null);
@@ -39,11 +45,15 @@ export default function DosenKillerGame() {
     pemainRef.current = pemain;
   }, [pemain]);
 
-  // 2. RADAR REALTIME & INSILISASI ROOM
+  // Auto-scroll ke bawah saat ada pesan chat baru
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [dkChat]);
+
+  // 2. RADAR REALTIME & INISIALISASI ROOM
   useEffect(() => {
     if (!isInRoom || !roomCode) return;
 
-    // TAMPILKAN POP-UP JIKA DIA ADMIN DAN BARU MASUK ROOM
     if (currentUser.isAdmin) {
       setShowAdminWarning(true);
     }
@@ -99,9 +109,71 @@ export default function DosenKillerGame() {
     };
   }, [isInRoom, roomCode]);
 
+  // ==============================================================
+  // LIVE CHAT BROADCAST KHUSUS DOSEN KILLER SAAT MALAM
+  // ==============================================================
+  useEffect(() => {
+    let chatSub = null;
+    if (faseGame === 'MALAM' && peranKu === 'DOSEN_KILLER' && isHidup) {
+      chatSub = supabase.channel(`dk-chat-${roomCode}`)
+        .on('broadcast', { event: 'dk_message' }, (payload) => {
+          setDkChat(prev => [...prev, payload.payload]);
+        })
+        .subscribe();
+    } else {
+      setDkChat([]); 
+    }
+
+    return () => {
+      if (chatSub) supabase.removeChannel(chatSub);
+    };
+  }, [faseGame, peranKu, isHidup, roomCode]);
+
+  const kirimPesanDK = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+    
+    const msg = { 
+      sender: currentUser.nama, 
+      text: chatInput, 
+      time: new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) 
+    };
+    
+    setDkChat(prev => [...prev, msg]);
+    setChatInput('');
+    
+    await supabase.channel(`dk-chat-${roomCode}`).send({
+      type: 'broadcast',
+      event: 'dk_message',
+      payload: msg
+    });
+  };
 
   // ==============================================================
-  // 3. OTAK BOT MODERATOR (HANYA BERJALAN DI HP ADMIN ROOM)
+  // GENERATOR 3 NAMA SUSPEK UNTUK MAHASISWA INTEL
+  // ==============================================================
+  useEffect(() => {
+    if (peranKu === 'INTEL' && isHidup && (faseGame === 'PAGI' || faseGame === 'DISKUSI') && intelSuspects.length === 0) {
+      const dks = pemain.filter(p => p.peran === 'DOSEN_KILLER' && p.is_hidup);
+      const wargas = pemain.filter(p => p.peran !== 'DOSEN_KILLER' && p.peran !== 'INTEL' && p.is_hidup);
+      
+      if (dks.length > 0 && wargas.length >= 2) {
+        const pickedDk = dks[Math.floor(Math.random() * dks.length)];
+        const shuffledWarga = wargas.sort(() => 0.5 - Math.random());
+        const pickedWargas = shuffledWarga.slice(0, 2);
+        
+        const combined = [pickedDk, ...pickedWargas].sort(() => 0.5 - Math.random());
+        setIntelSuspects(combined);
+      }
+    }
+    
+    if (faseGame === 'MALAM' || faseGame === 'SELESAI') {
+      setIntelSuspects([]); 
+    }
+  }, [faseGame, peranKu, pemain, isHidup, intelSuspects.length]);
+
+  // ==============================================================
+  // OTAK BOT MODERATOR (HANYA BERJALAN DI HP ADMIN ROOM)
   // ==============================================================
   useEffect(() => {
     if (!currentUser.isAdmin || !isInRoom || !roomCode) return;
@@ -143,10 +215,13 @@ export default function DosenKillerGame() {
 
           pesanBaru = "Malam yang damai. Tidak ada yang di-DO semalam.";
           if (korbanNim) {
+            const korbanData = players.find(p => p.nim === korbanNim);
+
             if (votesAhli[korbanNim]) {
               pesanBaru = "Seseorang hampir di-DO, tetapi nilainya berhasil diselamatkan oleh Mahasiswa Ahli!";
+            } else if (korbanData?.peran === 'UPTODATE') {
+              pesanBaru = "Dosen Killer mencoba memberi nilai E semalam, tapi Mahasiswa Uptodate berhasil menghindar karena dia sudah mendapat info duluan!";
             } else {
-              const korbanData = players.find(p => p.nim === korbanNim);
               await supabase.from('mahasiswa_roles').update({ is_hidup: false }).eq('room_code', roomCode).eq('nim', korbanNim);
               pesanBaru = `Kabar Duka! ${korbanData?.nama} telah resmi di-DO semalam!`;
             }
@@ -186,14 +261,12 @@ export default function DosenKillerGame() {
           await supabase.from('mahasiswa_roles').update({ target_voting: null, siap_skip: false }).eq('room_code', roomCode);
           nextFase = 'EKSEKUSI'; durasiNext = 7;
         }
-          
         else if (currentFase === 'EKSEKUSI') {
           const { data: freshPlayers } = await supabase.from('mahasiswa_roles').select('*').eq('room_code', roomCode);
           const mhsLive = freshPlayers.filter(p => p.is_hidup);
           const dosenLive = mhsLive.filter(p => p.peran === 'DOSEN_KILLER').length;
           const wargLive = mhsLive.length - dosenLive;
 
-          // Fungsi internal untuk membagikan poin ke tabel 'alumni' kolom 'skor_werewolf'
           const bagikanPoin = async (daftarPemenang) => {
             await Promise.all(daftarPemenang.map(async (p) => {
               const { data: userData } = await supabase.from('alumni').select('skor_werewolf').eq('nim', p.nim).single();
@@ -206,19 +279,13 @@ export default function DosenKillerGame() {
           if (dosenLive === 0) {
             nextFase = 'SELESAI'; durasiNext = 999;
             pesanBaru = "🎉 MAHASISWA MENANG! Semua Dosen Killer berhasil dikeluarkan. Warga dapat 3000 Poin!";
-            
-            // Eksekusi Poin untuk semua Warga (Biasa, Intel, Ahli)
             const wargaMenang = freshPlayers.filter(p => p.peran !== 'DOSEN_KILLER');
             await bagikanPoin(wargaMenang);
-
           } else if (dosenLive >= wargLive) {
             nextFase = 'SELESAI'; durasiNext = 999;
             pesanBaru = "🧛‍♂️ DOSEN KILLER MENANG! Kelas hancur. Dosen Killer dapat 3000 Poin!";
-            
-            // Eksekusi Poin untuk Dosen Killer saja
             const dosenMenang = freshPlayers.filter(p => p.peran === 'DOSEN_KILLER');
             await bagikanPoin(dosenMenang);
-
           } else {
             nextFase = 'MALAM'; durasiNext = 30;
             pesanBaru = "";
@@ -240,9 +307,8 @@ export default function DosenKillerGame() {
     return () => clearInterval(engineInterval);
   }, [isInRoom, roomCode, currentUser.isAdmin]);
 
-
   // ==============================================================
-  // 4. TIMER VISUAL POJOK KANAN ATAS UNTUK SEMUA ORANG
+  // TIMER VISUAL POJOK KANAN ATAS UNTUK SEMUA ORANG
   // ==============================================================
   useEffect(() => {
     if (!isInRoom || !roomCode || faseGame === 'LOBBY' || faseGame === 'SELESAI') return;
@@ -280,14 +346,20 @@ export default function DosenKillerGame() {
 
   const mulaiGame = async () => {
     const totalPemain = pemain.length;
-    const multiplier = Math.max(1, Math.round(totalPemain / 10));
+    
+    const jmlDosen = totalPemain < 25 ? 2 : Math.floor((totalPemain - 25) / 10) + 3;
+    const jmlIntel = 1;
+    const jmlAhli = 1;
+    const jmlUptodate = 1;
 
     let shuffled = [...pemain].sort(() => 0.5 - Math.random());
     const updates = shuffled.map((p, index) => {
       let peranDiberikan = 'BIASA';
-      if (index < multiplier) peranDiberikan = 'DOSEN_KILLER';
-      else if (index < multiplier * 2) peranDiberikan = 'INTEL';
-      else if (index < multiplier * 3) peranDiberikan = 'AHLI';
+      
+      if (index < jmlDosen) peranDiberikan = 'DOSEN_KILLER';
+      else if (index < jmlDosen + jmlIntel) peranDiberikan = 'INTEL';
+      else if (index < jmlDosen + jmlIntel + jmlAhli) peranDiberikan = 'AHLI';
+      else if (index < jmlDosen + jmlIntel + jmlAhli + jmlUptodate) peranDiberikan = 'UPTODATE';
       
       return { 
         room_code: roomCode, nim: p.nim, nama: p.nama, peran: peranDiberikan, 
@@ -299,7 +371,7 @@ export default function DosenKillerGame() {
 
     const durasiMalam = 30; 
     const waktuSelesaiMalam = new Date(Date.now() + durasiMalam * 1000).toISOString();
-    const pengumumanAwal = `Game dimulai! Terdeteksi ${multiplier} Dosen Killer yang menyusup di kelas ini.`;
+    const pengumumanAwal = `Game dimulai! Terdeteksi ${jmlDosen} Dosen Killer yang menyusup di kelas ini.`;
 
     await supabase.from('dosen_killer_state').update({ 
       fase_game: 'MALAM', ronde: 1, waktu_berakhir: waktuSelesaiMalam, pesan_pengumuman: pengumumanAwal
@@ -345,10 +417,11 @@ export default function DosenKillerGame() {
   }
 
   if (faseGame === 'LOBBY') {
-    const currentMultiplier = Math.max(1, Math.round(pemain.length / 10));
+    const totalMhs = pemain.length;
+    const currentJmlDosen = totalMhs < 25 ? 2 : Math.floor((totalMhs - 25) / 10) + 3;
+    
     return (
       <>
-        {/* --- POP-UP MODAL PERINGATAN KHUSUS ADMIN --- */}
         {showAdminWarning && currentUser.isAdmin && (
           <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-slate-900 border border-red-500 rounded-3xl max-w-sm p-6 text-center shadow-[0_0_50px_rgba(239,68,68,0.2)] animate-in zoom-in duration-300">
@@ -401,11 +474,12 @@ export default function DosenKillerGame() {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 font-mono text-xs">
-            <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center"><span className="block text-xl">🧛‍♂️</span><span className="text-red-400 font-bold text-sm block mt-1">{currentMultiplier} Dosen</span></div>
-            <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center"><span className="block text-xl">🕵️‍♂️</span><span className="text-blue-400 font-bold text-sm block mt-1">{currentMultiplier} Intel</span></div>
-            <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center"><span className="block text-xl">👨‍🎓</span><span className="text-green-400 font-bold text-sm block mt-1">{currentMultiplier} Ahli</span></div>
-            <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center"><span className="block text-xl">🥱</span><span className="text-slate-300 font-bold text-sm block mt-1">{Math.max(0, pemain.length - (currentMultiplier * 3))} Warga</span></div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6 font-mono text-xs">
+            <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center"><span className="block text-xl">🧛‍♂️</span><span className="text-red-400 font-bold text-[10px] md:text-sm block mt-1">{currentJmlDosen} Dosen</span></div>
+            <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center"><span className="block text-xl">🕵️‍♂️</span><span className="text-blue-400 font-bold text-[10px] md:text-sm block mt-1">1 Intel</span></div>
+            <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center"><span className="block text-xl">👨‍🎓</span><span className="text-green-400 font-bold text-[10px] md:text-sm block mt-1">1 Ahli</span></div>
+            <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center"><span className="block text-xl">📱</span><span className="text-purple-400 font-bold text-[10px] md:text-sm block mt-1">1 Update</span></div>
+            <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center"><span className="block text-xl">🥱</span><span className="text-slate-300 font-bold text-[10px] md:text-sm block mt-1">{Math.max(0, pemain.length - (currentJmlDosen + 3))} Warga</span></div>
           </div>
 
           <div className="bg-slate-800 p-6 rounded-2xl mb-8 border border-slate-700">
@@ -416,6 +490,37 @@ export default function DosenKillerGame() {
                   {p.nama} {p.nim === currentUser.nim && '(Kamu)'}
                 </span>
               ))}
+            </div>
+          </div>
+
+          {/* ============================================================== */}
+          {/* PANDUAN PERAN - MUNCUL DI LOBBY */}
+          {/* ============================================================== */}
+          <div className="bg-slate-900/60 p-6 rounded-2xl mb-8 border border-slate-700 text-left shadow-inner">
+            <h2 className="font-bold text-yellow-500 mb-5 text-sm text-center tracking-widest border-b border-slate-700 pb-3">
+              📜 PANDUAN PERAN (BACA SEBELUM MULAI)
+            </h2>
+            <div className="space-y-4 text-xs font-mono">
+              <div className="flex gap-4 items-start">
+                 <span className="text-2xl drop-shadow">🧛‍♂️</span>
+                 <div><span className="text-red-400 font-black tracking-wider block mb-0.5">DOSEN KILLER</span> <span className="text-slate-300 leading-relaxed">Memberi nilai E (DO) ke 1 mahasiswa setiap malam. Kalian bisa menyusun rencana rahasia melalui <b className="text-red-400">Live Chat</b> khusus sesama Dosen Killer.</span></div>
+              </div>
+              <div className="flex gap-4 items-start">
+                 <span className="text-2xl drop-shadow">🕵️‍♂️</span>
+                 <div><span className="text-blue-400 font-black tracking-wider block mb-0.5">MAHASISWA INTEL</span> <span className="text-slate-300 leading-relaxed">Setiap siang tiba, sistem akan membocorkan <b className="text-blue-400">3 Nama Suspek</b> (1 DK asli & 2 Warga) di layar HP-mu. Arahkan massa untuk mem-voting mereka!</span></div>
+              </div>
+              <div className="flex gap-4 items-start">
+                 <span className="text-2xl drop-shadow">👨‍🎓</span>
+                 <div><span className="text-green-400 font-black tracking-wider block mb-0.5">MAHASISWA AHLI</span> <span className="text-slate-300 leading-relaxed">Memiliki hak veto akademis. Kamu bisa memilih 1 orang setiap malam untuk <b className="text-green-400">diselamatkan</b> dari ancaman DO.</span></div>
+              </div>
+              <div className="flex gap-4 items-start">
+                 <span className="text-2xl drop-shadow">📱</span>
+                 <div><span className="text-purple-400 font-black tracking-wider block mb-0.5">MAHASISWA UPTODATE</span> <span className="text-slate-300 leading-relaxed">Anti-DO. Jika kamu ditargetkan oleh Dosen Killer saat malam, sistem otomatis menolak nilai E tersebut karena kamu <b className="text-purple-400">kebal</b> dan sudah tahu infonya duluan.</span></div>
+              </div>
+              <div className="flex gap-4 items-start">
+                 <span className="text-2xl drop-shadow">🥱</span>
+                 <div><span className="text-slate-400 font-black tracking-wider block mb-0.5">WARGA BIASA</span> <span className="text-slate-300 leading-relaxed">Tidak punya skill khusus di malam hari. Tugasmu berdiskusi di Live Chat siang hari, mencari kejanggalan, dan mem-voting Dosen Killer yang menyamar.</span></div>
+              </div>
             </div>
           </div>
 
@@ -431,7 +536,7 @@ export default function DosenKillerGame() {
 
   // --- FLOATING GLOBAL TIMER ---
   const GlobalTimer = () => (
-    <div className="fixed top-4 right-4 z-[9999] bg-slate-900/90 border border-red-500/50 text-red-400 font-bold px-4 py-2 rounded-full shadow-lg font-mono flex items-center gap-2 backdrop-blur-sm">
+    <div className="fixed top-4 right-4 z-[5000] bg-slate-900/90 border border-red-500/50 text-red-400 font-bold px-4 py-2 rounded-full shadow-lg font-mono flex items-center gap-2 backdrop-blur-sm">
        <span className="animate-spin-slow origin-center">⏳</span>
        <span className="w-6 text-right">{sisaWaktuUI}s</span>
     </div>
@@ -464,6 +569,67 @@ export default function DosenKillerGame() {
   return (
     <>
       <GlobalTimer />
+      
+      {/* ============================================================== */}
+      {/* PANEL CHAT DOSEN KILLER (HANYA MUNCUL DI MALAM HARI & BUAT DK) */}
+      {/* ============================================================== */}
+      {faseGame === 'MALAM' && peranKu === 'DOSEN_KILLER' && isHidup && (
+        <div className="fixed bottom-4 left-4 w-72 md:w-80 bg-slate-900 border border-red-600 rounded-2xl shadow-[0_0_20px_rgba(220,38,38,0.4)] z-[9999] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 backdrop-blur-md">
+          <div className="bg-red-950/80 p-3 border-b border-red-600/50 flex justify-between items-center">
+             <span className="text-red-400 font-black text-[10px] tracking-widest flex items-center gap-2">
+               <span className="animate-pulse">🔴</span> JARINGAN RAHASIA DK
+             </span>
+          </div>
+          <div className="h-44 p-3 overflow-y-auto flex flex-col gap-3 bg-slate-950/80 scrollbar-thin scrollbar-thumb-red-900">
+             {dkChat.length === 0 && (
+               <p className="text-center text-[10px] text-slate-500 font-mono italic my-auto">Diskusi target DO kalian di sini...</p>
+             )}
+             {dkChat.map((c, i) => (
+               <div key={i} className={`flex flex-col max-w-[85%] ${c.sender === currentUser.nama ? 'self-end items-end' : 'self-start items-start'}`}>
+                  <span className="text-red-500 font-bold text-[9px] mb-0.5">{c.sender}</span>
+                  <div className={`px-3 py-1.5 rounded-xl text-xs shadow-md ${c.sender === currentUser.nama ? 'bg-red-600 text-white rounded-br-sm' : 'bg-slate-800 border border-slate-700 text-slate-200 rounded-bl-sm'}`}>
+                    {c.text}
+                  </div>
+               </div>
+             ))}
+             <div ref={chatEndRef} />
+          </div>
+          <form onSubmit={kirimPesanDK} className="p-2 bg-slate-900 border-t border-red-600/30 flex gap-2">
+             <input 
+                type="text" 
+                value={chatInput} 
+                onChange={e => setChatInput(e.target.value)} 
+                className="w-full bg-slate-950 text-white text-xs px-3 py-2 rounded-lg border border-slate-700 focus:outline-none focus:border-red-500 placeholder:text-slate-600" 
+                placeholder="Rencana DO malam ini..." 
+             />
+             <button type="submit" className="bg-red-600 hover:bg-red-500 text-white px-4 rounded-lg text-xs font-bold transition-colors shadow-lg shadow-red-900/50">
+               SEND
+             </button>
+          </form>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* OVERLAY PANEL RAHASIA KHUSUS INTEL SAAT SIANG HARI */}
+      {/* ============================================================== */}
+      {peranKu === 'INTEL' && isHidup && intelSuspects.length > 0 && (faseGame === 'DISKUSI' || faseGame === 'VOTING') && (
+        <div className="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-blue-900/95 border-2 border-blue-400 p-5 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.6)] z-[4000] backdrop-blur-md animate-in slide-in-from-bottom-10">
+          <h3 className="text-blue-200 font-black tracking-widest text-sm mb-3 flex items-center gap-2 border-b border-blue-400/50 pb-2">
+            <span className="text-xl animate-pulse">🕵️‍♂️</span> BERKAS RAHASIA INTEL
+          </h3>
+          <p className="text-white text-xs mb-4 leading-relaxed font-mono">
+            Berdasarkan penyelidikanmu semalam, <b>salah satu dari 3 orang ini dipastikan adalah DOSEN KILLER</b>. Arahkan warga untuk mem-voting mereka!
+          </p>
+          <div className="flex flex-col gap-2">
+            {intelSuspects.map((s, i) => (
+              <div key={i} className="bg-blue-950 border border-blue-400/50 text-blue-100 text-center py-2 rounded-lg text-xs font-bold shadow-inner">
+                {s.nama}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {faseGame === 'MALAM' && <LayarMalam peranKu={peranKu} isHidup={isHidup} pemain={pemain} currentUser={{...currentUser, roomCode}} />}
       {faseGame === 'DISKUSI' && <LayarDiskusi pemain={pemain} isHidup={isHidup} currentUser={{...currentUser, roomCode}} />}
       {faseGame === 'VOTING' && <LayarVoting pemain={pemain} isHidup={isHidup} currentUser={{...currentUser, roomCode}} />}
