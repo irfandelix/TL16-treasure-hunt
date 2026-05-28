@@ -10,6 +10,7 @@ import AdminDashboard from './AdminDashboard';
 import FormKapsulWaktu from './FormKapsulWaktu'; 
 import WheelOfFamily from './WheelOfFamily';
 import MonopoliBoard from './MonopoliBoard';
+import DosenKillerGame from './DosenKillerGame';
 
 export default function GameDashboard() {
   const [user, setUser] = useState(null);
@@ -261,6 +262,20 @@ export default function GameDashboard() {
     );
   }
 
+  // ==============================================================
+  // MENU BARU: DOSEN KILLER (WEREWOLF)
+  // ==============================================================
+  if (activeView === 'dosenkiller') {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
+        <button onClick={() => setActiveView('dashboard')} className="mb-6 flex items-center text-red-500 hover:text-red-400 font-bold transition-colors">
+          <span className="mr-2">←</span> KEMBALI KE MENU UTAMA
+        </button>
+        <DosenKillerGame />
+      </div>
+    );
+  }
+
   if (activeView === 'admin' && user.is_admin) {
     return <AdminDashboard onBack={() => setActiveView('dashboard')} />;
   }
@@ -421,6 +436,31 @@ export default function GameDashboard() {
               <div className="absolute -right-8 -bottom-8 text-8xl opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">🎰</div>
             </div>
           )}
+
+          {/* ============================================================== */}
+          {/* Kartu Dosen Killer */}
+          {/* ============================================================== */}
+          <div className="bg-[#1e293b] p-6 rounded-2xl border border-slate-700 flex flex-col justify-between hover:border-red-500 transition-colors">
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <span className="text-4xl drop-shadow-md">🧛‍♂️</span>
+                <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded tracking-wider">
+                  LIVE
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Dosen Killer</h3>
+              <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                Satu dekade berlalu, tapi ancaman nilai E masih mengintai. Temukan pengkhianat di antara sedulur 16 sebelum kamu di-DO!
+              </p>
+            </div>
+            
+            <button 
+              onClick={() => setActiveView('dosenkiller')} 
+              className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-red-900/20"
+            >
+              Masuk Kelas 🚪
+            </button>
+          </div>
 
         </div>
 

@@ -6,7 +6,8 @@ export default function ScoreBoard() {
   const [alumni, setAlumni] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
-  const [isMonopoliUnlocked, setIsMonopoliUnlocked] = useState(false); // STATE BARU
+  const [isMonopoliUnlocked, setIsMonopoliUnlocked] = useState(false);
+  const [isWerewolfUnlocked, setIsWerewolfUnlocked] = useState(false); // STATE BARU UNTUK WEREWOLF
 
   useEffect(() => {
     const checkAdmin = localStorage.getItem('is_admin') === 'true';
@@ -14,32 +15,45 @@ export default function ScoreBoard() {
 
     const loadAllData = async () => {
       try {
-        // 1. Tarik Pengaturan Dulu (Cek Jadwal Monopoli)
-        const { data: settings } = await supabase.from('app_settings').select('show_scoreboard, monopoli_unlock_date').eq('id', 1).single();
+        // 1. Tarik Pengaturan Dulu (Cek Jadwal Monopoli & Werewolf)
+        const { data: settings } = await supabase.from('app_settings').select('show_scoreboard, monopoli_unlock_date, werewolf_unlock_date').eq('id', 1).single();
         
         let monopoliBuka = false;
+        let werewolfBuka = false; // CEK WEREWOLF
+        
         if (settings) {
           setIsRevealed(settings.show_scoreboard);
+          const now = new Date().getTime();
+
           if (checkAdmin) {
             monopoliBuka = true; // Admin selalu bisa lihat
-          } else if (settings.monopoli_unlock_date) {
-            const unlockTime = new Date(settings.monopoli_unlock_date).getTime();
-            const now = new Date().getTime();
-            monopoliBuka = now >= unlockTime;
+            werewolfBuka = true; // Admin selalu bisa lihat
+          } else {
+            if (settings.monopoli_unlock_date) {
+              const unlockTimeMono = new Date(settings.monopoli_unlock_date).getTime();
+              monopoliBuka = now >= unlockTimeMono;
+            }
+            if (settings.werewolf_unlock_date) {
+              const unlockTimeWolf = new Date(settings.werewolf_unlock_date).getTime();
+              werewolfBuka = now >= unlockTimeWolf;
+            }
           }
           setIsMonopoliUnlocked(monopoliBuka);
+          setIsWerewolfUnlocked(werewolfBuka);
         }
 
         // 2. Tarik Data Alumni & Urutkan
         const { data: alumniData } = await supabase.from('alumni').select('*');
         if (alumniData) {
           const sorted = alumniData.sort((a, b) => {
-            // Skor monopoli HANYA dihitung ke total jika jadwalnya sudah tiba
+            // Skor game dihitung ke total HANYA jika jadwalnya sudah tiba
             const skorMonopoliA = monopoliBuka ? (a.skor_monopoli || 0) : 0;
             const skorMonopoliB = monopoliBuka ? (b.skor_monopoli || 0) : 0;
+            const skorWerewolfA = werewolfBuka ? (a.skor_werewolf || 0) : 0;
+            const skorWerewolfB = werewolfBuka ? (b.skor_werewolf || 0) : 0;
             
-            const totalA = (a.skor_peta || 0) + (a.skor_muka || 0) + skorMonopoliA;
-            const totalB = (b.skor_peta || 0) + (b.skor_muka || 0) + skorMonopoliB;
+            const totalA = (a.skor_peta || 0) + (a.skor_muka || 0) + skorMonopoliA + skorWerewolfA;
+            const totalB = (b.skor_peta || 0) + (b.skor_muka || 0) + skorMonopoliB + skorWerewolfB;
             
             if (totalB !== totalA) return totalB - totalA;
             return a.nim.localeCompare(b.nim);
@@ -78,12 +92,10 @@ export default function ScoreBoard() {
         </p>
       </div>
       
-      {/* CONTAINER TABEL SCROLLABLE: 
-        max-h-[500px] membuat tabel punya batas tinggi, dan overflow-y-auto memunculkan scrollbar di dalam tabel 
-      */}
+      {/* CONTAINER TABEL SCROLLABLE */}
       <div className="max-h-[400px] md:max-h-[500px] overflow-y-auto overflow-x-auto relative z-10 rounded-xl border border-slate-700/50 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800">
         <table className="w-full text-left relative">
-          {/* HEADER STICKY: Tetap nempel di atas saat tabel di-scroll */}
+          {/* HEADER STICKY */}
           <thead className="sticky top-0 bg-slate-900 z-20 shadow-md">
             <tr className="border-b border-slate-700 text-slate-400 font-bold text-sm">
               <th className="py-4 px-2 text-center w-16">Rank</th>
@@ -94,8 +106,11 @@ export default function ScoreBoard() {
           
           <tbody>
             {alumni.map((person, index) => {
-              // Total skor disesuaikan agar Monopoli ikut hilang jika belum waktunya
-              const totalSkor = (person.skor_peta || 0) + (person.skor_muka || 0) + (isMonopoliUnlocked ? (person.skor_monopoli || 0) : 0);
+              // Total skor disesuaikan agar Monopoli & Werewolf ikut hilang jika belum waktunya
+              const totalSkor = (person.skor_peta || 0) + 
+                                (person.skor_muka || 0) + 
+                                (isMonopoliUnlocked ? (person.skor_monopoli || 0) : 0) + 
+                                (isWerewolfUnlocked ? (person.skor_werewolf || 0) : 0);
               
               const displayNim = shouldReveal ? person.nim : `${person.nim.substring(0, 5)}****`;
               const displayName = shouldReveal ? person.nama : "PENJELAJAH RAHASIA";
@@ -124,7 +139,14 @@ export default function ScoreBoard() {
                       {/* BADGE MONOPOLI HANYA MUNCUL JIKA SUDAH UNLOCKED */}
                       {isMonopoliUnlocked && (
                         <span className="bg-slate-900/80 border border-slate-700 text-purple-400 text-[10px] px-2 py-1 rounded-md font-bold shadow-inner">
-                          🎲 MONOPOLI: {person.skor_monopoli || 0}
+                          🎲 MONO: {person.skor_monopoli || 0}
+                        </span>
+                      )}
+
+                      {/* BADGE WEREWOLF HANYA MUNCUL JIKA SUDAH UNLOCKED */}
+                      {isWerewolfUnlocked && (
+                        <span className="bg-slate-900/80 border border-slate-700 text-red-400 text-[10px] px-2 py-1 rounded-md font-bold shadow-inner">
+                          🧛‍♂️ DK: {person.skor_werewolf || 0}
                         </span>
                       )}
                     </div>
