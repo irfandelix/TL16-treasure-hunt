@@ -23,7 +23,10 @@ export default function GameDashboard() {
   const [targetDate, setTargetDate] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
   const [wheelUnlocked, setWheelUnlocked] = useState(false);
+  
+  // State untuk kunci game rahasia
   const [isMonopoliUnlocked, setIsMonopoliUnlocked] = useState(false);
+  const [isWerewolfUnlocked, setIsWerewolfUnlocked] = useState(false);
 
   useEffect(() => {
     // 1. Matikan Klik Kanan
@@ -88,7 +91,7 @@ export default function GameDashboard() {
     }
   }, [user]);
 
-  // 1. POLLING DATABSE: Cek apakah Admin sudah ngeset tanggal
+  // 1. POLLING DATABSE: Cek apakah Admin sudah ngeset tanggal Wheel
   useEffect(() => {
     if (!user) return;
 
@@ -118,7 +121,7 @@ export default function GameDashboard() {
     return () => clearInterval(intervalId);
   }, [user]);
 
-  // 2. MESIN HITUNG MUNDUR (COUNTDOWN)
+  // 2. MESIN HITUNG MUNDUR (COUNTDOWN) WHEEL
   useEffect(() => {
     if (!targetDate) return;
 
@@ -147,43 +150,48 @@ export default function GameDashboard() {
     return () => clearInterval(timer);
   }, [targetDate]);
 
-  // 3. CEK JADWAL MONOPOLI
+  // 3. CEK JADWAL MONOPOLI & DOSEN KILLER SECARA BERSAMAAN
   useEffect(() => {
     if (!user) return;
 
-    const checkMonopoliStatus = async () => {
+    const checkGameStatus = async () => {
       try {
         const { data } = await supabase
           .from('app_settings')
-          .select('monopoli_unlock_date')
+          .select('monopoli_unlock_date, werewolf_unlock_date')
           .eq('id', 1)
           .single();
 
-        // Admin selalu bisa melihat kartu Monopoli
+        const now = new Date().getTime();
+
+        // Cek Status Monopoli
         if (user.is_admin) {
            setIsMonopoliUnlocked(true);
         } else if (data && data.monopoli_unlock_date) {
-          // Bandingkan waktu sekarang dengan jadwal di pangkalan data
-          const unlockTime = new Date(data.monopoli_unlock_date).getTime();
-          const now = new Date().getTime();
-
-          if (now >= unlockTime) {
-            setIsMonopoliUnlocked(true);
-          } else {
-            setIsMonopoliUnlocked(false);
-          }
+          const unlockTimeMono = new Date(data.monopoli_unlock_date).getTime();
+          setIsMonopoliUnlocked(now >= unlockTimeMono);
         } else {
-          // Jika jadwal belum diset (kosong), sembunyikan
           setIsMonopoliUnlocked(false); 
         }
+
+        // Cek Status Dosen Killer
+        if (user.is_admin) {
+           setIsWerewolfUnlocked(true);
+        } else if (data && data.werewolf_unlock_date) {
+          const unlockTimeWolf = new Date(data.werewolf_unlock_date).getTime();
+          setIsWerewolfUnlocked(now >= unlockTimeWolf);
+        } else {
+          setIsWerewolfUnlocked(false);
+        }
+
       } catch (error) {
-        console.error("Gagal cek jadwal monopoli:", error.message);
+        console.error("Gagal cek jadwal game rahasia:", error.message);
       }
     };
 
-    checkMonopoliStatus();
-    // Cek otomatis setiap 10 detik di balik layar
-    const interval = setInterval(checkMonopoliStatus, 10000); 
+    checkGameStatus();
+    // Cek otomatis setiap 10 detik di balik layar agar kartu muncul sendiri saat waktunya tiba
+    const interval = setInterval(checkGameStatus, 10000); 
     return () => clearInterval(interval);
   }, [user]);
 
@@ -353,7 +361,7 @@ export default function GameDashboard() {
           {/* TARUH KARTU MONOPOLI DI SINI, DI DALAM GRID MENU UTAMA */}
           {/* ============================================================== */}
           {isMonopoliUnlocked && (
-            <div onClick={() => setActiveView('monopoli')} className="group bg-slate-800 p-8 rounded-3xl border border-slate-700 hover:border-emerald-500 transition-all cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between">
+            <div onClick={() => setActiveView('monopoli')} className="group bg-slate-800 p-8 rounded-3xl border border-slate-700 hover:border-emerald-500 transition-all cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between animate-in zoom-in duration-500">
               <div className="relative z-10 flex justify-between items-start">
                 <span className="text-4xl mb-4 block">🎲</span>
                 <span className="bg-emerald-600 text-white text-[10px] font-black px-2 py-1 rounded-md tracking-widest">LIVE</span>
@@ -438,29 +446,31 @@ export default function GameDashboard() {
           )}
 
           {/* ============================================================== */}
-          {/* Kartu Dosen Killer */}
+          {/* Kartu Dosen Killer HANYA MUNCUL JIKA SUDAH UNLOCKED/ADMIN */}
           {/* ============================================================== */}
-          <div className="bg-[#1e293b] p-6 rounded-2xl border border-slate-700 flex flex-col justify-between hover:border-red-500 transition-colors">
-            <div>
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-4xl drop-shadow-md">🧛‍♂️</span>
-                <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded tracking-wider">
-                  LIVE
-                </span>
+          {isWerewolfUnlocked && (
+            <div className="bg-[#1e293b] p-6 rounded-2xl border border-slate-700 flex flex-col justify-between hover:border-red-500 transition-colors animate-in zoom-in duration-500">
+              <div>
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-4xl drop-shadow-md">🧛‍♂️</span>
+                  <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded tracking-wider">
+                    LIVE
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Dosen Killer</h3>
+                <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                  Satu dekade berlalu, tapi ancaman nilai E masih mengintai. Temukan pengkhianat di antara sedulur 16 sebelum kamu di-DO!
+                </p>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Dosen Killer</h3>
-              <p className="text-sm text-slate-400 mb-6 leading-relaxed">
-                Satu dekade berlalu, tapi ancaman nilai E masih mengintai. Temukan pengkhianat di antara sedulur 16 sebelum kamu di-DO!
-              </p>
+              
+              <button 
+                onClick={() => setActiveView('dosenkiller')} 
+                className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-red-900/20"
+              >
+                Masuk Kelas 🚪
+              </button>
             </div>
-            
-            <button 
-              onClick={() => setActiveView('dosenkiller')} 
-              className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-red-900/20"
-            >
-              Masuk Kelas 🚪
-            </button>
-          </div>
+          )}
 
         </div>
 
