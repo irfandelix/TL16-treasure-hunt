@@ -148,7 +148,7 @@ export default function MonopoliBoard() {
   };
 
   const createRoom = async () => {
-    await cleanupStaleRooms(); // <--- SAPU CLEANUP DI SINI
+    // await cleanupStaleRooms(); // DINONAKTIFKAN KARENA MENYEBABKAN RACE CONDITION PADA BANYAK USER
 
     const newCode = Math.floor(1000 + Math.random() * 9000).toString();
     await supabase.from('monopoli_rooms').insert([{ id: newCode, status: 'waiting', last_active: new Date() }]);
@@ -156,7 +156,7 @@ export default function MonopoliBoard() {
   };
 
   const joinRoom = async (code) => {
-    await cleanupStaleRooms(); // <--- SAPU CLEANUP DI SINI JUGA
+    // await cleanupStaleRooms(); // DINONAKTIFKAN KARENA MENYEBABKAN RACE CONDITION PADA BANYAK USER
 
     const rCode = code || joinCode;
     const { data: room } = await supabase.from('monopoli_rooms').select('*').eq('id', rCode).single();
@@ -240,11 +240,34 @@ export default function MonopoliBoard() {
   }, [currentRoom, appState, currentUser.nim]);
 
   useEffect(() => {
-    if (appState === 'lobby') return;
+    if (appState === 'lobby' || !currentRoom) return;
+    
+    // Ambil data pertama kali saat masuk room
     loadGameData();
-    const interval = setInterval(loadGameData, 2000);
-    return () => clearInterval(interval);
-  }, [loadGameData, appState]);
+    
+    // Subscribe ke perubahan Room, Players, dan Properties
+    const roomSub = supabase.channel(`rooms:${currentRoom.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'monopoli_rooms', filter: `id=eq.${currentRoom.id}` }, () => {
+        loadGameData();
+      }).subscribe();
+
+    const playersSub = supabase.channel(`players:${currentRoom.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'monopoli_players', filter: `room_id=eq.${currentRoom.id}` }, () => {
+        loadGameData();
+      }).subscribe();
+
+    const propSub = supabase.channel(`props:${currentRoom.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'monopoli_properties', filter: `room_id=eq.${currentRoom.id}` }, () => {
+        loadGameData();
+      }).subscribe();
+
+    return () => {
+      supabase.removeChannel(roomSub);
+      supabase.removeChannel(playersSub);
+      supabase.removeChannel(propSub);
+    };
+    // Hapus loadGameData dari dependency array agar tidak terjadi loop tidak terbatas saat state berubah
+  }, [currentRoom?.id, appState]);
 
   useEffect(() => () => clearInterval(journeyTimer.current), []);
 
