@@ -402,50 +402,54 @@ export default function GameDashboard() {
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-16">
           
-          <div onClick={() => setActiveView('map')} className="group bg-slate-800 p-8 rounded-3xl border border-slate-700 hover:border-green-500 transition-all cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between">
+          <div onClick={() => setActiveView('map')} className="group backdrop-blur-xl bg-slate-800/60 p-8 rounded-3xl border border-slate-700/50 hover:border-green-500 hover:bg-slate-800/80 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-[0_0_30px_-5px_rgba(34,197,94,0.3)] relative overflow-hidden flex flex-col justify-between">
             <div className="relative z-10">
-              <span className="text-4xl mb-4 block">🗺️</span>
-              <h2 className="text-2xl font-bold mb-2">Digital Treasure Hunt</h2>
+              <span className="text-5xl mb-4 block group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300 drop-shadow-md">🗺️</span>
+              <h2 className="text-2xl font-bold mb-2 text-white group-hover:text-green-400 transition-colors">Digital Treasure Hunt</h2>
               <p className="text-slate-400 text-sm mb-6">Napak tilas lokasi memori di sekitar kampus dan tempat kumpul legendaris.</p>
             </div>
             <div className="relative z-10">
-              <button className="w-full bg-green-600 py-3 rounded-xl font-bold group-hover:bg-green-500 transition-colors">Mulai Eksplorasi</button>
+              <button className="w-full bg-green-600/90 py-3 rounded-xl font-bold text-white group-hover:bg-green-500 group-hover:shadow-[0_0_20px_rgba(34,197,94,0.5)] transition-all duration-300">Mulai Eksplorasi</button>
             </div>
-            <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">📍</div>
+            <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 group-hover:rotate-12 transition-all duration-500 pointer-events-none">📍</div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
           </div>
 
-          <div onClick={() => setActiveView('face')} className="group bg-slate-800 p-8 rounded-3xl border border-slate-700 hover:border-green-500 transition-all cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between">
+          <div onClick={() => setActiveView('face')} className="group backdrop-blur-xl bg-slate-800/60 p-8 rounded-3xl border border-slate-700/50 hover:border-green-500 hover:bg-slate-800/80 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-[0_0_30px_-5px_rgba(34,197,94,0.3)] relative overflow-hidden flex flex-col justify-between">
             <div className="relative z-10">
-              <span className="text-4xl mb-4 block">👥</span>
-              <h2 className="text-2xl font-bold mb-2">Tebak Muka Blur</h2>
+              <span className="text-5xl mb-4 block group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300 drop-shadow-md">👥</span>
+              <h2 className="text-2xl font-bold mb-2 text-white group-hover:text-green-400 transition-colors">Tebak Muka Blur</h2>
               <p className="text-slate-400 text-sm mb-6">Uji ingatanmu! Seberapa kenal kamu dengan teman seangkatan?</p>
             </div>
             <div className="relative z-10">
-              <button className="w-full bg-green-600 py-3 rounded-xl font-bold group-hover:bg-green-500 transition-colors">Hayo Tebak, Siapa Ini?</button>
+              <button className="w-full bg-green-600/90 py-3 rounded-xl font-bold text-white group-hover:bg-green-500 group-hover:shadow-[0_0_20px_rgba(34,197,94,0.5)] transition-all duration-300">Hayo Tebak, Siapa Ini?</button>
             </div>
-            <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">🕵️</div>
+            <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 group-hover:rotate-12 transition-all duration-500 pointer-events-none">🕵️</div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
           </div>
 
-          <div onClick={() => setActiveView('kapsul')} className="group bg-slate-800 p-8 rounded-3xl border border-slate-700 hover:border-yellow-500 transition-all cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between">
+          <div onClick={() => setActiveView('kapsul')} className="group backdrop-blur-xl bg-slate-800/60 p-8 rounded-3xl border border-slate-700/50 hover:border-yellow-500 hover:bg-slate-800/80 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-[0_0_30px_-5px_rgba(234,179,8,0.3)] relative overflow-hidden flex flex-col justify-between">
             <div className="relative z-10">
-              <span className="text-4xl mb-4 block">⏳</span>
-              <h2 className="text-2xl font-bold mb-2 text-yellow-500">Kapsul Waktu</h2>
+              <span className="text-5xl mb-4 block group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300 drop-shadow-md">⏳</span>
+              <h2 className="text-2xl font-bold mb-2 text-white group-hover:text-yellow-400 transition-colors">Kapsul Waktu</h2>
               <p className="text-slate-400 text-sm mb-6">Setor foto terbaik & pesan maut kalian untuk acara Wheel of Family!</p>
             </div>
             <div className="relative z-10">
-              <button className="w-full bg-yellow-600 py-3 rounded-xl font-bold text-slate-900 group-hover:bg-yellow-500 transition-colors">Buka Kapsul</button>
+              <button className="w-full bg-yellow-600/90 py-3 rounded-xl font-bold text-slate-900 group-hover:bg-yellow-500 group-hover:shadow-[0_0_20px_rgba(234,179,8,0.5)] transition-all duration-300">Buka Kapsul</button>
             </div>
-            <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">📦</div>
+            <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 group-hover:rotate-12 transition-all duration-500 pointer-events-none">📦</div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
           </div>
 
           {/* ============================================================== */}
           {/* KARTU TEASER MONOPOLI (H-30) */}
           {/* ============================================================== */}
           {monopoliApproaching && !isMonopoliUnlocked && (
-            <div className="bg-slate-900/40 p-8 rounded-3xl border border-slate-800 relative overflow-hidden flex flex-col justify-between cursor-not-allowed opacity-80 animate-in fade-in">
+            <div className="group bg-slate-900/50 backdrop-blur-sm p-8 rounded-3xl border border-slate-800 relative overflow-hidden flex flex-col justify-between cursor-not-allowed opacity-75 animate-in fade-in hover:border-slate-700 transition-colors">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-20 pointer-events-none"></div>
               <div className="relative z-10 flex justify-between items-start">
-                <span className="text-4xl mb-4 block blur-[2px] opacity-30">🎲</span>
-                <span className="bg-red-950/50 border border-red-900 text-red-500 text-[10px] font-black px-2 py-1 rounded-md tracking-widest uppercase">ENCRYPTED</span>
+                <span className="text-5xl mb-4 block blur-[2px] opacity-40 group-hover:blur-[1px] transition-all">🎲</span>
+                <span className="bg-red-950/50 border border-red-900 text-red-500 text-[10px] font-black px-2 py-1 rounded-md tracking-widest uppercase shadow-[0_0_10px_rgba(239,68,68,0.2)]">ENCRYPTED</span>
               </div>
               <div className="relative z-10">
                 <h2 className="text-2xl font-bold mb-2">
@@ -466,19 +470,20 @@ export default function GameDashboard() {
           {/* KARTU MONOPOLI ASLI */}
           {/* ============================================================== */}
           {isMonopoliUnlocked && (
-            <div onClick={() => setActiveView('monopoli')} className="group bg-slate-800 p-8 rounded-3xl border border-slate-700 hover:border-emerald-500 transition-all cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between animate-in zoom-in duration-500">
+            <div onClick={() => setActiveView('monopoli')} className="group backdrop-blur-xl bg-slate-800/60 p-8 rounded-3xl border border-slate-700/50 hover:border-emerald-500 hover:bg-slate-800/80 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.3)] relative overflow-hidden flex flex-col justify-between animate-in zoom-in duration-500">
               <div className="relative z-10 flex justify-between items-start">
-                <span className="text-4xl mb-4 block">🎲</span>
-                <span className="bg-emerald-600 text-white text-[10px] font-black px-2 py-1 rounded-md tracking-widest">LIVE</span>
+                <span className="text-5xl mb-4 block group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300 drop-shadow-md">🎲</span>
+                <span className="bg-emerald-600/90 text-white text-[10px] font-black px-2 py-1 rounded-md tracking-widest shadow-[0_0_10px_rgba(16,185,129,0.5)]">LIVE</span>
               </div>
               <div className="relative z-10">
-                <h2 className="text-2xl font-bold mb-2 text-emerald-400">Monopoli TL16</h2>
+                <h2 className="text-2xl font-bold mb-2 text-emerald-400 group-hover:text-emerald-300 transition-colors">Monopoli TL16</h2>
                 <p className="text-slate-400 text-sm mb-6">Napak tilas 4 tahun masa kuliah. Kocok dadu, bayar UKT, dan bersiaplah buka aib di petak ToD!</p>
               </div>
               <div className="relative z-10">
-                <button className="w-full bg-emerald-600 py-3 rounded-xl font-bold text-white group-hover:bg-emerald-500 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.3)]">Masuk ke Papan 🏃‍♂️</button>
+                <button className="w-full bg-emerald-600/90 py-3 rounded-xl font-bold text-white group-hover:bg-emerald-500 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all duration-300">Masuk ke Papan 🏃‍♂️</button>
               </div>
-              <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">💸</div>
+              <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 group-hover:rotate-12 transition-all duration-500 pointer-events-none">💸</div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
             </div>
           )}
 
@@ -486,11 +491,12 @@ export default function GameDashboard() {
           {/* KARTU TEASER DOSEN KILLER (H-30) */}
           {/* ============================================================== */}
           {werewolfApproaching && !isWerewolfUnlocked && (
-            <div className="bg-[#0f172a]/60 p-8 rounded-3xl border border-slate-800 flex flex-col justify-between cursor-not-allowed opacity-80 animate-in fade-in">
-              <div>
+            <div className="group bg-slate-900/50 backdrop-blur-sm p-8 rounded-3xl border border-slate-800 flex flex-col justify-between cursor-not-allowed opacity-75 animate-in fade-in hover:border-slate-700 transition-colors relative overflow-hidden">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-20 pointer-events-none"></div>
+              <div className="relative z-10">
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-4xl opacity-30 blur-[2px]">🧛‍♂️</span>
-                  <span className="bg-red-950/50 border border-red-900 text-red-500 text-[10px] font-black px-2 py-1 rounded tracking-wider">RESTRICTED</span>
+                  <span className="text-5xl opacity-40 blur-[2px] group-hover:blur-[1px] transition-all">🧛‍♂️</span>
+                  <span className="bg-red-950/50 border border-red-900 text-red-500 text-[10px] font-black px-2 py-1 rounded tracking-wider shadow-[0_0_10px_rgba(239,68,68,0.2)] uppercase">RESTRICTED</span>
                 </div>
                 <h3 className="text-xl font-bold mb-2">
                   <span className="bg-slate-800 text-transparent px-2 py-0.5 rounded-sm select-none relative inline-block">
@@ -502,6 +508,7 @@ export default function GameDashboard() {
                   Satu dekade berlalu, tapi ancaman nilai E masih mengintai. Temukan pengkhianat!
                 </p>
               </div>
+              <div className="absolute -right-8 -bottom-8 text-8xl opacity-[0.02] pointer-events-none blur-sm">🔒</div>
             </div>
           )}
 
@@ -509,23 +516,22 @@ export default function GameDashboard() {
           {/* KARTU DOSEN KILLER ASLI */}
           {/* ============================================================== */}
           {isWerewolfUnlocked && (
-            <div className="bg-[#1e293b] p-8 rounded-3xl border border-slate-700 flex flex-col justify-between hover:border-red-500 transition-colors animate-in zoom-in duration-500 cursor-pointer shadow-xl relative overflow-hidden group">
+            <div onClick={() => setActiveView('dosenkiller')} className="group backdrop-blur-xl bg-slate-800/60 p-8 rounded-3xl border border-slate-700/50 hover:border-red-500 hover:bg-slate-800/80 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-[0_0_30px_-5px_rgba(239,68,68,0.3)] relative overflow-hidden flex flex-col justify-between animate-in zoom-in duration-500">
               <div className="relative z-10">
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-4xl drop-shadow-md">🧛‍♂️</span>
-                  <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded tracking-wider">LIVE</span>
+                  <span className="text-5xl drop-shadow-md group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">🧛‍♂️</span>
+                  <span className="bg-red-600/90 text-white text-[10px] font-black px-2 py-1 rounded tracking-wider shadow-[0_0_10px_rgba(239,68,68,0.5)]">LIVE</span>
                 </div>
-                <h3 className="text-2xl font-bold text-red-400 mb-2">Dosen Killer</h3>
+                <h3 className="text-2xl font-bold text-red-400 mb-2 group-hover:text-red-300 transition-colors">Dosen Killer</h3>
                 <p className="text-sm text-slate-400 mb-6 leading-relaxed">
                   Satu dekade berlalu, tapi ancaman nilai E masih mengintai. Temukan pengkhianat di antara sedulur 16 sebelum kamu di-DO!
                 </p>
               </div>
-              <button 
-                onClick={() => setActiveView('dosenkiller')} 
-                className="relative z-10 w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-red-900/20"
-              >
-                Masuk Kelas 🚪
-              </button>
+              <div className="relative z-10">
+                <button className="w-full bg-red-600/90 py-3 rounded-xl font-bold text-white group-hover:bg-red-500 group-hover:shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all duration-300">Masuk Kelas 🚪</button>
+              </div>
+              <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 group-hover:rotate-12 transition-all duration-500 pointer-events-none">🩸</div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
             </div>
           )}
 
@@ -533,10 +539,11 @@ export default function GameDashboard() {
           {/* KARTU TEASER UNO BRUTAL (H-30) */}
           {/* ============================================================== */}
           {unoApproaching && !isUnoUnlocked && (
-            <div className="bg-slate-900/40 p-8 rounded-3xl border border-slate-800 relative overflow-hidden flex flex-col justify-between cursor-not-allowed opacity-80 animate-in fade-in">
+            <div className="group bg-slate-900/50 backdrop-blur-sm p-8 rounded-3xl border border-slate-800 relative overflow-hidden flex flex-col justify-between cursor-not-allowed opacity-75 animate-in fade-in hover:border-slate-700 transition-colors">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-20 pointer-events-none"></div>
               <div className="relative z-10 flex justify-between items-start">
-                <span className="text-4xl mb-4 block blur-[2px] opacity-30">🃏</span>
-                <span className="bg-red-950/50 border border-red-900 text-red-500 text-[10px] font-black px-2 py-1 rounded-md tracking-widest uppercase">ENCRYPTED</span>
+                <span className="text-5xl mb-4 block blur-[2px] opacity-40 group-hover:blur-[1px] transition-all">🃏</span>
+                <span className="bg-red-950/50 border border-red-900 text-red-500 text-[10px] font-black px-2 py-1 rounded-md tracking-widest uppercase shadow-[0_0_10px_rgba(239,68,68,0.2)]">ENCRYPTED</span>
               </div>
               <div className="relative z-10">
                 <h2 className="text-2xl font-bold mb-2">
@@ -557,19 +564,20 @@ export default function GameDashboard() {
           {/* KARTU UNO BRUTAL ASLI */}
           {/* ============================================================== */}
           {isUnoUnlocked && (
-            <div onClick={() => setActiveView('unobrutal')} className="group bg-[#1e293b] p-8 rounded-3xl border border-slate-700 hover:border-yellow-500 transition-all cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between animate-in zoom-in duration-500">
+            <div onClick={() => setActiveView('unobrutal')} className="group backdrop-blur-xl bg-slate-800/60 p-8 rounded-3xl border border-slate-700/50 hover:border-amber-500 hover:bg-slate-800/80 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-[0_0_30px_-5px_rgba(245,158,11,0.3)] relative overflow-hidden flex flex-col justify-between animate-in zoom-in duration-500">
               <div className="relative z-10 flex justify-between items-start">
-                <span className="text-4xl mb-4 block">🃏</span>
-                <span className="bg-yellow-600 text-white text-[10px] font-black px-2 py-1 rounded-md tracking-widest">LIVE</span>
+                <span className="text-5xl mb-4 block group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300 drop-shadow-md">🃏</span>
+                <span className="bg-amber-500/90 text-white text-[10px] font-black px-2 py-1 rounded-md tracking-widest shadow-[0_0_10px_rgba(245,158,11,0.5)]">LIVE</span>
               </div>
               <div className="relative z-10">
-                <h2 className="text-2xl font-bold mb-2 text-yellow-500">UNO Brutal</h2>
+                <h2 className="text-2xl font-bold mb-2 text-amber-500 group-hover:text-amber-400 transition-colors">UNO Brutal</h2>
                 <p className="text-slate-400 text-sm mb-6">Hancurkan pertemanan sedulur 16 dengan aturan main yang lebih kejam. Berani masuk meja?</p>
               </div>
               <div className="relative z-10">
-                <button className="w-full bg-yellow-600 py-3 rounded-xl font-bold text-slate-900 group-hover:bg-yellow-500 transition-colors shadow-[0_0_15px_rgba(202,138,4,0.3)]">Gabung Meja 🪑</button>
+                <button className="w-full bg-amber-500/90 py-3 rounded-xl font-bold text-slate-900 group-hover:bg-amber-400 group-hover:shadow-[0_0_20px_rgba(245,158,11,0.5)] transition-all duration-300">Gabung Meja 🪑</button>
               </div>
-              <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">🔥</div>
+              <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 group-hover:rotate-12 transition-all duration-500 pointer-events-none">🔥</div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
             </div>
           )}
 
@@ -580,61 +588,64 @@ export default function GameDashboard() {
         {/* ============================================================== */}
         <div className="max-w-md mx-auto mb-16">
           {user.is_admin ? (
-            <div onClick={() => setActiveView('wheel')} className="group bg-slate-800 p-8 rounded-3xl border border-slate-700 hover:border-blue-500 transition-all cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between">
+            <div onClick={() => setActiveView('wheel')} className="group backdrop-blur-xl bg-slate-800/60 p-8 rounded-3xl border border-slate-700/50 hover:border-blue-500 hover:bg-slate-800/80 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)] relative overflow-hidden flex flex-col justify-between">
               <div className="relative z-10 flex justify-between items-start">
-                <span className="text-4xl mb-4 block">🎡</span>
-                <span className="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-md tracking-widest animate-pulse">ADMIN MODE</span>
+                <span className="text-5xl mb-4 block group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300 drop-shadow-md">🎡</span>
+                <span className="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-md tracking-widest animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]">ADMIN MODE</span>
               </div>
               <div className="relative z-10">
-                <h2 className="text-2xl font-bold mb-2 text-blue-400">Wheel of Family</h2>
+                <h2 className="text-2xl font-bold mb-2 text-white group-hover:text-blue-400 transition-colors">Wheel of Family</h2>
                 <p className="text-slate-400 text-sm mb-6">Akses khusus panitia. {targetDate ? 'Countdown ke user sedang berjalan.' : 'Jadwal belum di-set.'}</p>
               </div>
               <div className="relative z-10">
-                <button className="w-full bg-blue-600 py-3 rounded-xl font-bold text-white group-hover:bg-blue-500 transition-colors">Buka Mesin Spin</button>
+                <button className="w-full bg-blue-600/90 py-3 rounded-xl font-bold text-white group-hover:bg-blue-500 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all duration-300">Buka Mesin Spin</button>
               </div>
-              <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">🎰</div>
+              <div className="absolute -right-8 -bottom-8 text-8xl opacity-5 group-hover:opacity-10 group-hover:rotate-12 transition-all duration-500 pointer-events-none">🎰</div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
             </div>
           ) : !targetDate ? (
             null
           ) : !wheelUnlocked && timeLeft ? (
-            <div className="bg-slate-800/80 p-8 rounded-3xl border border-yellow-500/30 relative overflow-hidden flex flex-col justify-between shadow-[0_0_30px_rgba(234,179,8,0.1)]">
+            <div className="backdrop-blur-xl bg-slate-800/50 p-8 rounded-3xl border border-yellow-500/30 relative overflow-hidden flex flex-col justify-between shadow-[0_0_40px_-10px_rgba(234,179,8,0.15)] group">
+              <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/5 to-transparent pointer-events-none"></div>
               <div className="relative z-10 text-center flex flex-col items-center justify-center h-full">
-                <span className="text-4xl mb-2 block animate-pulse">🎁</span>
-                <h2 className="text-2xl font-black mb-2 text-yellow-500 uppercase tracking-widest">Tunggu Kejutan Ini</h2>
-                <p className="text-slate-400 text-xs mb-6 font-mono">Buka dalam waktu:</p>
-                <div className="flex gap-2 justify-center w-full">
-                  <div className="bg-slate-900 border border-slate-700 w-14 py-2 rounded-lg text-center">
-                    <span className="block font-bold text-lg text-white">{timeLeft.days}</span>
-                    <span className="block text-[8px] text-slate-500 uppercase">Hari</span>
+                <span className="text-5xl mb-4 block animate-bounce drop-shadow-lg">🎁</span>
+                <h2 className="text-2xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 uppercase tracking-widest">Kejutan Segera Hadir</h2>
+                <p className="text-slate-400 text-xs mb-8 font-mono tracking-wider">MENGHITUNG MUNDUR:</p>
+                <div className="flex gap-3 justify-center w-full">
+                  <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/50 w-16 py-3 rounded-xl text-center shadow-inner relative overflow-hidden">
+                    <span className="block font-black text-2xl text-white drop-shadow-md">{timeLeft.days}</span>
+                    <span className="block text-[9px] text-slate-500 uppercase mt-1 font-bold">Hari</span>
                   </div>
-                  <div className="bg-slate-900 border border-slate-700 w-14 py-2 rounded-lg text-center">
-                    <span className="block font-bold text-lg text-white">{timeLeft.hours}</span>
-                    <span className="block text-[8px] text-slate-500 uppercase">Jam</span>
+                  <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/50 w-16 py-3 rounded-xl text-center shadow-inner relative overflow-hidden">
+                    <span className="block font-black text-2xl text-white drop-shadow-md">{timeLeft.hours}</span>
+                    <span className="block text-[9px] text-slate-500 uppercase mt-1 font-bold">Jam</span>
                   </div>
-                  <div className="bg-slate-900 border border-slate-700 w-14 py-2 rounded-lg text-center animate-pulse">
-                    <span className="block font-bold text-lg text-yellow-500">{timeLeft.minutes}</span>
-                    <span className="block text-[8px] text-slate-500 uppercase">Mnt</span>
+                  <div className="bg-slate-900/80 backdrop-blur-md border border-yellow-500/30 w-16 py-3 rounded-xl text-center shadow-[inset_0_0_15px_rgba(234,179,8,0.1)] relative overflow-hidden">
+                    <span className="block font-black text-2xl text-yellow-400 drop-shadow-md">{timeLeft.minutes}</span>
+                    <span className="block text-[9px] text-yellow-600/80 uppercase mt-1 font-bold">Mnt</span>
                   </div>
-                  <div className="bg-slate-900 border border-slate-700 w-14 py-2 rounded-lg text-center">
-                    <span className="block font-bold text-lg text-red-400">{timeLeft.seconds}</span>
-                    <span className="block text-[8px] text-slate-500 uppercase">Dtk</span>
+                  <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/50 w-16 py-3 rounded-xl text-center shadow-inner relative overflow-hidden">
+                    <span className="block font-black text-2xl text-red-400 drop-shadow-md">{timeLeft.seconds}</span>
+                    <span className="block text-[9px] text-slate-500 uppercase mt-1 font-bold">Dtk</span>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div onClick={() => setActiveView('wheel')} className="group bg-slate-800 p-8 rounded-3xl border border-blue-500 hover:border-blue-400 transition-all cursor-pointer shadow-[0_0_20px_rgba(59,130,246,0.3)] relative overflow-hidden flex flex-col justify-between animate-in zoom-in duration-500">
+            <div onClick={() => setActiveView('wheel')} className="group backdrop-blur-xl bg-slate-800/60 p-8 rounded-3xl border border-blue-500/50 hover:border-blue-400 hover:bg-slate-800/80 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-[0_0_40px_-5px_rgba(59,130,246,0.4)] relative overflow-hidden flex flex-col justify-between animate-in zoom-in duration-500">
               <div className="relative z-10">
-                <span className="text-4xl mb-4 block animate-bounce">🎡</span>
-                <h2 className="text-2xl font-bold mb-2 text-blue-400">Wheel of Family</h2>
-                <p className="text-slate-300 text-sm mb-6">WAKTU TELAH TIBA! Putar roda keberuntungan dan lihat perubahan sedulur 16 sekarang!</p>
+                <span className="text-6xl mb-6 block animate-bounce drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">🎡</span>
+                <h2 className="text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Wheel of Family</h2>
+                <p className="text-slate-300 text-sm mb-6 leading-relaxed">WAKTU TELAH TIBA! Putar roda keberuntungan dan lihat perubahan sedulur 16 sekarang!</p>
               </div>
               <div className="relative z-10">
-                <button className="w-full bg-blue-600 py-3 rounded-xl font-bold text-white group-hover:bg-blue-500 transition-colors shadow-[0_0_15px_rgba(37,99,235,0.5)]">
-                  Masuk ke Mesin Spin 🚀
+                <button className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 py-4 rounded-xl font-black text-white text-lg group-hover:from-blue-500 group-hover:to-cyan-500 group-hover:shadow-[0_0_25px_rgba(34,211,238,0.6)] transition-all duration-300 transform group-hover:scale-[1.02]">
+                  MASUK KE MESIN SPIN 🚀
                 </button>
               </div>
-              <div className="absolute -right-8 -bottom-8 text-8xl opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">🎰</div>
+              <div className="absolute -right-10 -bottom-10 text-9xl opacity-10 group-hover:opacity-20 group-hover:rotate-12 transition-all duration-500 pointer-events-none">🎰</div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
             </div>
           )}
         </div>
