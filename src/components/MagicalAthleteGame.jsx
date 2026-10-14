@@ -4,6 +4,42 @@ import { supabase } from '../lib/supabaseClient';
 import { ATHLETE_CHARACTERS, TRACK_TILES, PLAYER_COLORS } from '../data/athleteCharacters';
 import confetti from 'canvas-confetti';
 
+// Koordinat petak untuk sirkuit stadion balap lari oval melingkar (9 Kolom x 6 Baris)
+const TRACK_LOOP_COORDS = {
+  // Sisi Lurus Atas (Lari ke Kanan ➔)
+  0:  { col: 2, row: 1, arrow: '➔' },
+  1:  { col: 3, row: 1, arrow: '➔' },
+  2:  { col: 4, row: 1, arrow: '➔' },
+  3:  { col: 5, row: 1, arrow: '➔' },
+  4:  { col: 6, row: 1, arrow: '➔' },
+  5:  { col: 7, row: 1, arrow: '➔' },
+  6:  { col: 8, row: 1, arrow: '➔' },
+  7:  { col: 9, row: 1, arrow: '⤵' },
+
+  // Tikungan & Sisi Kanan (Lari ke Bawah ↓)
+  8:  { col: 9, row: 2, arrow: '↓' },
+  9:  { col: 9, row: 3, arrow: '↓' },
+  10: { col: 9, row: 4, arrow: '↓' },
+  11: { col: 9, row: 5, arrow: '↓' },
+  12: { col: 9, row: 6, arrow: '↵' },
+
+  // Sisi Lurus Bawah (Lari ke Kiri ⬅)
+  13: { col: 8, row: 6, arrow: '⬅' },
+  14: { col: 7, row: 6, arrow: '⬅' },
+  15: { col: 6, row: 6, arrow: '⬅' },
+  16: { col: 5, row: 6, arrow: '⬅' },
+  17: { col: 4, row: 6, arrow: '⬅' },
+  18: { col: 3, row: 6, arrow: '⬅' },
+  19: { col: 2, row: 6, arrow: '⬅' },
+  20: { col: 1, row: 6, arrow: '↰' },
+
+  // Tikungan & Lurus Depan / Home Stretch (Lari ke Atas ↑)
+  21: { col: 1, row: 5, arrow: '↑' },
+  22: { col: 1, row: 4, arrow: '↑' },
+  23: { col: 1, row: 3, arrow: '↑' },
+  24: { col: 1, row: 2, arrow: '🏁' }, // FINISH LINE
+};
+
 export default function MagicalAthleteGame() {
   // --- USER STATE ---
   const [currentUser, setCurrentUser] = useState({
@@ -1347,70 +1383,19 @@ export default function MagicalAthleteGame() {
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 mb-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
               <div>
-                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest">
-                  Arena Balap 24 Petak S-Curve
+                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <span>🏟️</span> Sirkuit Stadion 24 Petak (Loop Arena)
                 </span>
                 <h2 className="text-xl font-black text-white">
                   Ronde {roomData.current_round} dari 4
                 </h2>
               </div>
 
-              {/* ACTION BUTTON (LEMPAR DADU JIKA GILIRAN SAYA) */}
-              {roomData.status === 'RACING' && (() => {
-                const isMyTurn = mySlot === roomData.current_turn_slot;
-                const activePlayer = players.find(p => p.slot_number === roomData.current_turn_slot);
-
-                return (
-                  <div className="flex items-center gap-3">
-                    {isMyTurn ? (
-                      <div className="flex items-center gap-2">
-                        {/* SPECIAL SKILL: CLARIFIER UNIT (Maju Pasti 3 Langkah) */}
-                        {myPlayer?.active_character_id === 'clarifier_unit' && (
-                          <button
-                            onClick={() => executePlayerMove(myPlayer, 3)}
-                            disabled={diceRolling || isProcessingMove}
-                            className="px-4 py-3 bg-teal-500/20 border border-teal-400 text-teal-300 hover:bg-teal-500/30 rounded-xl font-mono text-xs font-bold transition active:scale-95"
-                          >
-                            ⚖️ Maju Pasti 3 Langkah
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => executePlayerMove(myPlayer, null)}
-                          disabled={diceRolling || isProcessingMove}
-                          className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-xl uppercase tracking-wider text-base shadow-[0_0_30px_rgba(16,185,129,0.4)] active:scale-95 transition flex items-center gap-2"
-                        >
-                          <span>🎲</span>
-                          <span>{diceRolling ? 'Mengocok...' : 'Lempar Dadu'}</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <div className="px-5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-400 flex items-center gap-2">
-                          <span className="animate-pulse">⏳</span>
-                          <span>Giliran: <strong className="text-white">{activePlayer?.nama}</strong></span>
-                        </div>
-                        {activePlayer?.is_bot && isHost && (
-                          <button
-                            type="button"
-                            onClick={() => executePlayerMove(activePlayer, null)}
-                            disabled={diceRolling || isProcessingMove}
-                            className="px-3 py-2 bg-purple-500 hover:bg-purple-400 text-slate-950 text-xs font-bold rounded-xl transition active:scale-95 cursor-pointer"
-                          >
-                            ⚡ Paksa Jalan
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-
               {/* ROUND OVER / NEXT ROUND BUTTON (ADMIN / HOST) */}
               {roomData.status === 'ROUND_OVER' && isHost && (
                 <button
                   onClick={handleNextRound}
-                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl uppercase tracking-wider text-sm shadow-lg transition active:scale-95"
+                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl uppercase tracking-wider text-sm shadow-lg transition active:scale-95 cursor-pointer"
                 >
                   Lanjut Ronde {roomData.current_round + 1} ⏩
                 </button>
@@ -1418,22 +1403,133 @@ export default function MagicalAthleteGame() {
             </div>
 
             {/* ========================================================================= */}
-            {/* LINTASAN BALAP 24 KOTAK (3 BARIS RESPONSIVE S-CURVE)                     */}
+            {/* LINTASAN BALAP 24 KOTAK STADION OVAL (BERPUTAR SEPERTI BALAPAN LARI)       */}
             {/* ========================================================================= */}
-            <div className="space-y-3 p-4 bg-slate-950/80 rounded-2xl border border-slate-800/80 overflow-x-auto">
-              {/* BARIS 1: Petak 0 s/d 8 (Kiri ke Kanan) */}
-              <div className="grid grid-cols-9 gap-2 min-w-[650px]">
-                {TRACK_TILES.slice(0, 9).map(tile => renderTile(tile))}
-              </div>
+            <div className="p-3 sm:p-5 bg-slate-950/90 rounded-3xl border border-slate-800 overflow-x-auto shadow-2xl">
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(9, minmax(0, 1fr))',
+                  gridTemplateRows: 'repeat(6, minmax(0, 1fr))',
+                  gap: '0.5rem'
+                }}
+                className="min-w-[860px] relative"
+              >
+                {/* 1. GERBANG TIKUNGAN GRAND ARCH (COL 1, ROW 1) */}
+                <div
+                  style={{ gridColumn: 1, gridRow: 1 }}
+                  className="h-20 sm:h-24 rounded-2xl border-2 border-dashed border-amber-500/40 bg-gradient-to-br from-amber-500/20 via-slate-900 to-blue-500/20 p-2 flex flex-col items-center justify-center text-center shadow-inner"
+                >
+                  <span className="text-xl sm:text-2xl animate-pulse">🏟️</span>
+                  <span className="text-[9px] sm:text-[10px] font-mono font-black text-amber-300 uppercase mt-0.5 leading-tight">
+                    START / FINISH
+                  </span>
+                  <span className="text-[8px] font-mono text-slate-400">Grand Gate</span>
+                </div>
 
-              {/* BARIS 2: Petak 9 s/d 16 (Kanan ke Kiri) */}
-              <div className="grid grid-cols-8 gap-2 min-w-[650px] flex-row-reverse">
-                {TRACK_TILES.slice(9, 17).reverse().map(tile => renderTile(tile))}
-              </div>
+                {/* 2. PETAK LINTASAN 0 S/D 24 (MELINGKAR OVAL SEARAH JARUM JAM) */}
+                {TRACK_TILES.map(tile => renderTile(tile))}
 
-              {/* BARIS 3: Petak 17 s/d 24 (Kiri ke Kanan) */}
-              <div className="grid grid-cols-8 gap-2 min-w-[650px]">
-                {TRACK_TILES.slice(17, 25).map(tile => renderTile(tile))}
+                {/* 3. LAPANGAN TENGAH STADION (INFIELD: COL 2..8, ROW 2..5) */}
+                <div
+                  style={{
+                    gridColumn: '2 / 9',
+                    gridRow: '2 / 6'
+                  }}
+                  className="rounded-3xl border-2 border-emerald-500/20 bg-gradient-to-b from-emerald-950/20 via-slate-950/95 to-slate-900/90 p-5 flex flex-col justify-between items-center text-center backdrop-blur-md relative overflow-hidden my-0.5 shadow-inner"
+                >
+                  {/* HEADER LAPANGAN TENGAH */}
+                  <div className="flex items-center gap-2">
+                    <span className="px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold uppercase tracking-widest">
+                      🏟️ SIRKUIT ATLETIK TL16 (1 PUTARAN PENUH)
+                    </span>
+                  </div>
+
+                  {/* ACTION PUSAT / DADU & STATUS GILIRAN */}
+                  <div className="flex flex-col items-center gap-3 my-auto py-2">
+                    {roomData.status === 'RACING' && (() => {
+                      const isMyTurn = mySlot === roomData.current_turn_slot;
+                      const activePlayer = players.find(p => p.slot_number === roomData.current_turn_slot);
+
+                      return (
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="text-xs sm:text-sm font-mono text-slate-300 flex items-center gap-2">
+                            <span className="text-emerald-400">📍</span>
+                            <span>Pelari Giliran Ini:</span>
+                            <strong className="text-white bg-slate-800 px-3 py-1 rounded-xl border border-slate-700 shadow-sm">
+                              {activePlayer?.nama} (P{activePlayer?.slot_number})
+                            </strong>
+                          </div>
+
+                          {isMyTurn ? (
+                            <div className="flex flex-wrap items-center justify-center gap-3">
+                              {myPlayer?.active_character_id === 'clarifier_unit' && (
+                                <button
+                                  type="button"
+                                  onClick={() => executePlayerMove(myPlayer, 3)}
+                                  disabled={diceRolling || isProcessingMove}
+                                  className="px-5 py-3.5 bg-teal-500/20 border border-teal-400 text-teal-300 hover:bg-teal-500/30 rounded-2xl font-mono text-xs font-bold transition active:scale-95 cursor-pointer shadow-lg"
+                                >
+                                  ⚖️ Maju Pasti 3 Langkah
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => executePlayerMove(myPlayer, null)}
+                                disabled={diceRolling || isProcessingMove}
+                                className="px-10 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-2xl uppercase tracking-wider text-base shadow-[0_0_35px_rgba(16,185,129,0.5)] active:scale-95 transition flex items-center gap-3 cursor-pointer"
+                              >
+                                <span className="text-2xl animate-bounce">🎲</span>
+                                <span>{diceRolling ? 'Mengocok Dadu...' : 'LEMPAR DADU SEKARANG'}</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap items-center justify-center gap-2">
+                              <div className="px-5 py-3 bg-slate-950/80 border border-slate-800 rounded-2xl text-xs font-mono text-slate-400 flex items-center gap-2 shadow-inner">
+                                <span className="animate-pulse">⏳</span>
+                                <span>Menunggu <strong className="text-white">{activePlayer?.nama}</strong> melangkah di lintasan...</span>
+                              </div>
+                              {activePlayer?.is_bot && isHost && (
+                                <button
+                                  type="button"
+                                  onClick={() => executePlayerMove(activePlayer, null)}
+                                  disabled={diceRolling || isProcessingMove}
+                                  className="px-4 py-2.5 bg-purple-500 hover:bg-purple-400 text-slate-950 text-xs font-bold rounded-xl transition active:scale-95 cursor-pointer shadow-md"
+                                >
+                                  ⚡ Paksa Bot Jalan
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* LIVE PROGRESS STATUS UNTUK KEEMPAT PELARI */}
+                  <div className="w-full max-w-xl grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-800/80">
+                    {players.map(p => {
+                      const colorConfig = PLAYER_COLORS[p.slot_number - 1];
+                      const pct = Math.min(100, Math.round((p.position / 24) * 100));
+                      return (
+                        <div key={p.id} className="p-2 bg-slate-950/80 rounded-xl border border-slate-800/80 text-left">
+                          <div className="flex items-center justify-between text-[10px] font-mono mb-1">
+                            <span className="font-bold text-white truncate max-w-[70px]">{p.nama}</span>
+                            <span className={colorConfig.text}>{pct}%</span>
+                          </div>
+                          <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                            <div
+                              style={{ width: `${pct}%` }}
+                              className={`h-full rounded-full transition-all duration-500 ${colorConfig.badge.split(' ')[0]}`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -1596,35 +1692,46 @@ export default function MagicalAthleteGame() {
     </div>
   );
 
-  // Helper render tile di lintasan
+  // Helper render tile di lintasan oval berputar
   function renderTile(tile) {
     const racersOnThisTile = players.filter(p => p.position === tile.index);
+    const coord = TRACK_LOOP_COORDS[tile.index] || { col: 1, row: 1, arrow: '➔' };
 
     return (
       <div
         key={tile.index}
-        className={`h-28 rounded-2xl border p-2 flex flex-col justify-between relative transition-all ${
+        style={{
+          gridColumn: coord.col,
+          gridRow: coord.row
+        }}
+        className={`h-20 sm:h-24 rounded-2xl border p-1.5 sm:p-2 flex flex-col justify-between relative transition-all shadow-md ${
           tile.type === 'start'
-            ? 'bg-blue-500/10 border-blue-500/40'
+            ? 'bg-blue-600/25 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.3)] ring-1 ring-blue-400/50'
             : tile.type === 'finish'
-            ? 'bg-amber-500/20 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.3)]'
+            ? 'bg-amber-500/25 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.4)] ring-2 ring-amber-400'
             : tile.type === 'boost'
-            ? 'bg-teal-500/10 border-teal-500/40'
+            ? 'bg-teal-500/15 border-teal-400/70 shadow-[0_0_12px_rgba(20,184,166,0.2)]'
             : tile.type === 'trap'
-            ? 'bg-rose-500/10 border-rose-500/40'
+            ? 'bg-rose-500/15 border-rose-400/70 shadow-[0_0_12px_rgba(244,63,94,0.2)]'
             : tile.type === 'halfway'
-            ? 'bg-purple-500/10 border-purple-500/40'
-            : 'bg-slate-900/60 border-slate-800/80'
+            ? 'bg-purple-500/20 border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
+            : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
         }`}
       >
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono font-bold text-slate-400">
-            {tile.label}
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] sm:text-xs font-mono font-black text-slate-300">
+              {tile.label}
+            </span>
+            <span className="text-[10px] text-emerald-400 font-bold">
+              {coord.arrow}
+            </span>
+          </div>
           {tile.type === 'boost' && <span className="text-xs">⚡</span>}
           {tile.type === 'trap' && <span className="text-xs">⚠️</span>}
-          {tile.type === 'finish' && <span className="text-xs">🏁</span>}
+          {tile.type === 'finish' && <span className="text-xs animate-bounce">🏆</span>}
           {tile.type === 'start' && <span className="text-xs">🚀</span>}
+          {tile.type === 'halfway' && <span className="text-xs">🏁</span>}
         </div>
 
         {/* PION ATLET DI ATAS PETAK */}
@@ -1637,7 +1744,7 @@ export default function MagicalAthleteGame() {
               <div
                 key={p.id}
                 title={`${p.nama} (${char?.name})`}
-                className={`w-9 h-9 rounded-full flex items-center justify-center text-lg border-2 shadow-lg transition-transform animate-in zoom-in duration-300 ${colorConfig.badge} ${colorConfig.border} ${colorConfig.glow}`}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm sm:text-base border-2 shadow-lg transition-transform animate-in zoom-in duration-300 hover:scale-125 z-10 ${colorConfig.badge} ${colorConfig.border} ${colorConfig.glow}`}
               >
                 {char?.emoji || '🏃'}
               </div>
@@ -1645,11 +1752,12 @@ export default function MagicalAthleteGame() {
           })}
         </div>
 
-        <div className="text-[9px] font-mono text-slate-500 truncate text-center">
-          {tile.type === 'boost' && '+2'}
-          {tile.type === 'trap' && '-2'}
-          {tile.type === 'halfway' && 'Mid'}
-          {tile.type === 'finish' && 'GOAL'}
+        <div className="text-[8px] sm:text-[9px] font-mono text-slate-400 truncate text-center">
+          {tile.type === 'boost' && '+2 Langkah'}
+          {tile.type === 'trap' && '-2 Langkah'}
+          {tile.type === 'halfway' && 'Titik Tengah'}
+          {tile.type === 'finish' && 'FINISH LINE'}
+          {tile.type === 'start' && 'GARIS AWAL'}
         </div>
       </div>
     );
