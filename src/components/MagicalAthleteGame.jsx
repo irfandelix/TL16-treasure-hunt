@@ -70,6 +70,8 @@ export default function MagicalAthleteGame() {
   // --- GAMEPLAY LOCAL STATE ---
   const [diceRolling, setDiceRolling] = useState(false);
   const [lastDice, setLastDice] = useState(null);
+  const [displayDice, setDisplayDice] = useState(1);
+  const [diceRollDetails, setDiceRollDetails] = useState(null);
   const [selectedDraftChar, setSelectedDraftChar] = useState(null);
   const [secretSelectedChar, setSecretSelectedChar] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
@@ -87,6 +89,27 @@ export default function MagicalAthleteGame() {
   useEffect(() => {
     playersRef.current = players;
   }, [players]);
+
+  // Sync Dadu dari Realtime Room Data (agar lawan / spectator melihat dadu yang sama)
+  useEffect(() => {
+    if (roomData?.round_winners && typeof roomData.round_winners === 'object' && !Array.isArray(roomData.round_winners)) {
+      const synced = roomData.round_winners;
+      if (synced.last_dice) {
+        setDisplayDice(synced.last_dice);
+        setLastDice(synced.last_dice);
+        setDiceRollDetails({
+          rollerName: synced.roller_name,
+          charName: synced.char_name,
+          roll: synced.last_dice,
+          bonus: synced.bonus || 0,
+          totalSteps: synced.total_steps || synced.last_dice,
+          skillNote: synced.skill_note || ''
+        });
+      }
+    } else if (Array.isArray(roomData?.round_winners) && roomData.round_winners.length === 0) {
+      setDiceRollDetails(null);
+    }
+  }, [roomData?.round_winners]);
 
   // 1. CEK SESI LOGIN DARI LOCALSTORAGE
   useEffect(() => {
@@ -642,11 +665,19 @@ export default function MagicalAthleteGame() {
     setIsProcessingMove(true);
     setDiceRolling(true);
 
-    let roll = overrideSteps !== null ? overrideSteps : Math.floor(1 + Math.random() * 6);
-    setLastDice(roll);
+    // Animasi putaran kocok dadu acak (shuffling faces)
+    const shuffleInterval = setInterval(() => {
+      setDisplayDice(Math.floor(1 + Math.random() * 6));
+    }, 60);
 
-    // Animasi jeda dadu
-    await new Promise(r => setTimeout(r, 600));
+    let roll = overrideSteps !== null ? overrideSteps : Math.floor(1 + Math.random() * 6);
+
+    // Durasi animasi kocok dadu 850ms
+    await new Promise(r => setTimeout(r, 850));
+    clearInterval(shuffleInterval);
+
+    setDisplayDice(roll);
+    setLastDice(roll);
     setDiceRolling(false);
 
     let charData = ATHLETE_CHARACTERS.find(c => c.id === playerToMove.active_character_id);
@@ -659,6 +690,8 @@ export default function MagicalAthleteGame() {
       const secondRoll = Math.floor(1 + Math.random() * 6);
       steps = Math.max(roll, secondRoll);
       skillNote = ` [💧 Flash Flocculation: lempar ulang dari ${roll} jadi ${steps}!]`;
+      setDisplayDice(steps);
+      setLastDice(steps);
     }
 
     // 2. Activated Sludge: Dadu genap +1
@@ -681,6 +714,34 @@ export default function MagicalAthleteGame() {
       steps += 2;
       skillNote = ` [🌋 Magma Burst: paruh kedua +2 langkah!]`;
     }
+
+    // Simpan detail lemparan dadu untuk ditampilkan besar di tengah lapangan
+    setDiceRollDetails({
+      rollerName: playerToMove.nama,
+      charName: charData?.name,
+      roll: roll,
+      bonus: steps - roll,
+      totalSteps: steps,
+      skillNote: skillNote
+    });
+
+    // Sync info dadu ke Supabase agar lawan & spectator melihat dadu yang sama
+    await supabase.from('athlete_rooms').update({
+      round_winners: {
+        last_dice: roll,
+        total_steps: steps,
+        bonus: steps - roll,
+        roller_slot: playerToMove.slot_number,
+        roller_name: playerToMove.nama,
+        char_name: charData?.name,
+        skill_note: skillNote,
+        rolled_at: Date.now()
+      },
+      last_action: `🎲 ${playerToMove.nama} melempar dadu: [ ${roll} ] ${steps !== roll ? `(Skill +${steps - roll} = ${steps} Petak)` : ''}`
+    }).eq('room_code', roomCode);
+
+    // Jeda sejenak 450ms agar pemain dapat melihat jelas angka dadu di tengah sebelum pion melompat
+    await new Promise(r => setTimeout(r, 450));
 
     // =========================================================================
     // ANIMASI GERAKAN LANGKAH-DEMI-LANGKAH (TIDAK BLINK / TELEPORTASI)
@@ -1479,21 +1540,74 @@ export default function MagicalAthleteGame() {
                   </div>
 
                   {/* ACTION PUSAT / DADU & STATUS GILIRAN */}
-                  <div className="flex flex-col items-center gap-3 my-auto py-2">
+                  <div className="flex flex-col items-center justify-center gap-3 my-auto py-2 w-full max-w-lg">
                     {roomData.status === 'RACING' && (() => {
                       const isMyTurn = mySlot === roomData.current_turn_slot;
                       const activePlayer = players.find(p => p.slot_number === roomData.current_turn_slot);
+                      const activeChar = ATHLETE_CHARACTERS.find(c => c.id === activePlayer?.active_character_id);
 
                       return (
-                        <div className="flex flex-col items-center gap-3">
+                        <div className="flex flex-col items-center gap-3 w-full">
+                          {/* 1. INDIKATOR GILIRAN PELARI */}
                           <div className="text-xs sm:text-sm font-mono text-slate-300 flex items-center gap-2">
                             <span className="text-emerald-400">📍</span>
-                            <span>Pelari Giliran Ini:</span>
-                            <strong className="text-white bg-slate-800 px-3 py-1 rounded-xl border border-slate-700 shadow-sm">
-                              {activePlayer?.nama} (P{activePlayer?.slot_number})
+                            <span>Giliran:</span>
+                            <strong className="text-white bg-slate-800/90 px-3 py-1 rounded-xl border border-slate-700 shadow-sm flex items-center gap-1.5">
+                              <span>{activeChar?.emoji || '🏃'}</span>
+                              <span>{activePlayer?.nama}</span>
+                              <span className="text-xs text-slate-400 font-normal">({activeChar?.name || `Slot ${activePlayer?.slot_number}`})</span>
                             </strong>
                           </div>
 
+                          {/* 2. PANGGUNG DADU 3D ANIMASI & DISPLAY ANGKA BESAR */}
+                          <div className="flex items-center justify-center gap-4 sm:gap-6 p-3 sm:p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 shadow-2xl w-full max-w-md my-0.5 relative overflow-hidden">
+                            {/* Dadu 3D */}
+                            <div className="flex flex-col items-center gap-1">
+                              <DiceCube value={displayDice || 1} isRolling={diceRolling} />
+                              <span className="text-[9px] font-mono text-slate-400 font-bold uppercase tracking-wider">
+                                {diceRolling ? 'Mengocok...' : 'Dadu 3D'}
+                              </span>
+                            </div>
+
+                            {/* Display Angka & Detail Langkah */}
+                            <div className="flex flex-col items-start justify-center flex-1">
+                              <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                                {diceRolling ? '🎲 Mengacak Angka...' : diceRollDetails?.rollerName ? `Lemparan ${diceRollDetails.rollerName}:` : 'Angka Dadu:'}
+                              </div>
+
+                              <div className="flex items-center gap-3 mt-1">
+                                <div className={`text-3xl sm:text-4xl font-mono font-black px-4 py-1.5 rounded-2xl flex items-center gap-2 border shadow-lg ${
+                                  diceRolling
+                                    ? 'bg-blue-600/20 text-cyan-400 border-cyan-500/50 animate-pulse'
+                                    : 'bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 border-amber-300 shadow-[0_0_25px_rgba(245,158,11,0.5)]'
+                                }`}>
+                                  <span className="text-xl sm:text-2xl">🎲</span>
+                                  <span>{diceRolling ? '...' : (displayDice || '-')}</span>
+                                </div>
+
+                                {!diceRolling && diceRollDetails && (
+                                  <div className="flex flex-col text-left">
+                                    <span className="text-xs sm:text-sm font-black text-white font-mono">
+                                      = {diceRollDetails.totalSteps} Petak
+                                    </span>
+                                    {diceRollDetails.bonus !== 0 && (
+                                      <span className={`text-[10px] font-mono font-bold ${diceRollDetails.bonus > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                        {diceRollDetails.bonus > 0 ? `(+${diceRollDetails.bonus} Bonus Skill)` : `(${diceRollDetails.bonus} Penalti)`}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              {!diceRolling && diceRollDetails?.skillNote && (
+                                <div className="text-[10px] sm:text-[11px] font-mono text-teal-300 mt-1.5 line-clamp-2 text-left bg-teal-500/10 px-2 py-0.5 rounded-lg border border-teal-500/20">
+                                  {diceRollDetails.skillNote.trim()}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 3. TOMBOL KONTROL LEMPAR DADU / STATUS MENUNGGU */}
                           {isMyTurn ? (
                             <div className="flex flex-wrap items-center justify-center gap-3">
                               {myPlayer?.active_character_id === 'clarifier_unit' && (
@@ -1511,15 +1625,19 @@ export default function MagicalAthleteGame() {
                                 type="button"
                                 onClick={() => executePlayerMove(myPlayer, null)}
                                 disabled={diceRolling || isProcessingMove}
-                                className="px-10 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-2xl uppercase tracking-wider text-base shadow-[0_0_35px_rgba(16,185,129,0.5)] active:scale-95 transition flex items-center gap-3 cursor-pointer"
+                                className={`px-10 py-3.5 rounded-2xl uppercase tracking-wider font-mono text-sm sm:text-base font-black transition flex items-center gap-3 cursor-pointer shadow-xl ${
+                                  diceRolling || isProcessingMove
+                                    ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-[0_0_35px_rgba(16,185,129,0.5)] active:scale-95'
+                                }`}
                               >
-                                <span className="text-2xl animate-bounce">🎲</span>
+                                <span className={`text-2xl ${diceRolling ? 'animate-spin' : 'animate-bounce'}`}>🎲</span>
                                 <span>{diceRolling ? 'Mengocok Dadu...' : 'LEMPAR DADU SEKARANG'}</span>
                               </button>
                             </div>
                           ) : (
                             <div className="flex flex-wrap items-center justify-center gap-2">
-                              <div className="px-5 py-3 bg-slate-950/80 border border-slate-800 rounded-2xl text-xs font-mono text-slate-400 flex items-center gap-2 shadow-inner">
+                              <div className="px-5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-2xl text-xs font-mono text-slate-400 flex items-center gap-2 shadow-inner">
                                 <span className="animate-pulse">⏳</span>
                                 <span>Menunggu <strong className="text-white">{activePlayer?.nama}</strong> melangkah di lintasan...</span>
                               </div>
@@ -1809,4 +1927,60 @@ export default function MagicalAthleteGame() {
       </div>
     );
   }
+}
+
+// =========================================================================
+// KOMPONEN DADU 3D DENGAN DOT PIPS FISIK & ANIMASI SHUFFLE/SHAKE
+// =========================================================================
+const DICE_PIPS = {
+  1: [4],
+  2: [0, 8],
+  3: [0, 4, 8],
+  4: [0, 2, 6, 8],
+  5: [0, 2, 4, 6, 8],
+  6: [0, 2, 3, 5, 6, 8]
+};
+
+function DiceCube({ value = 1, isRolling = false }) {
+  const pips = DICE_PIPS[value] || DICE_PIPS[1];
+  const isOne = value === 1;
+
+  return (
+    <>
+      <style>{`
+        @keyframes diceShakeKeyframes {
+          0% { transform: rotate(-14deg) scale(1.08) translateY(-3px); }
+          50% { transform: rotate(14deg) scale(0.94) translateY(3px); }
+          100% { transform: rotate(-8deg) scale(1.04) translateY(-1px); }
+        }
+      `}</style>
+      <div
+        style={isRolling ? { animation: 'diceShakeKeyframes 0.16s infinite alternate ease-in-out' } : {}}
+        className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-white via-slate-100 to-slate-200 p-2 sm:p-2.5 border-2 border-slate-300 flex items-center justify-center transition-all duration-200 select-none shadow-[0_12px_28px_rgba(0,0,0,0.5),inset_0_-3px_5px_rgba(0,0,0,0.15),inset_0_2px_4px_rgba(255,255,255,0.95)] ${
+          isRolling
+            ? 'shadow-[0_0_35px_rgba(59,130,246,0.6)] ring-4 ring-cyan-400 rotate-6 scale-105'
+            : 'ring-2 ring-amber-400/80 hover:scale-105'
+        }`}
+      >
+        <div className="grid grid-cols-3 grid-rows-3 gap-1 sm:gap-1.5 w-full h-full">
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(idx => {
+            const hasPip = pips.includes(idx);
+            if (!hasPip) {
+              return <div key={idx} className="w-full h-full" />;
+            }
+            return (
+              <div
+                key={idx}
+                className={`w-full h-full rounded-full transition-transform ${
+                  isOne && idx === 4
+                    ? 'bg-rose-600 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)] scale-110'
+                    : 'bg-slate-900 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]'
+                }`}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
 }
