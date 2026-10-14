@@ -4,40 +4,44 @@ import { supabase } from '../lib/supabaseClient';
 import { ATHLETE_CHARACTERS, TRACK_TILES, PLAYER_COLORS } from '../data/athleteCharacters';
 import confetti from 'canvas-confetti';
 
-// Koordinat petak untuk sirkuit stadion balap lari oval melingkar (9 Kolom x 6 Baris)
+// Koordinat petak untuk sirkuit stadion balap lari oval melingkar (8 Kolom x 6 Baris = 24 Petak Penuh)
 const TRACK_LOOP_COORDS = {
-  // Sisi Lurus Atas (Lari ke Kanan ➔)
-  0:  { col: 2, row: 1, arrow: '➔' },
-  1:  { col: 3, row: 1, arrow: '➔' },
-  2:  { col: 4, row: 1, arrow: '➔' },
-  3:  { col: 5, row: 1, arrow: '➔' },
-  4:  { col: 6, row: 1, arrow: '➔' },
-  5:  { col: 7, row: 1, arrow: '➔' },
-  6:  { col: 8, row: 1, arrow: '➔' },
-  7:  { col: 9, row: 1, arrow: '⤵' },
+  // Petak 0: Garis START / FINISH di Sudut Kiri-Atas (Col 1, Row 1)
+  0:  { col: 1, row: 1, arrow: '➔' },
 
-  // Tikungan & Sisi Kanan (Lari ke Bawah ↓)
-  8:  { col: 9, row: 2, arrow: '↓' },
-  9:  { col: 9, row: 3, arrow: '↓' },
-  10: { col: 9, row: 4, arrow: '↓' },
-  11: { col: 9, row: 5, arrow: '↓' },
-  12: { col: 9, row: 6, arrow: '↵' },
+  // Sisi Lurus Atas (Lari ke Kanan ➔)
+  1:  { col: 2, row: 1, arrow: '➔' },
+  2:  { col: 3, row: 1, arrow: '➔' },
+  3:  { col: 4, row: 1, arrow: '➔' },
+  4:  { col: 5, row: 1, arrow: '➔' },
+  5:  { col: 6, row: 1, arrow: '➔' },
+  6:  { col: 7, row: 1, arrow: '➔' },
+  7:  { col: 8, row: 1, arrow: '⤵' }, // Tikungan Kanan-Atas
+
+  // Sisi Kanan (Lari ke Bawah ↓)
+  8:  { col: 8, row: 2, arrow: '↓' },
+  9:  { col: 8, row: 3, arrow: '↓' },
+  10: { col: 8, row: 4, arrow: '↓' },
+  11: { col: 8, row: 5, arrow: '↓' },
+  12: { col: 8, row: 6, arrow: '↵' }, // Tikungan Kanan-Bawah (Titik Tengah)
 
   // Sisi Lurus Bawah (Lari ke Kiri ⬅)
-  13: { col: 8, row: 6, arrow: '⬅' },
-  14: { col: 7, row: 6, arrow: '⬅' },
-  15: { col: 6, row: 6, arrow: '⬅' },
-  16: { col: 5, row: 6, arrow: '⬅' },
-  17: { col: 4, row: 6, arrow: '⬅' },
-  18: { col: 3, row: 6, arrow: '⬅' },
-  19: { col: 2, row: 6, arrow: '⬅' },
-  20: { col: 1, row: 6, arrow: '↰' },
+  13: { col: 7, row: 6, arrow: '⬅' },
+  14: { col: 6, row: 6, arrow: '⬅' },
+  15: { col: 5, row: 6, arrow: '⬅' },
+  16: { col: 4, row: 6, arrow: '⬅' },
+  17: { col: 3, row: 6, arrow: '⬅' },
+  18: { col: 2, row: 6, arrow: '⬅' },
+  19: { col: 1, row: 6, arrow: '↰' }, // Tikungan Kiri-Bawah
 
-  // Tikungan & Lurus Depan / Home Stretch (Lari ke Atas ↑)
-  21: { col: 1, row: 5, arrow: '↑' },
-  22: { col: 1, row: 4, arrow: '↑' },
-  23: { col: 1, row: 3, arrow: '↑' },
-  24: { col: 1, row: 2, arrow: '🏁' }, // FINISH LINE
+  // Sisi Kiri (Lari ke Atas Menuju Garis Finish ↑)
+  20: { col: 1, row: 5, arrow: '↑' },
+  21: { col: 1, row: 4, arrow: '↑' },
+  22: { col: 1, row: 3, arrow: '↑' },
+  23: { col: 1, row: 2, arrow: '↑' },
+
+  // Petak 24 (Garis Finish yang Sama dengan Petak 0 di Col 1, Row 1)
+  24: { col: 1, row: 1, arrow: '🏆' },
 };
 
 export default function MagicalAthleteGame() {
@@ -1450,31 +1454,19 @@ export default function MagicalAthleteGame() {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(9, minmax(0, 1fr))',
+                  gridTemplateColumns: 'repeat(8, minmax(0, 1fr))',
                   gridTemplateRows: 'repeat(6, minmax(0, 1fr))',
                   gap: '0.5rem'
                 }}
-                className="min-w-[860px] relative"
+                className="min-w-[800px] relative"
               >
-                {/* 1. GERBANG TIKUNGAN GRAND ARCH (COL 1, ROW 1) */}
-                <div
-                  style={{ gridColumn: 1, gridRow: 1 }}
-                  className="h-20 sm:h-24 rounded-2xl border-2 border-dashed border-amber-500/40 bg-gradient-to-br from-amber-500/20 via-slate-900 to-blue-500/20 p-2 flex flex-col items-center justify-center text-center shadow-inner"
-                >
-                  <span className="text-xl sm:text-2xl animate-pulse">🏟️</span>
-                  <span className="text-[9px] sm:text-[10px] font-mono font-black text-amber-300 uppercase mt-0.5 leading-tight">
-                    START / FINISH
-                  </span>
-                  <span className="text-[8px] font-mono text-slate-400">Grand Gate</span>
-                </div>
+                {/* 1. PETAK LINTASAN 0 S/D 23 (24 PETAK OVAL LENGKAP DIMULAI DAN BERAKHIR DI COL 1 ROW 1) */}
+                {TRACK_TILES.slice(0, 24).map(tile => renderTile(tile))}
 
-                {/* 2. PETAK LINTASAN 0 S/D 24 (MELINGKAR OVAL SEARAH JARUM JAM) */}
-                {TRACK_TILES.map(tile => renderTile(tile))}
-
-                {/* 3. LAPANGAN TENGAH STADION (INFIELD: COL 2..8, ROW 2..5) */}
+                {/* 2. LAPANGAN TENGAH STADION (INFIELD: COL 2..7, ROW 2..5) */}
                 <div
                   style={{
-                    gridColumn: '2 / 9',
+                    gridColumn: '2 / 8',
                     gridRow: '2 / 6'
                   }}
                   className="rounded-3xl border-2 border-emerald-500/20 bg-gradient-to-b from-emerald-950/20 via-slate-950/95 to-slate-900/90 p-5 flex flex-col justify-between items-center text-center backdrop-blur-md relative overflow-hidden my-0.5 shadow-inner"
@@ -1733,9 +1725,15 @@ export default function MagicalAthleteGame() {
     </div>
   );
 
-  // Helper render tile di lintasan oval berputar
+  // Helper render tile di lintasan oval berputar (1 putaran penuh, Start & Finish di petak yang sama)
   function renderTile(tile) {
-    const racersOnThisTile = players.filter(p => p.position === tile.index);
+    const isStartFinish = tile.index === 0 || tile.type === 'start_finish';
+    const racersOnThisTile = players.filter(p => {
+      if (isStartFinish) {
+        return p.position === 0 || p.position >= 24;
+      }
+      return p.position === tile.index;
+    });
     const coord = TRACK_LOOP_COORDS[tile.index] || { col: 1, row: 1, arrow: '➔' };
 
     return (
@@ -1746,10 +1744,8 @@ export default function MagicalAthleteGame() {
           gridRow: coord.row
         }}
         className={`h-20 sm:h-24 rounded-2xl border p-1.5 sm:p-2 flex flex-col justify-between relative transition-all shadow-md ${
-          tile.type === 'start'
-            ? 'bg-blue-600/25 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.3)] ring-1 ring-blue-400/50'
-            : tile.type === 'finish'
-            ? 'bg-amber-500/25 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.4)] ring-2 ring-amber-400'
+          isStartFinish
+            ? 'bg-gradient-to-br from-amber-500/25 via-slate-900/90 to-blue-600/25 border-amber-400/80 shadow-[0_0_25px_rgba(245,158,11,0.35)] ring-2 ring-amber-400/60'
             : tile.type === 'boost'
             ? 'bg-teal-500/15 border-teal-400/70 shadow-[0_0_12px_rgba(20,184,166,0.2)]'
             : tile.type === 'trap'
@@ -1761,18 +1757,22 @@ export default function MagicalAthleteGame() {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
-            <span className="text-[10px] sm:text-xs font-mono font-black text-slate-300">
+            <span className={`text-[10px] sm:text-xs font-mono font-black ${isStartFinish ? 'text-amber-300' : 'text-slate-300'}`}>
               {tile.label}
             </span>
             <span className="text-[10px] text-emerald-400 font-bold">
               {coord.arrow}
             </span>
           </div>
-          {tile.type === 'boost' && <span className="text-xs">⚡</span>}
-          {tile.type === 'trap' && <span className="text-xs">⚠️</span>}
-          {tile.type === 'finish' && <span className="text-xs animate-bounce">🏆</span>}
-          {tile.type === 'start' && <span className="text-xs">🚀</span>}
-          {tile.type === 'halfway' && <span className="text-xs">🏁</span>}
+          {isStartFinish && (
+            <div className="flex items-center gap-0.5 text-xs">
+              <span title="Garis Awal">🚀</span>
+              <span className="animate-pulse" title="Garis Akhir">🏁</span>
+            </div>
+          )}
+          {tile.type === 'boost' && <span className="text-xs" title="Arus Deras (+2)">⚡</span>}
+          {tile.type === 'trap' && <span className="text-xs" title="Jebakan (-2)">⚠️</span>}
+          {tile.type === 'halfway' && <span className="text-xs" title="Titik Tengah">📍</span>}
         </div>
 
         {/* PION ATLET DI ATAS PETAK */}
@@ -1781,27 +1781,30 @@ export default function MagicalAthleteGame() {
             const char = ATHLETE_CHARACTERS.find(c => c.id === p.active_character_id);
             const colorConfig = PLAYER_COLORS[p.slot_number - 1];
             const isMoving = roomData?.status === 'RACING' && roomData?.current_turn_slot === p.slot_number;
+            const hasFinished = p.position >= 24;
 
             return (
               <div
                 key={p.id}
-                title={`${p.nama} (${char?.name})`}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm sm:text-base border-2 shadow-lg transition-all duration-200 z-10 ${colorConfig.badge} ${colorConfig.border} ${colorConfig.glow} ${
+                title={`${p.nama} (${char?.name})${hasFinished ? ' - FINISH! 🏆' : ''}`}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm sm:text-base border-2 shadow-lg transition-all duration-200 z-10 relative ${colorConfig.badge} ${colorConfig.border} ${colorConfig.glow} ${
                   isMoving ? 'animate-bounce ring-2 ring-white scale-115 z-20 shadow-[0_0_20px_rgba(255,255,255,0.8)]' : 'hover:scale-110'
                 }`}
               >
                 {char?.emoji || '🏃'}
+                {hasFinished && (
+                  <span className="absolute -top-1.5 -right-1.5 text-xs">🏆</span>
+                )}
               </div>
             );
           })}
         </div>
 
         <div className="text-[8px] sm:text-[9px] font-mono text-slate-400 truncate text-center">
+          {isStartFinish && <span className="text-amber-400 font-bold">START / FINISH</span>}
           {tile.type === 'boost' && '+2 Langkah'}
           {tile.type === 'trap' && '-2 Langkah'}
-          {tile.type === 'halfway' && 'Titik Tengah'}
-          {tile.type === 'finish' && 'FINISH LINE'}
-          {tile.type === 'start' && 'GARIS AWAL'}
+          {tile.type === 'halfway' && 'Titik Tengah (12)'}
         </div>
       </div>
     );

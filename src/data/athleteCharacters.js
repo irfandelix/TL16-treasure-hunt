@@ -187,7 +187,7 @@ export const ATHLETE_CHARACTERS = [
 ];
 
 export const TRACK_TILES = [
-  { index: 0, label: 'START', type: 'start', desc: 'Garis Awal Balapan' },
+  { index: 0, label: 'START / FINISH', type: 'start_finish', desc: 'Garis Awal & Garis Akhir' },
   { index: 1, label: '1', type: 'normal' },
   { index: 2, label: '2', type: 'normal' },
   { index: 3, label: '3', type: 'normal' },
@@ -211,7 +211,7 @@ export const TRACK_TILES = [
   { index: 21, label: '21', type: 'normal' },
   { index: 22, label: '22', type: 'normal' },
   { index: 23, label: '23', type: 'normal' },
-  { index: 24, label: 'FINISH', type: 'finish', desc: '🏆 Garis Akhir' }
+  { index: 24, label: 'START / FINISH', type: 'start_finish', desc: '🏆 Garis Akhir' }
 ];
 
 export const PLAYER_COLORS = [
