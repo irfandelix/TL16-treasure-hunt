@@ -272,30 +272,38 @@ export default function MagicalAthleteGame() {
     }
 
     const colorConfig = PLAYER_COLORS[targetSlot - 1] || PLAYER_COLORS[0];
+    const newPlayer = {
+      room_code: roomCode,
+      slot_number: targetSlot,
+      nim: alumnus.nim,
+      nama: alumnus.nama,
+      is_bot: false,
+      color: colorConfig.id,
+      drafted_characters: [],
+      active_character_id: null,
+      used_characters: [],
+      position: 0,
+      score: 0,
+      is_ready: true
+    };
 
-    // Hapus player di slot tersebut jika ada
-    await supabase.from('athlete_players').delete().match({ room_code: roomCode, slot_number: targetSlot });
-
-    // Insert player baru
-    await supabase.from('athlete_players').insert([
-      {
-        room_code: roomCode,
-        slot_number: targetSlot,
-        nim: alumnus.nim,
-        nama: alumnus.nama,
-        is_bot: false,
-        color: colorConfig.id,
-        drafted_characters: [],
-        active_character_id: null,
-        used_characters: [],
-        position: 0,
-        score: 0,
-        is_ready: true
-      }
-    ]);
-
+    // Optimistic UI update
+    setPlayers(prev => [...prev.filter(p => p.slot_number !== targetSlot), newPlayer].sort((a, b) => a.slot_number - b.slot_number));
     setShowAlumniModal(false);
     setTargetSlot(null);
+
+    // Hapus player di slot tersebut jika ada
+    await supabase.from('athlete_players').delete().eq('room_code', roomCode).eq('slot_number', targetSlot);
+
+    // Insert player baru
+    const { error } = await supabase.from('athlete_players').insert([newPlayer]);
+    if (error) {
+      console.error('Gagal assign pemain:', error);
+    }
+
+    // Refresh data dari database
+    const { data: updated } = await supabase.from('athlete_players').select('*').eq('room_code', roomCode).order('slot_number', { ascending: true });
+    if (updated) setPlayers(updated);
   };
 
   const handleAddBot = async (slotNum) => {
@@ -304,28 +312,59 @@ export default function MagicalAthleteGame() {
     const botNim = `BOT_${slotNum}_${Math.floor(100 + Math.random() * 900)}`;
     const colorConfig = PLAYER_COLORS[slotNum - 1] || PLAYER_COLORS[0];
 
-    await supabase.from('athlete_players').delete().match({ room_code: roomCode, slot_number: slotNum });
+    const newBot = {
+      room_code: roomCode,
+      slot_number: slotNum,
+      nim: botNim,
+      nama: botName,
+      is_bot: true,
+      color: colorConfig.id,
+      drafted_characters: [],
+      active_character_id: null,
+      used_characters: [],
+      position: 0,
+      score: 0,
+      is_ready: true
+    };
 
-    await supabase.from('athlete_players').insert([
-      {
-        room_code: roomCode,
-        slot_number: slotNum,
-        nim: botNim,
-        nama: botName,
-        is_bot: true,
-        color: colorConfig.id,
-        drafted_characters: [],
-        active_character_id: null,
-        used_characters: [],
-        position: 0,
-        score: 0,
-        is_ready: true
-      }
-    ]);
+    // Optimistic UI update
+    setPlayers(prev => [...prev.filter(p => p.slot_number !== slotNum), newBot].sort((a, b) => a.slot_number - b.slot_number));
+
+    await supabase.from('athlete_players').delete().eq('room_code', roomCode).eq('slot_number', slotNum);
+
+    const { error } = await supabase.from('athlete_players').insert([newBot]);
+    if (error) {
+      console.error('Gagal tambah bot:', error);
+    }
+
+    // Refresh data dari database
+    const { data: updated } = await supabase.from('athlete_players').select('*').eq('room_code', roomCode).order('slot_number', { ascending: true });
+    if (updated) setPlayers(updated);
   };
 
   const handleRemoveSlot = async (slotNum) => {
-    await supabase.from('athlete_players').delete().match({ room_code: roomCode, slot_number: slotNum });
+    // 1. Optimistic UI update langsung hilang dari layar
+    setPlayers(prev => prev.filter(p => p.slot_number !== slotNum));
+
+    // 2. Hapus dari database Supabase
+    const { error } = await supabase
+      .from('athlete_players')
+      .delete()
+      .eq('room_code', roomCode)
+      .eq('slot_number', slotNum);
+
+    if (error) {
+      console.error('Gagal menghapus slot pemain:', error);
+      alert('Gagal menghapus pemain: ' + error.message);
+    }
+
+    // 3. Pastikan state tersinkron dengan database
+    const { data: updated } = await supabase
+      .from('athlete_players')
+      .select('*')
+      .eq('room_code', roomCode)
+      .order('slot_number', { ascending: true });
+    if (updated) setPlayers(updated);
   };
 
   // 8. MULAI FASE DRAFT (ADMIN TRIGGER)
@@ -968,10 +1007,14 @@ export default function MagicalAthleteGame() {
                         {player ? (
                           slotNum !== 1 && (
                             <button
-                              onClick={() => handleRemoveSlot(slotNum)}
-                              className="w-full py-1 text-xs font-mono bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition"
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveSlot(slotNum);
+                              }}
+                              className="w-full py-1.5 text-xs font-mono font-bold bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 rounded-lg transition active:scale-95 cursor-pointer shadow-sm"
                             >
-                              Keluarkan
+                              ✕ Keluarkan
                             </button>
                           )
                         ) : (
