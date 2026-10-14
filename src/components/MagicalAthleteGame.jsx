@@ -395,31 +395,44 @@ export default function MagicalAthleteGame() {
     }).eq('room_code', roomCode);
   };
 
+  // Helper Host check: Room creator or Admin
+  const isHost = roomData?.admin_nim === currentUser.nim || currentUser.isAdmin || mySlot === 1;
+
   // 9. EKSEKUSI PEMILIHAN ATLET (DRAFT PICK)
   const handleDraftPick = async (charId) => {
-    if (!roomData || roomData.status !== 'DRAFT') return;
-    const currentDraftSlot = roomData.draft_order[roomData.draft_turn_index];
-    const currentDraftPlayer = players.find(p => p.slot_number === currentDraftSlot);
+    const currentR = roomDataRef.current || roomData;
+    const currentP = playersRef.current || players;
+    if (!currentR || currentR.status !== 'DRAFT') return;
+
+    const currentDraftSlot = currentR.draft_order?.[currentR.draft_turn_index];
+    const currentDraftPlayer = currentP.find(p => p.slot_number === currentDraftSlot);
 
     if (!currentDraftPlayer) return;
 
-    // Pastikan ini giliran player terkait (atau Admin mengeksekusi untuk bot)
+    // Pastikan ini giliran player terkait (atau Host mengeksekusi untuk bot)
     if (currentDraftPlayer.nim !== currentUser.nim && !currentDraftPlayer.is_bot) {
       alert('Bukan giliran Anda memilih!');
       return;
     }
 
-    const updatedPool = roomData.pool_characters.filter(id => id !== charId);
+    const updatedPool = (currentR.pool_characters || []).filter(id => id !== charId);
     const updatedDrafted = [...(currentDraftPlayer.drafted_characters || []), charId];
 
-    // Update Player
+    // Optimistic UI updates
+    setPlayers(prev => prev.map(p => p.id === currentDraftPlayer.id ? { ...p, drafted_characters: updatedDrafted } : p));
+    setRoomData(prev => prev ? {
+      ...prev,
+      draft_turn_index: prev.draft_turn_index + 1,
+      pool_characters: updatedPool
+    } : prev);
+
+    // Update Player di database
     await supabase.from('athlete_players').update({
       drafted_characters: updatedDrafted
     }).eq('id', currentDraftPlayer.id);
 
-    const nextIndex = roomData.draft_turn_index + 1;
-    const isDraftFinished = nextIndex >= roomData.draft_order.length;
-
+    const nextIndex = currentR.draft_turn_index + 1;
+    const isDraftFinished = nextIndex >= (currentR.draft_order || []).length;
     const chosenChar = ATHLETE_CHARACTERS.find(c => c.id === charId);
 
     if (isDraftFinished) {
@@ -432,22 +445,22 @@ export default function MagicalAthleteGame() {
         last_action: `🎉 Draft selesai! ${currentDraftPlayer.nama} memilih ${chosenChar?.name}. Waktunya pilih atlet untuk Ronde 1!`
       }).eq('room_code', roomCode);
     } else {
-      const nextSlot = roomData.draft_order[nextIndex];
-      const nextPlayer = players.find(p => p.slot_number === nextSlot);
+      const nextSlot = currentR.draft_order[nextIndex];
+      const nextPlayer = currentP.find(p => p.slot_number === nextSlot);
 
       await supabase.from('athlete_rooms').update({
         draft_turn_index: nextIndex,
         pool_characters: updatedPool,
-        last_action: `✨ ${currentDraftPlayer.nama} memilih ${chosenChar?.name}! Giliran berikutnya: ${nextPlayer?.nama}.`
+        last_action: `✨ ${currentDraftPlayer.nama} memilih ${chosenChar?.name}! Giliran: ${nextPlayer?.nama}.`
       }).eq('room_code', roomCode);
     }
 
     setSelectedDraftChar(null);
   };
 
-  // 10. BOT AUTOMATION (HANYA DIEKSEKUSI OLEH CLIENT ADMIN AGAR TIDAK DUPLIKAT)
+  // 10. BOT AUTOMATION (HANYA DIEKSEKUSI OLEH CLIENT HOST AGAR TIDAK DUPLIKAT)
   useEffect(() => {
-    if (!currentUser.isAdmin || !roomData) return;
+    if (!isHost || !roomData) return;
 
     // BOT TICK PADA FASE DRAFT
     if (roomData.status === 'DRAFT') {
@@ -457,14 +470,24 @@ export default function MagicalAthleteGame() {
       if (currentDraftPlayer?.is_bot && !isBotThinkingRef.current) {
         isBotThinkingRef.current = true;
         const timer = setTimeout(async () => {
-          const available = roomData.pool_characters || [];
-          if (available.length > 0) {
-            const randomPick = available[Math.floor(Math.random() * available.length)];
-            await handleDraftPick(randomPick);
+          try {
+            const currentR = roomDataRef.current || roomData;
+            const available = currentR.pool_characters || [];
+            if (available.length > 0) {
+              const randomPick = available[Math.floor(Math.random() * available.length)];
+              await handleDraftPick(randomPick);
+            }
+          } catch (err) {
+            console.error('Error bot drafting:', err);
+          } finally {
+            isBotThinkingRef.current = false;
           }
+        }, 1000);
+
+        return () => {
+          clearTimeout(timer);
           isBotThinkingRef.current = false;
-        }, 1200);
-        return () => clearTimeout(timer);
+        };
       }
     }
 
@@ -474,19 +497,28 @@ export default function MagicalAthleteGame() {
       if (botWaiting && !isBotThinkingRef.current) {
         isBotThinkingRef.current = true;
         const timer = setTimeout(async () => {
-          const unused = (botWaiting.drafted_characters || []).filter(
-            id => !(botWaiting.used_characters || []).includes(id)
-          );
-          if (unused.length > 0) {
-            const pick = unused[Math.floor(Math.random() * unused.length)];
-            await supabase.from('athlete_players').update({
-              active_character_id: pick,
-              is_ready: true
-            }).eq('id', botWaiting.id);
+          try {
+            const unused = (botWaiting.drafted_characters || []).filter(
+              id => !(botWaiting.used_characters || []).includes(id)
+            );
+            if (unused.length > 0) {
+              const pick = unused[Math.floor(Math.random() * unused.length)];
+              await supabase.from('athlete_players').update({
+                active_character_id: pick,
+                is_ready: true
+              }).eq('id', botWaiting.id);
+            }
+          } catch (err) {
+            console.error('Error bot lock-in:', err);
+          } finally {
+            isBotThinkingRef.current = false;
           }
-          isBotThinkingRef.current = false;
         }, 800);
-        return () => clearTimeout(timer);
+
+        return () => {
+          clearTimeout(timer);
+          isBotThinkingRef.current = false;
+        };
       }
     }
 
@@ -498,13 +530,22 @@ export default function MagicalAthleteGame() {
       if (activePlayer?.is_bot && !isBotThinkingRef.current && !diceRolling) {
         isBotThinkingRef.current = true;
         const timer = setTimeout(async () => {
-          await executePlayerMove(activePlayer, null);
+          try {
+            await executePlayerMove(activePlayer, null);
+          } catch (err) {
+            console.error('Error bot move:', err);
+          } finally {
+            isBotThinkingRef.current = false;
+          }
+        }, 1200);
+
+        return () => {
+          clearTimeout(timer);
           isBotThinkingRef.current = false;
-        }, 1500);
-        return () => clearTimeout(timer);
+        };
       }
     }
-  }, [roomData, players, currentUser.isAdmin, diceRolling]);
+  }, [roomData, players, isHost, diceRolling]);
 
   // 11. LOCK-IN ATLET UNTUK BALAPAN RONDE SAAT INI
   const handleLockInCharacter = async () => {
@@ -520,7 +561,7 @@ export default function MagicalAthleteGame() {
 
   // Cek apakah semua pemain sudah lock-in atlet untuk ronde ini
   useEffect(() => {
-    if (!currentUser.isAdmin || !roomData || roomData.status !== 'RACE_SELECT') return;
+    if (!isHost || !roomData || roomData.status !== 'RACE_SELECT') return;
 
     const allReady = players.length >= 2 && players.every(p => p.active_character_id);
     if (allReady) {
@@ -1078,6 +1119,21 @@ export default function MagicalAthleteGame() {
                   <div className="font-bold text-sm">
                     {isMyTurn ? '👉 GILIRAN KAMU SEKARANG! 👈' : `${currentDraftPlayer?.nama} (Slot ${currentDraftSlot})`}
                   </div>
+                  {currentDraftPlayer?.is_bot && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const available = roomData.pool_characters || [];
+                        if (available.length > 0) {
+                          const randomPick = available[Math.floor(Math.random() * available.length)];
+                          handleDraftPick(randomPick);
+                        }
+                      }}
+                      className="mt-2 px-3 py-1 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold text-xs rounded-lg transition active:scale-95 cursor-pointer"
+                    >
+                      ⚡ Klik: Paksa Bot Memilih Sekarang
+                    </button>
+                  )}
                 </div>
               );
             })()}
@@ -1329,17 +1385,29 @@ export default function MagicalAthleteGame() {
                         </button>
                       </div>
                     ) : (
-                      <div className="px-5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-400 flex items-center gap-2">
-                        <span className="animate-pulse">⏳</span>
-                        <span>Giliran Melangkah: <strong className="text-white">{activePlayer?.nama}</strong></span>
+                      <div className="flex items-center gap-2">
+                        <div className="px-5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-400 flex items-center gap-2">
+                          <span className="animate-pulse">⏳</span>
+                          <span>Giliran: <strong className="text-white">{activePlayer?.nama}</strong></span>
+                        </div>
+                        {activePlayer?.is_bot && isHost && (
+                          <button
+                            type="button"
+                            onClick={() => executePlayerMove(activePlayer, null)}
+                            disabled={diceRolling || isProcessingMove}
+                            className="px-3 py-2 bg-purple-500 hover:bg-purple-400 text-slate-950 text-xs font-bold rounded-xl transition active:scale-95 cursor-pointer"
+                          >
+                            ⚡ Paksa Jalan
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
                 );
               })()}
 
-              {/* ROUND OVER / NEXT ROUND BUTTON (ADMIN) */}
-              {roomData.status === 'ROUND_OVER' && currentUser.isAdmin && (
+              {/* ROUND OVER / NEXT ROUND BUTTON (ADMIN / HOST) */}
+              {roomData.status === 'ROUND_OVER' && isHost && (
                 <button
                   onClick={handleNextRound}
                   className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl uppercase tracking-wider text-sm shadow-lg transition active:scale-95"
