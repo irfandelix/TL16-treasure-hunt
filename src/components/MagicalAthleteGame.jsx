@@ -678,57 +678,98 @@ export default function MagicalAthleteGame() {
       skillNote = ` [🌋 Magma Burst: paruh kedua +2 langkah!]`;
     }
 
-    let targetPos = Math.min(24, playerToMove.position + steps);
-
-    // --- CHECK SLURRY TAILING (Viscous Trap: Lawan yang mencoba menyalip harus berhenti di petaknya) ---
+    // =========================================================================
+    // ANIMASI GERAKAN LANGKAH-DEMI-LANGKAH (TIDAK BLINK / TELEPORTASI)
+    // =========================================================================
+    let currentPos = playerToMove.position;
     const tailingPlayer = players.find(p => p.active_character_id === 'slurry_tailing' && p.id !== playerToMove.id);
-    if (tailingPlayer && playerToMove.position < tailingPlayer.position && targetPos > tailingPlayer.position) {
-      targetPos = tailingPlayer.position;
-      skillNote += ` [🪨 Terjebak Viscous Trap dari ${tailingPlayer.nama}!]`;
+
+    const stepTo = async (newPos) => {
+      currentPos = newPos;
+      setPlayers(prev => prev.map(p => p.id === playerToMove.id ? { ...p, position: newPos } : p));
+      await new Promise(r => setTimeout(r, 220));
+    };
+
+    // 1. LANGKAH MAJU SATU-PER-SATU
+    for (let s = 1; s <= steps; s++) {
+      if (currentPos >= 24) break;
+      await stepTo(currentPos + 1);
+
+      // Cek apakah terhadang Viscous Trap dari Slurry Tailing
+      if (tailingPlayer && currentPos === tailingPlayer.position) {
+        skillNote += ` [🪨 Terjebak Viscous Trap dari ${tailingPlayer.nama}!]`;
+        setToastMessage(`🪨 ${playerToMove.nama} terhenti di petak Slurry Tailing milik ${tailingPlayer.nama}!`);
+        await new Promise(r => setTimeout(r, 350));
+        break;
+      }
     }
 
-    // --- CHECK TILE KHUSUS (BOOST / TRAP) ---
-    const targetTile = TRACK_TILES.find(t => t.index === targetPos);
-    if (targetTile) {
+    // 2. CEK PETAK KHUSUS (BOOST / TRAP) PADA PETAK PENDARATAN
+    const targetTile = TRACK_TILES.find(t => t.index === currentPos);
+    if (targetTile && currentPos < 24) {
       if (targetTile.type === 'boost') {
-        targetPos = Math.min(24, targetPos + 2);
         skillNote += ` [⚡ Meluncur di petak Boost +2!]`;
+        setToastMessage(`⚡ ${playerToMove.nama} menginjak petak Boost! Meluncur +2 langkah maju!`);
+        await new Promise(r => setTimeout(r, 350));
+        for (let b = 0; b < 2; b++) {
+          if (currentPos >= 24) break;
+          await stepTo(currentPos + 1);
+        }
       } else if (targetTile.type === 'trap') {
-        // Phytoremediation kebal terhadap jebakan!
         if (charData?.id === 'phytoremediation') {
           skillNote += ` [🌲 Phyto-Immunity: Kebal jebakan!]`;
+          setToastMessage(`🌲 ${playerToMove.nama} kebal terhadap jebakan!`);
+          await new Promise(r => setTimeout(r, 300));
         } else {
-          targetPos = Math.max(0, targetPos - 2);
           skillNote += ` [⚠️ Terperosok jebakan -2!]`;
+          setToastMessage(`⚠️ ${playerToMove.nama} terperosok jebakan! Melangkah mundur 2 petak!`);
+          await new Promise(r => setTimeout(r, 400));
+          // LANGKAH MUNDUR SATU-PER-SATU (ANIMASI MUNDUR)
+          for (let t = 0; t < 2; t++) {
+            if (currentPos <= 0) break;
+            await stepTo(currentPos - 1);
+          }
         }
       }
     }
 
-    // --- CHECK MENDARAT DI PETAK ACID MINE DRAINAGE ---
+    // 3. CEK MENDARAT DI PETAK ACID MINE DRAINAGE (MUNDUR 3 PETAK)
     const acidPlayer = players.find(p => p.active_character_id === 'acid_mine' && p.id !== playerToMove.id);
-    if (acidPlayer && acidPlayer.position === targetPos && targetPos < 24) {
-      targetPos = Math.max(0, targetPos - 3);
+    if (acidPlayer && acidPlayer.position === currentPos && currentPos < 24) {
       skillNote += ` [🧪 Terpental Corrosive Leach mundur 3 petak!]`;
+      setToastMessage(`🧪 ${playerToMove.nama} mendarat di petak Acid Mine! Terpental mundur 3 petak!`);
+      await new Promise(r => setTimeout(r, 400));
+      // LANGKAH MUNDUR 3 PETAK SATU-PER-SATU
+      for (let a = 0; a < 3; a++) {
+        if (currentPos <= 0) break;
+        await stepTo(currentPos - 1);
+      }
     }
 
-    // UPDATE POSISI PEMAIN YANG SEDANG GILIRAN
+    // UPDATE POSISI FINAL PEMAIN KE DATABASE SUPABASE
     await supabase.from('athlete_players').update({
-      position: targetPos
+      position: currentPos
     }).eq('id', playerToMove.id);
 
-    // --- SKILL CEK PENUMPANG: Groundwater Flow (Subsurface Surge) ---
-    // Jika ada lawan menyalip groundwater, groundwater ikut maju +2 petak
+    // 4. SKILL CEK PENUMPANG: Groundwater Flow (Subsurface Surge)
+    // Jika ada lawan menyalip groundwater, groundwater ikut maju +2 petak dengan animasi
     const gwPlayer = players.find(p => p.active_character_id === 'groundwater' && p.id !== playerToMove.id);
-    if (gwPlayer && playerToMove.position < gwPlayer.position && targetPos > gwPlayer.position) {
-      const newGwPos = Math.min(24, gwPlayer.position + 2);
-      await supabase.from('athlete_players').update({
-        position: newGwPos
-      }).eq('id', gwPlayer.id);
+    if (gwPlayer && playerToMove.position < gwPlayer.position && currentPos > gwPlayer.position) {
+      let gwPos = gwPlayer.position;
+      setToastMessage(`🌊 ${gwPlayer.nama} terseret Subsurface Surge maju +2 petak!`);
+      await new Promise(r => setTimeout(r, 350));
+      for (let g = 0; g < 2; g++) {
+        if (gwPos >= 24) break;
+        gwPos += 1;
+        setPlayers(prev => prev.map(p => p.id === gwPlayer.id ? { ...p, position: gwPos } : p));
+        await new Promise(r => setTimeout(r, 220));
+      }
+      await supabase.from('athlete_players').update({ position: gwPos }).eq('id', gwPlayer.id);
       skillNote += ` [🌊 ${gwPlayer.nama} terseret Subsurface Surge +2!]`;
     }
 
     // CEK APAKAH RONDE BERAKHIR (ATLET MENCAPAI FINISH LINE 24)
-    if (targetPos >= 24) {
+    if (currentPos >= 24) {
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       await handleFinishRound(playerToMove, `${playerToMove.nama} (${charData?.name}) Menembus Garis FINISH! 🏆`);
       setIsProcessingMove(false);
@@ -749,7 +790,7 @@ export default function MagicalAthleteGame() {
     } else {
       await supabase.from('athlete_rooms').update({
         current_turn_slot: nextSlot,
-        last_action: `🎲 ${playerToMove.nama} melangkah ${steps} petak (ke petak ${targetPos}).${skillNote} Giliran: ${nextPlayer.nama}.`
+        last_action: `🎲 ${playerToMove.nama} melangkah ${steps} petak (ke petak ${currentPos}).${skillNote} Giliran: ${nextPlayer.nama}.`
       }).eq('room_code', roomCode);
     }
 
@@ -1739,12 +1780,15 @@ export default function MagicalAthleteGame() {
           {racersOnThisTile.map(p => {
             const char = ATHLETE_CHARACTERS.find(c => c.id === p.active_character_id);
             const colorConfig = PLAYER_COLORS[p.slot_number - 1];
+            const isMoving = roomData?.status === 'RACING' && roomData?.current_turn_slot === p.slot_number;
 
             return (
               <div
                 key={p.id}
                 title={`${p.nama} (${char?.name})`}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm sm:text-base border-2 shadow-lg transition-transform animate-in zoom-in duration-300 hover:scale-125 z-10 ${colorConfig.badge} ${colorConfig.border} ${colorConfig.glow}`}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm sm:text-base border-2 shadow-lg transition-all duration-200 z-10 ${colorConfig.badge} ${colorConfig.border} ${colorConfig.glow} ${
+                  isMoving ? 'animate-bounce ring-2 ring-white scale-115 z-20 shadow-[0_0_20px_rgba(255,255,255,0.8)]' : 'hover:scale-110'
+                }`}
               >
                 {char?.emoji || '🏃'}
               </div>
