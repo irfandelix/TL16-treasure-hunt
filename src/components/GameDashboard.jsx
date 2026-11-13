@@ -274,11 +274,14 @@ export default function GameDashboard() {
           className="fixed inset-0 z-50 bg-slate-950/90 flex flex-col items-center justify-center p-4"
         >
           <div className="bg-slate-800 border-2 border-amber-400 p-8 md:p-10 rounded-2xl max-w-lg w-full text-center shadow-lg">
-            <span className="inline-block px-3 py-1 rounded-md bg-amber-400/20 text-amber-300 text-xs font-bold mb-4">
-              10 Tahun Kebersamaan (2016 - 2026)
-            </span>
-            <h2 id="anniv-welcome-title" className="text-3xl md:text-5xl font-bold text-amber-300 mb-3">
-              Selamat Ulang Tahun, Sedulur 16!
+            <h2 id="anniv-welcome-title" className="flex justify-center mb-5">
+              <img
+                src="/Asset 2.webp"
+                alt="Happy Anniversary Teknik Lingkungan 2016"
+                width="280"
+                height="109"
+                className="w-full max-w-[280px] h-auto"
+              />
             </h2>
             <p className="text-slate-200 text-base mb-8 leading-relaxed">
               Selamat datang kembali, <strong>{user.nama}</strong>! Mari rayakan satu dekade Teknik Lingkungan 2016 dengan mengisi kapsul kenangan dan bermain bersama.
@@ -299,15 +302,12 @@ export default function GameDashboard() {
           <div className="flex items-center gap-4">
             <img
               src="/Asset 2.webp"
-              alt="Logo Happy Anniversary TL 2016"
-              width="120"
-              height="47"
-              className="w-28 h-auto hidden sm:block"
+              alt="Happy Anniversary TL 2016"
+              width="140"
+              height="54"
+              className="w-32 h-auto hidden sm:block"
             />
             <div>
-              <span className="inline-block text-xs font-semibold text-amber-300 mb-1">
-                Perayaan 1 Dekade Teknik Lingkungan 2016
-              </span>
               <h1 className="text-2xl md:text-3xl font-bold text-slate-50">
                 Halo, {user.nama}!
               </h1>

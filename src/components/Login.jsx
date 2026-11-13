@@ -68,21 +68,17 @@ export default function Login({ onLoginSuccess }) {
     <main className="min-h-screen bg-slate-900 flex justify-center items-center p-4">
       <div className="bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-lg border-2 border-amber-400/40 w-full max-w-md relative">
         <header className="text-center mb-8 flex flex-col items-center">
-          <span className="inline-block px-3 py-1 rounded-md bg-amber-400/15 border border-amber-400/40 text-amber-300 text-xs font-semibold mb-5">
-            Perayaan 10 Tahun Sedulur 16
-          </span>
-          <img
-            src="/Asset 2.webp"
-            alt="Happy Anniversary Teknik Lingkungan 2016"
-            width="280"
-            height="109"
-            fetchPriority="high"
-            className="w-full max-w-[260px] h-auto mb-3"
-          />
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-50 mt-2">
-            Selamat Ulang Tahun ke-10, TL 2016!
+          <h1 className="w-full flex justify-center">
+            <img
+              src="/Asset 2.webp"
+              alt="Happy Anniversary Teknik Lingkungan 2016"
+              width="280"
+              height="109"
+              fetchPriority="high"
+              className="w-full max-w-[280px] h-auto"
+            />
           </h1>
-          <p className="text-sm text-slate-300 mt-1">
+          <p className="text-sm text-slate-300 mt-4">
             Masuk dengan NIM untuk ikut kumpul kenangan dan bermain bersama teman seangkatan.
           </p>
         </header>
