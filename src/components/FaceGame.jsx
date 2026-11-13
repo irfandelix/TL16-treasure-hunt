@@ -1,4 +1,3 @@
-// src/components/FaceGame.jsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import confetti from 'canvas-confetti';
@@ -9,30 +8,26 @@ export default function FaceGame() {
   const [isRevealed, setIsRevealed] = useState(false);
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [lastPoints, setLastPoints] = useState(0);
-  
-  // State Timer
   const [timeLeft, setTimeLeft] = useState(60);
-  
-  // Fungsi untuk mengatur tingkat blur berdasarkan sisa waktu (turun tiap 10 detik)
-  const getDynamicBlur = () => {
-    if (isRevealed) return 'blur-0'; // Langsung jelas kalau sudah dijawab
-    if (timeLeft > 50) return 'blur-3xl'; // 60s - 51s: Paling ngeblur
-    if (timeLeft > 40) return 'blur-2xl'; // 50s - 41s
-    if (timeLeft > 30) return 'blur-xl';  // 40s - 31s
-    if (timeLeft > 20) return 'blur-lg';  // 30s - 21s
-    if (timeLeft > 10) return 'blur-md';  // 20s - 11s
-    return 'blur-sm';                     // 10s - 1s: Hampir jelas
-  };
-  
   const [timerActive, setTimerActive] = useState(false);
+
+  const getDynamicBlur = () => {
+    if (isRevealed) return 'blur-0';
+    if (timeLeft > 50) return 'blur-3xl';
+    if (timeLeft > 40) return 'blur-2xl';
+    if (timeLeft > 30) return 'blur-xl';
+    if (timeLeft > 20) return 'blur-lg';
+    if (timeLeft > 10) return 'blur-md';
+    return 'blur-sm';
+  };
 
   useEffect(() => {
     initGame();
   }, []);
 
-  // Logic Timer Berjalan
   useEffect(() => {
     let interval = null;
     if (timerActive && timeLeft > 0 && !isRevealed) {
@@ -45,7 +40,6 @@ export default function FaceGame() {
     return () => clearInterval(interval);
   }, [timerActive, timeLeft, isRevealed]);
 
-  // Fungsi membuat 3 opsi pilihan (Satu Gender, 1 Benar, 2 Salah)
   const generateOptions = (correctPerson, allData) => {
     let sameGenderList = allData.filter(p => 
       p.gender === correctPerson.gender && p.nama !== correctPerson.nama
@@ -64,31 +58,39 @@ export default function FaceGame() {
   };
 
   const initGame = async () => {
-    const userNim = localStorage.getItem('user_nim');
-    const savedSession = localStorage.getItem(`session_face_${userNim}`);
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const userNim = localStorage.getItem('user_nim');
+      const savedSession = localStorage.getItem(`session_face_${userNim}`);
 
-    if (savedSession) {
-      const sessionData = JSON.parse(savedSession);
-      setList(sessionData.list);
-      setCurrentIndex(sessionData.currentIndex);
-      setScore(sessionData.score);
-    } else {
-      const { data } = await supabase.from('alumni').select('*');
-      if (data && data.length > 0) {
-        const shuffled = data.sort(() => 0.5 - Math.random());
-        const selected20 = shuffled.slice(0, 20).map(person => {
-          return {
+      if (savedSession) {
+        const sessionData = JSON.parse(savedSession);
+        setList(sessionData.list);
+        setCurrentIndex(sessionData.currentIndex);
+        setScore(sessionData.score);
+      } else {
+        const { data, error } = await supabase.from('alumni').select('*');
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const shuffled = [...data].sort(() => 0.5 - Math.random());
+          const selected20 = shuffled.slice(0, 20).map(person => ({
             ...person,
-            options: generateOptions(person, data) 
-          };
-        });
-        
-        setList(selected20);
-        updateLocalSession(selected20, 0, 0);
+            options: generateOptions(person, data)
+          }));
+          
+          setList(selected20);
+          updateLocalSession(selected20, 0, 0);
+        }
       }
+      setTimerActive(true);
+    } catch (err) {
+      console.error("Gagal memuat kuis foto:", err.message);
+      setErrorMsg('Gagal memuat data foto alumni. Periksa koneksi internet dan coba lagi.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    setTimerActive(true);
   };
 
   const handleTimeOut = () => {
@@ -98,14 +100,14 @@ export default function FaceGame() {
   };
 
   const handleGuess = async (guessName) => {
-    if (isRevealed) return; // Mencegah user dobel klik
+    if (isRevealed) return;
 
     setTimerActive(false);
     setIsRevealed(true);
     setSelectedAnswer(guessName);
 
     const currentPerson = list[currentIndex];
-    if (!currentPerson) return; // Aman jika di-klik saat data kosong
+    if (!currentPerson) return;
 
     const isCorrect = guessName === currentPerson.nama;
     let newScore = score;
@@ -122,11 +124,14 @@ export default function FaceGame() {
       newScore = score + pointsEarned;
       setScore(newScore);
       
-      confetti({ particleCount: 150, spread: 80, origin: { x: 0, y: 0.9 }, angle: 45, zIndex: 100 });
-      confetti({ particleCount: 150, spread: 80, origin: { x: 1, y: 0.9 }, angle: 135, zIndex: 100 });
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!prefersReducedMotion) {
+        confetti({ particleCount: 100, spread: 70, origin: { x: 0.2, y: 0.8 }, zIndex: 100 });
+        confetti({ particleCount: 100, spread: 70, origin: { x: 0.8, y: 0.8 }, zIndex: 100 });
+      }
       
       const userNim = localStorage.getItem('user_nim');
-      if (userNim !== 'guest') {
+      if (userNim && userNim !== 'guest') {
         await supabase.from('alumni').update({ skor_muka: newScore }).eq('nim', userNim);
       }
     } else {
@@ -156,150 +161,161 @@ export default function FaceGame() {
     updateLocalSession(list, nextIdx, score);
   };
 
-  if (loading) return <div className="text-center p-10 text-green-500 font-mono flex flex-col items-center justify-center mt-20"><div className="w-12 h-12 border-4 border-slate-700 border-t-green-500 rounded-full animate-spin mb-4"></div>MENYIAPKAN TARGET...</div>;
-  
-  if (currentIndex >= 20) return (
-    <div className="text-center p-10 bg-slate-800 rounded-3xl border border-green-500 shadow-2xl">
-      <h2 className="text-3xl font-bold text-white mb-4">MISSION COMPLETE! 🏁</h2>
-      <p className="text-slate-400 mb-6">Total skor kamu: <span className="text-green-500 font-bold text-2xl">{score}</span></p>
-      
-      <div className="flex flex-col gap-3">
-        <button 
-          onClick={() => {
-            const userNim = localStorage.getItem('user_nim');
-            localStorage.removeItem(`session_face_${userNim}`); 
-            window.location.reload(); 
-          }} 
-          className="bg-blue-600 px-8 py-3 rounded-xl font-bold text-white hover:bg-blue-500 transition-all"
-        >
-          🔄 Main Ulang Game
-        </button>
-
-        <a href="/" className="inline-block bg-green-600 px-8 py-3 rounded-xl font-bold text-white hover:bg-green-500 transition-all">
-          🏠 Kembali ke Dashboard
-        </a>
+  if (loading) {
+    return (
+      <div className="text-center p-10 text-amber-400 font-mono flex flex-col items-center justify-center mt-16">
+        <div className="w-12 h-12 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin mb-4"></div>
+        Menyiapkan Foto Kenangan...
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <div role="alert" className="text-center p-8 bg-slate-800 rounded-2xl border border-rose-500/40 mt-10 shadow-md max-w-md mx-auto">
+        <h2 className="text-xl font-bold text-rose-400 mb-2">Gagal Memuat Permainan</h2>
+        <p className="text-slate-300 mb-6 text-sm">{errorMsg}</p>
+        <button
+          type="button"
+          onClick={initGame}
+          className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-6 py-3 min-h-[44px] rounded-xl transition-colors w-full"
+        >
+          Coba Lagi
+        </button>
+      </div>
+    );
+  }
+  
+  if (currentIndex >= 20) {
+    return (
+      <div className="text-center p-8 md:p-10 bg-slate-800 rounded-2xl border border-emerald-500/50 shadow-md max-w-md mx-auto">
+        <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+          Kuis Selesai
+        </p>
+        <h2 className="text-3xl font-bold text-white mb-3">Tebak Foto Selesai!</h2>
+        <p className="text-slate-300 mb-6">
+          Total skor kenangan kamu: <span className="text-emerald-400 font-mono font-bold text-2xl">{score}</span>
+        </p>
+        
+        <div className="flex flex-col gap-3">
+          <button 
+            type="button"
+            onClick={() => {
+              const userNim = localStorage.getItem('user_nim');
+              localStorage.removeItem(`session_face_${userNim}`); 
+              window.location.reload(); 
+            }} 
+            className="bg-amber-400 hover:bg-amber-300 text-slate-950 px-8 py-3.5 min-h-[48px] rounded-xl font-bold transition-colors"
+          >
+            Main Ulang Kuis Foto
+          </button>
+
+          <a href="/" className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-700 border border-slate-600 px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-white transition-colors">
+            Kembali ke Beranda
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const currentPerson = list[currentIndex];
 
-  // ==========================================
-  // 🛡️ SABUK PENGAMAN (GUARD CLAUSE) ANTI CRASH
-  // ==========================================
   if (!currentPerson) {
     return (
-      <div className="text-center p-8 bg-slate-800 rounded-3xl border border-red-500 mt-10 shadow-2xl max-w-md mx-auto">
-        <h2 className="text-2xl font-bold text-red-500 mb-4">DATA NYANGKUT! 🚨</h2>
+      <div className="text-center p-8 bg-slate-800 rounded-2xl border border-rose-500/40 mt-10 shadow-md max-w-md mx-auto">
+        <h2 className="text-2xl font-bold text-rose-400 mb-3">Sesi Kuis Perlu Dimuat Ulang</h2>
         <p className="text-slate-300 mb-6 text-sm">
-          Sistem gagal membaca memori lokasi. Ini wajar saat masa pembuatan. Klik tombol di bawah untuk membersihkan cache perangkatmu.
+          Data sesi sebelumnya tidak lengkap. Klik tombol di bawah untuk menyegarkan sesi permainanmu.
         </p>
         <button 
+          type="button"
           onClick={() => {
             const userNim = localStorage.getItem('user_nim');
             localStorage.removeItem(`session_face_${userNim}`);
             window.location.reload();
           }} 
-          className="bg-red-600 px-6 py-4 rounded-xl font-bold text-white hover:bg-red-500 transition-all w-full shadow-lg"
+          className="bg-amber-400 hover:bg-amber-300 text-slate-950 px-6 py-3.5 min-h-[48px] rounded-xl font-bold transition-colors w-full"
         >
-          🧹 Bersihkan Cache & Restart
+          Muat Ulang Sesi
         </button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-slate-800 rounded-3xl shadow-2xl border border-slate-700">
-      {/* Header Info */}
+    <div className="max-w-md mx-auto p-6 bg-slate-800 rounded-2xl shadow-md border border-slate-700">
       <div className="flex justify-between items-center mb-4">
-        <span className="text-[10px] font-mono text-green-500 border border-green-500/30 px-2 py-1 rounded">
-          ALUMNI {currentIndex + 1} / 20
+        <span className="text-xs font-mono font-bold text-emerald-400 bg-slate-900 border border-emerald-500/30 px-3 py-1 rounded-lg">
+          Foto {currentIndex + 1} / 20
         </span>
-        <div className={`font-mono font-bold text-xl ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`}>
+        <div className={`font-mono font-bold text-xl ${timeLeft <= 10 ? 'text-rose-400' : 'text-amber-400'}`}>
           00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}
         </div>
       </div>
 
-      {/* Progress Bar Waktu */}
-      <div className="w-full bg-slate-900 h-1.5 rounded-full mb-6 overflow-hidden">
+      <div className="w-full bg-slate-900 h-2 rounded-full mb-6 overflow-hidden">
         <div 
-          className={`h-full transition-all duration-1000 ${timeLeft <= 10 ? 'bg-red-500' : 'bg-green-500'}`}
+          className={`h-full transition-all duration-1000 ${timeLeft <= 10 ? 'bg-rose-500' : 'bg-emerald-500'}`}
           style={{ width: `${(timeLeft / 60) * 100}%` }}
         ></div>
       </div>
 
-      {/* Foto Alumni */}
-      <div className="relative aspect-square mb-6 overflow-hidden rounded-2xl border-4 border-slate-900 bg-slate-900">
+      <div className="relative aspect-square mb-5 overflow-hidden rounded-xl border-2 border-slate-700 bg-slate-900">
         <img 
           src={`/2016/${currentPerson.nim}.webp`} 
-          // 👇 UBAH CLASSNAME INI: Transisi hanya aktif saat isRevealed = true
-          className={`w-full h-full object-cover ${isRevealed ? 'transition-all duration-1000' : 'transition-none'} ${getDynamicBlur()}`}
-          alt="Mystery Alumni"
+          width="400"
+          height="400"
+          className={`w-full h-full object-cover ${isRevealed ? 'transition-all duration-700' : 'transition-none'} ${getDynamicBlur()}`}
+          alt={`Foto misteri alumni ke-${currentIndex + 1}`}
         />
         {timeLeft === 0 && !isRevealed && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-red-500 font-black text-2xl rotate-12 border-4 border-red-500 m-10">
-            WAKTU HABIS!
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/85 text-rose-400 font-bold text-2xl border-2 border-rose-500 m-8 rounded-xl">
+            Waktu Habis!
           </div>
         )}
       </div>
 
-      <p className="text-center text-slate-300 text-sm mb-6 italic">"{currentPerson.hint || "Anak TL16..."}"</p>
+      <div className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 mb-6 text-center">
+        <p className="text-xs font-mono text-amber-400 uppercase font-bold mb-0.5">Petunjuk</p>
+        <p className="text-slate-200 text-sm">{currentPerson.hint || "Teman seangkatan Teknik Lingkungan 2016"}</p>
+      </div>
 
-      {/* Opsi Pilihan Ganda & Feedback */}
       <div className="space-y-3">
         {!isRevealed ? (
           currentPerson.options.map((opt, idx) => (
             <button 
               key={idx}
+              type="button"
               onClick={() => handleGuess(opt)}
-              className="w-full bg-slate-900 hover:bg-slate-700 border border-slate-600 py-4 rounded-xl font-bold text-white transition-all active:scale-95 text-lg"
+              className="w-full min-h-[48px] bg-slate-900 hover:bg-slate-700 border border-slate-600 hover:border-amber-400 py-3.5 px-4 rounded-xl font-bold text-white transition-colors text-base"
             >
               {opt}
             </button>
           ))
         ) : (
-          <div className="animate-in fade-in zoom-in duration-300 space-y-4">
+          <div className="space-y-4">
             <div className={`p-4 rounded-xl border text-center ${
               selectedAnswer === currentPerson.nama 
-                ? 'bg-green-900/30 border-green-500 text-green-400' 
-                : 'bg-red-900/30 border-red-500 text-red-400'
+                ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300' 
+                : 'bg-rose-950/60 border-rose-500/50 text-rose-300'
             }`}>
-              <p className="text-xs mb-1 uppercase tracking-widest">
-                {selectedAnswer === currentPerson.nama ? `Tebakan Benar! (+${lastPoints} Poin)` : 'Jawaban Salah / Waktu Habis'}
+              <p className="text-xs font-mono font-bold mb-1 uppercase tracking-wider">
+                {selectedAnswer === currentPerson.nama
+                  ? `Tebakan Tepat! (+${lastPoints} Poin)`
+                  : 'Belum Tepat / Waktu Habis'}
               </p>
-              <p className="font-bold text-xl uppercase text-white">{currentPerson.nama}</p>
+              <p className="font-bold text-xl text-white">{currentPerson.nama}</p>
             </div>
             <button 
+              type="button"
               onClick={nextPerson}
-              className="w-full bg-white text-slate-900 py-4 rounded-xl font-bold hover:bg-slate-200 transition-all shadow-xl"
+              className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 py-3.5 px-6 rounded-xl font-bold transition-colors shadow-md"
             >
-              LANJUT ({currentIndex + 1 > 20 ? 20 : currentIndex + 1}/20) →
+              Lanjut ke Foto Berikutnya ({currentIndex + 1 > 20 ? 20 : currentIndex + 1}/20)
             </button>
           </div>
         )}
       </div>
-
-      {/* EFEK DEPRESI ANIME FULL SCREEN (BILA SALAH) */}
-      {isRevealed && selectedAnswer !== currentPerson.nama && selectedAnswer !== null && (
-        <div className="fixed inset-0 z-50 pointer-events-none flex justify-center backdrop-grayscale backdrop-contrast-125 backdrop-brightness-75 transition-all duration-1000">
-          <div 
-            className="absolute inset-0 opacity-40 animate-pulse"
-            style={{ 
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0 L20 30 L40 60 L20 90 L40 120' fill='none' stroke='black' stroke-width='25' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-              backgroundSize: '100px 120px',
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 70%)',
-              maskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 70%)'
-            }}
-          ></div>
-          <div 
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(to bottom, rgba(51, 65, 85, 0.9) 0%, rgba(51, 65, 85, 0.4) 40%, transparent 100%)' }}
-          ></div>
-          <div className="absolute top-32 text-8xl opacity-90 animate-bounce drop-shadow-2xl">
-            😭
-          </div>
-        </div>
-      )}
     </div>
   );
 }

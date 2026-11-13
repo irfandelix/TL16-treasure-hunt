@@ -1,85 +1,89 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 export default function LayarMalam({ peranKu, isHidup, pemain, currentUser }) {
   const [targetDipilih, setTargetDipilih] = useState('');
   const [pesanAksi, setPesanAksi] = useState('');
 
-  // Filter hanya mahasiswa yang masih hidup untuk dijadikan target
   const daftarTarget = pemain.filter(p => p.is_hidup && p.nim !== currentUser.nim);
 
   const handleAksiMalam = async (targetNim, targetNama) => {
     setTargetDipilih(targetNim);
 
-    // Simpan target malam ini ke database mahasiswa_roles milikmu
     await supabase
       .from('mahasiswa_roles')
       .update({ target_malam: targetNim })
-      .eq('room_code', currentUser.roomCode) // <-- Tambahan penyaring room
+      .eq('room_code', currentUser.roomCode)
       .eq('nim', currentUser.nim);
 
-    // Tampilkan notifikasi teks sesuai peran
     if (peranKu === 'DOSEN_KILLER') {
-      setPesanAksi(`Kamu sepakat memberikan nilai E kepada ${targetNama}.`);
+      setPesanAksi(`Kamu memilih memberikan nilai E kepada ${targetNama}.`);
     } else if (peranKu === 'INTEL') {
-      // Intel bisa langsung melihat peran target di layar saat itu juga
       const target = pemain.find(p => p.nim === targetNim);
-      setPesanAksi(`Hasil investigasi: ${targetNama} adalah ${target?.peran || 'BIASA'}`);
+      setPesanAksi(`Hasil penyelidikan: Peran ${targetNama} adalah ${target?.peran || 'BIASA'}.`);
     } else if (peranKu === 'AHLI') {
-      setPesanAksi(`Kamu memberikan bocoran kunci jawaban kepada ${targetNama}.`);
+      setPesanAksi(`Kamu memilih menyelamatkan nilai milik ${targetNama} malam ini.`);
     }
   };
 
   if (!isHidup) {
     return (
-      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center p-6 text-center z-50">
-        <span className="text-6xl mb-4">👻</span>
-        <h2 className="text-red-500 font-bold text-xl uppercase tracking-wider">Kamu Sudah Di-DO</h2>
-        <p className="text-slate-500 text-sm mt-2 font-mono">Arwahmu hanya bisa memantau jalannya kelas dari balik layar.</p>
+      <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center p-6 text-center z-50">
+        <p className="text-xs font-mono font-bold text-rose-400 uppercase tracking-wider mb-1">
+          Status Peserta
+        </p>
+        <h2 className="text-white font-bold text-2xl">Kamu Sudah Terkena DO</h2>
+        <p className="text-slate-300 text-sm mt-2 max-w-sm">
+          Kamu tetap bisa memantau jalannya permainan hingga sidang selesai.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center p-4 z-50 select-none">
+    <div className="fixed inset-0 bg-slate-900 flex flex-col items-center justify-center p-4 z-50">
       <div className="max-w-md w-full text-center">
-        <span className="text-5xl animate-pulse block mb-4">🌙</span>
-        <h2 className="text-xl font-bold text-slate-400 tracking-widest uppercase mb-2">Fase Malam Hari</h2>
-        <p className="text-xs text-slate-600 font-mono mb-8">Ssst... Dosen sedang memeriksa draf revisi laporan...</p>
+        <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+          Siklus Malam
+        </p>
+        <h2 className="text-2xl font-bold text-white mb-2">Fase Malam Hari</h2>
+        <p className="text-xs text-slate-300 font-mono mb-6">
+          Saatnya peran khusus mengambil tindakan secara rahasia...
+        </p>
 
-        {/* JIKA MAHASISWA BIASA */}
-        {peranKu === 'BIASA' && (
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-            <span className="text-4xl block mb-3">🥱</span>
-            <h3 className="text-white font-bold text-base uppercase">Mahasiswa Biasa</h3>
-            <p className="text-slate-400 text-xs mt-2 font-mono leading-relaxed">
-              Tidak ada aksi malam untukmu. Tidurlah yang nyenyak, berdoa agar besok pagi nilaimu tidak berubah menjadi E.
+        {(peranKu === 'BIASA' || peranKu === 'UPTODATE') ? (
+          <div className="bg-slate-800 border border-slate-700 p-6 rounded-2xl">
+            <h3 className="text-amber-400 font-bold text-lg">
+              {peranKu === 'UPTODATE' ? 'Mahasiswa Uptodate' : 'Mahasiswa Biasa'}
+            </h3>
+            <p className="text-slate-200 text-sm mt-2 leading-relaxed">
+              {peranKu === 'UPTODATE'
+                ? 'Kamu kebal terhadap ancaman nilai E pada malam hari. Tunggu hingga pagi tiba untuk berdiskusi.'
+                : 'Tidak ada aksi khusus malam ini. Istirahatlah dan bersiap berdiskusi saat pagi tiba.'}
             </p>
           </div>
-        )}
-
-        {/* JIKA PERAN AKSI KHUSUS */}
-        {peranKu !== 'BIASA' && (
-          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl max-h-[60vh] overflow-y-auto w-full text-left">
-            <p className="text-yellow-500 font-bold text-xs uppercase tracking-wider mb-3 px-2">
-              {peranKu === 'DOSEN_KILLER' && '🎯 Pilih Mahasiswa yang Ingin Di-DO:'}
-              {peranKu === 'INTEL' && '🔍 Pilih Mahasiswa yang Ingin Diintip Perannya:'}
-              {peranKu === 'AHLI' && '🛡️ Pilih Mahasiswa yang Ingin Diselamatkan Nilainya:'}
+        ) : (
+          <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl max-h-[60vh] overflow-y-auto w-full text-left">
+            <p className="text-amber-400 font-bold text-xs font-mono uppercase tracking-wider mb-3">
+              {peranKu === 'DOSEN_KILLER' && 'Pilih Mahasiswa yang Akan Diberi Nilai E:'}
+              {peranKu === 'INTEL' && 'Pilih Mahasiswa yang Ingin Diperiksa Perannya:'}
+              {peranKu === 'AHLI' && 'Pilih Mahasiswa yang Ingin Diselamatkan Nilainya:'}
             </p>
 
             {pesanAksi ? (
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center text-green-400 font-mono text-xs">
+              <div className="bg-slate-900 p-4 rounded-xl border border-emerald-500/40 text-center text-emerald-300 font-mono text-sm">
                 {pesanAksi}
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2.5">
                 {daftarTarget.map(t => (
                   <button
                     key={t.nim}
+                    type="button"
                     onClick={() => handleAksiMalam(t.nim, t.nama)}
-                    className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-3 px-4 rounded-xl text-sm text-left transition-colors border border-slate-700 active:scale-98"
+                    className="w-full min-h-[48px] bg-slate-900 hover:bg-slate-700 text-slate-100 font-bold py-3 px-4 rounded-xl text-sm text-left transition-colors border border-slate-700"
                   >
-                    👤 {t.nama}
+                    {t.nama}
                   </button>
                 ))}
               </div>

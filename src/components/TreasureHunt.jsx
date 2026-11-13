@@ -41,53 +41,52 @@ export default function TreasureHunt() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
   
   const [userGuess, setUserGuess] = useState(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [result, setResult] = useState({ distance: 0, points: 0 });
 
-  useEffect(() => {
-    const initGame = async () => {
-      const userNim = localStorage.getItem('user_nim') || 'guest';
-      
-      // 1. CEK APAKAH SUDAH PERNAH TAMAT
-      const isFinished = localStorage.getItem(`hunt_completed_${userNim}`);
-      
-      if (isFinished === 'true') {
-        const finalScore = localStorage.getItem(`hunt_final_score_${userNim}`) || 0;
-        setTotalScore(Number(finalScore));
-        setCurrentIdx(20); 
-        setLoading(false);
-        return;
-      }
-
-      // 2. TARIK DATA DARI SUPABASE
-      const { data: dbLocations, error } = await supabase
-        .from('locations') 
-        .select('*');
-
-      if (error) {
-        console.error("Gagal mengambil data lokasi dari Supabase:", error);
-        alert("Gagal memuat peta. Pastikan internet lancar!");
-        setLoading(false);
-        return;
-      }
-
-      // 3. LOGIKA RESET KEJAM
-      if (userNim !== 'guest') {
-        await supabase.from('alumni').update({ skor_peta: 0 }).eq('nim', userNim);
-      }
-
-      // 4. KocoK Data dari Database
-      const shuffled = [...dbLocations].sort(() => 0.5 - Math.random());
-      const selected20 = shuffled.slice(0, 20);
-      
-      setMyMissions(selected20);
-      setCurrentIdx(0);
-      setTotalScore(0);
+  const initGame = async () => {
+    setLoading(true);
+    setErrorMsg('');
+    const userNim = localStorage.getItem('user_nim') || 'guest';
+    
+    const isFinished = localStorage.getItem(`hunt_completed_${userNim}`);
+    
+    if (isFinished === 'true') {
+      const finalScore = localStorage.getItem(`hunt_final_score_${userNim}`) || 0;
+      setTotalScore(Number(finalScore));
+      setCurrentIdx(20); 
       setLoading(false);
-    };
+      return;
+    }
 
+    const { data: dbLocations, error } = await supabase
+      .from('locations') 
+      .select('*');
+
+    if (error || !dbLocations) {
+      console.error("Gagal mengambil data lokasi dari Supabase:", error);
+      setErrorMsg("Gagal memuat peta lokasi kenangan. Pastikan koneksi internet lancar dan coba lagi.");
+      setLoading(false);
+      return;
+    }
+
+    if (userNim !== 'guest') {
+      await supabase.from('alumni').update({ skor_peta: 0 }).eq('nim', userNim);
+    }
+
+    const shuffled = [...dbLocations].sort(() => 0.5 - Math.random());
+    const selected20 = shuffled.slice(0, 20);
+    
+    setMyMissions(selected20);
+    setCurrentIdx(0);
+    setTotalScore(0);
+    setLoading(false);
+  };
+
+  useEffect(() => {
     initGame();
   }, []);
 
@@ -121,12 +120,13 @@ export default function TreasureHunt() {
     const newScore = totalScore + points;
     setTotalScore(newScore);
 
-    if (points >= 80) {
-      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (points >= 80 && !prefersReducedMotion) {
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
     }
 
     const userNim = localStorage.getItem('user_nim');
-    if (userNim !== 'guest') {
+    if (userNim && userNim !== 'guest') {
       await supabase.from('alumni').update({ skor_peta: newScore }).eq('nim', userNim);
     }
   };
@@ -144,27 +144,50 @@ export default function TreasureHunt() {
     }
   };
 
-  // LAYAR LOADING ANIMASI (Saat mengambil data dari Supabase)
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center h-[60vh] space-y-6">
-      <div className="w-16 h-16 border-8 border-slate-700 border-t-green-500 rounded-full animate-spin"></div>
-      <div className="text-center">
-        <h3 className="text-green-500 font-black tracking-widest text-xl mb-2 animate-pulse">MENYAPU RADAR LOKASI...</h3>
-        <p className="text-slate-400 text-sm">Menghubungkan ke satelit Nostalgia 16</p>
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
+        <div className="w-12 h-12 border-4 border-slate-700 border-t-emerald-400 rounded-full animate-spin"></div>
+        <div className="text-center">
+          <h3 className="text-emerald-400 font-bold text-lg mb-1">Menyiapkan Peta Napak Tilas...</h3>
+          <p className="text-slate-300 text-sm">Memuat 20 titik kenangan kampus dan tongkrongan TL 2016</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <div role="alert" className="max-w-xl mx-auto p-8 bg-slate-800 rounded-2xl border border-rose-500/40 text-center shadow-md">
+        <h2 className="text-xl font-bold text-rose-400 mb-2">Gagal Memuat Peta</h2>
+        <p className="text-slate-300 text-sm mb-6">{errorMsg}</p>
+        <button
+          type="button"
+          onClick={initGame}
+          className="px-6 py-3 min-h-[44px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl transition-colors"
+        >
+          Coba Lagi
+        </button>
+      </div>
+    );
+  }
   
   if (currentIdx >= 20) {
     return (
-      <div className="max-w-xl mx-auto p-10 bg-slate-800 rounded-3xl border border-green-500 text-center shadow-2xl">
-        <h2 className="text-3xl font-bold text-white mb-4">PETUALANGAN SELESAI! 🗺️</h2>
-        <p className="text-slate-400 mb-2">Kamu sudah menyelesaikan Napak Tilas ini.</p>
-        <p className="text-slate-400 mb-8">Skor Akhir Kamu: <br/><span className="text-green-500 font-bold text-5xl">{totalScore}</span></p>
+      <div className="max-w-xl mx-auto p-8 md:p-10 bg-slate-800 rounded-2xl border border-emerald-500/50 text-center shadow-md">
+        <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+          Napak Tilas Selesai
+        </p>
+        <h2 className="text-3xl font-bold text-white mb-3">Petualangan Peta Selesai!</h2>
+        <p className="text-slate-300 mb-4">Kamu sudah menelusuri kembali 20 lokasi kenangan Sedulur 16.</p>
+        <p className="text-slate-300 mb-8">
+          Skor Akhir Kamu:<br />
+          <span className="text-emerald-400 font-mono font-bold text-5xl">{totalScore}</span>
+        </p>
         
         <div className="flex justify-center">
-          <a href="/" className="inline-block bg-green-600 px-8 py-3 rounded-xl font-bold text-white hover:bg-green-500 transition-all">
-            🏠 Kembali ke Dashboard
+          <a href="/" className="inline-flex items-center justify-center bg-amber-400 hover:bg-amber-300 px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-slate-950 transition-colors">
+            Kembali ke Beranda
           </a>
         </div>
       </div>
@@ -175,25 +198,27 @@ export default function TreasureHunt() {
   const centerMap = [-7.762171406006976, 110.40926671296263]; 
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 md:p-8 bg-slate-800 rounded-3xl shadow-2xl border border-slate-700">
+    <div className="w-full max-w-4xl mx-auto p-4 md:p-8 bg-slate-800 rounded-2xl shadow-md border border-slate-700">
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h2 className="text-2xl md:text-4xl font-bold text-green-500 uppercase tracking-widest">Enviro 16 Geo-Guesser</h2>
-          <p className="text-slate-400 text-sm md:text-base mt-1">Titik {currentIdx + 1} / 20</p>
+          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+            Titik Kenangan {currentIdx + 1} dari 20
+          </p>
+          <h2 className="text-2xl md:text-3xl font-bold text-white">Napak Tilas Kampus & Jogja</h2>
         </div>
-        <div className="bg-slate-900 px-6 py-3 rounded-xl border border-green-500/30 text-center md:text-right w-full md:w-auto flex flex-row md:flex-col justify-between md:justify-center items-center md:items-end">
-          <span className="text-slate-400 text-xs md:text-sm font-bold tracking-widest block mb-0 md:mb-1">SKOR SAAT INI</span>
-          <span className="text-2xl md:text-4xl font-black text-green-500">{totalScore}</span>
+        <div className="bg-slate-900 px-5 py-3 rounded-xl border border-emerald-500/30 text-center md:text-right w-full md:w-auto flex flex-row md:flex-col justify-between md:justify-center items-center md:items-end">
+          <span className="text-slate-300 text-xs font-mono font-bold tracking-wider block">SKOR SAAT INI</span>
+          <span className="text-2xl md:text-3xl font-mono font-bold text-emerald-400">{totalScore}</span>
         </div>
       </div>
 
-      <div className="bg-slate-900 p-5 md:p-6 rounded-xl border border-slate-700 mb-6 relative overflow-hidden shadow-inner">
-        <div className="absolute top-0 left-0 w-2 h-full bg-green-500"></div>
-        <p className="text-slate-300 italic text-base md:text-xl pl-2">"{mission?.clue}"</p>
+      <div className="bg-slate-900 p-5 rounded-xl border border-slate-700 mb-6">
+        <p className="text-xs font-mono font-bold text-amber-400 uppercase mb-1">Petunjuk Lokasi:</p>
+        <p className="text-slate-100 text-base md:text-lg leading-relaxed">{mission?.clue}</p>
       </div>
 
-      <div className="h-[400px] md:h-[550px] w-full rounded-2xl overflow-hidden border-4 border-slate-900 relative z-0 mb-6 shadow-lg">
+      <div className="h-[380px] md:h-[500px] w-full rounded-xl overflow-hidden border-2 border-slate-700 relative z-0 mb-6 shadow-md">
         <MapContainer 
           center={centerMap} 
           zoom={17} 
@@ -214,34 +239,36 @@ export default function TreasureHunt() {
 
       {!isRevealed ? (
         <button 
+          type="button"
           onClick={handleKunciJawaban}
           disabled={!userGuess}
-          className={`w-full py-4 md:py-5 rounded-xl font-bold text-white transition-all text-lg md:text-xl ${
+          className={`w-full py-4 min-h-[48px] rounded-xl font-bold transition-colors text-base md:text-lg ${
             userGuess 
-              ? 'bg-green-600 hover:bg-green-500 active:scale-95 shadow-lg shadow-green-900/50' 
-              : 'bg-slate-700 cursor-not-allowed opacity-50'
+              ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md' 
+              : 'bg-slate-700 text-slate-300 cursor-not-allowed'
           }`}
         >
-          {userGuess ? 'KUNCI LOKASI INI 🔒' : 'TARUH PIN DI PETA DULU'}
+          {userGuess ? 'Kunci Titik Lokasi Ini' : 'Klik pada Peta untuk Menaruh Pin Tebakan'}
         </button>
       ) : (
-        <div className={`p-6 rounded-xl border-2 text-center animate-in zoom-in duration-300 ${
-          result.points > 0 ? 'bg-green-900/40 border-green-500' : 'bg-red-900/40 border-red-500'
+        <div className={`p-6 rounded-xl border text-center ${
+          result.points > 0 ? 'bg-emerald-950/50 border-emerald-500/50' : 'bg-rose-950/50 border-rose-500/50'
         }`}>
-          <h3 className="text-white font-black text-2xl md:text-3xl mb-2">
-            {result.points === 100 ? 'AKURAT BANGET! 🎯' : result.points > 0 ? 'LUMAYAN DEKAT! 📍' : 'NYASAR JAUH! 😭'}
+          <h3 className="text-white font-bold text-2xl mb-2">
+            {result.points === 100 ? 'Tepat Sasaran!' : result.points > 0 ? 'Cukup Dekat!' : 'Masih Meleset Jauh'}
           </h3>
-          <p className="text-slate-300 text-base md:text-lg mb-1">
-            Aslinya di: <span className="text-white font-bold">{mission?.nama_tempat}</span>
+          <p className="text-slate-200 text-base mb-1">
+            Lokasi sebenarnya: <span className="text-white font-bold">{mission?.nama_tempat}</span>
           </p>
-          <p className="text-slate-400 text-sm md:text-base mb-3">Meleset: {Math.round(result.distance)} meter</p>
-          <p className="text-3xl md:text-4xl font-black text-yellow-400 mb-6">+{result.points} Poin</p>
+          <p className="text-slate-300 text-sm mb-3">Selisih jarak: {Math.round(result.distance)} meter</p>
+          <p className="text-3xl font-mono font-bold text-amber-400 mb-6">+{result.points} Poin</p>
           
           <button 
+            type="button"
             onClick={handleNextMission}
-            className="w-full bg-white text-slate-900 py-4 rounded-xl font-bold hover:bg-slate-200 transition-all shadow-md text-lg"
+            className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 py-3.5 px-6 rounded-xl font-bold transition-colors shadow-md text-base"
           >
-            Lanjut Titik {currentIdx + 2 > 20 ? 'Terakhir' : currentIdx + 2} →
+            Lanjut ke Titik {currentIdx + 2 > 20 ? 'Terakhir' : currentIdx + 2}
           </button>
         </div>
       )}

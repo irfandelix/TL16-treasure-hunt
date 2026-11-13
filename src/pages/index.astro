@@ -2,14 +2,29 @@
 import '../styles/global.css';
 import GameDashboard from '../components/GameDashboard.jsx';
 ---
-
+<!doctype html>
 <html lang="id">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>TL2016 Archives</title>
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      />
+    </noscript>
+    <title>Perayaan 1 Dekade TL 2016 - Portal Sedulur 16</title>
   </head>
-  <body class="bg-slate-900 text-white m-0 p-0">
+  <body class="bg-slate-900 text-slate-50 m-0 p-0 min-h-screen">
     <GameDashboard client:only="react" />
   </body>
 </html>

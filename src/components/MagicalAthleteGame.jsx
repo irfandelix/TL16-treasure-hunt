@@ -1,51 +1,37 @@
-// src/components/MagicalAthleteGame.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { ATHLETE_CHARACTERS, TRACK_TILES, PLAYER_COLORS } from '../data/athleteCharacters';
 import confetti from 'canvas-confetti';
 
-// Koordinat petak untuk sirkuit stadion balap lari oval melingkar (8 Kolom x 6 Baris = 24 Petak Penuh)
 const TRACK_LOOP_COORDS = {
-  // Petak 0: Garis START / FINISH di Sudut Kiri-Atas (Col 1, Row 1)
-  0:  { col: 1, row: 1, arrow: '➔' },
-
-  // Sisi Lurus Atas (Lari ke Kanan ➔)
-  1:  { col: 2, row: 1, arrow: '➔' },
-  2:  { col: 3, row: 1, arrow: '➔' },
-  3:  { col: 4, row: 1, arrow: '➔' },
-  4:  { col: 5, row: 1, arrow: '➔' },
-  5:  { col: 6, row: 1, arrow: '➔' },
-  6:  { col: 7, row: 1, arrow: '➔' },
-  7:  { col: 8, row: 1, arrow: '⤵' }, // Tikungan Kanan-Atas
-
-  // Sisi Kanan (Lari ke Bawah ↓)
-  8:  { col: 8, row: 2, arrow: '↓' },
-  9:  { col: 8, row: 3, arrow: '↓' },
-  10: { col: 8, row: 4, arrow: '↓' },
-  11: { col: 8, row: 5, arrow: '↓' },
-  12: { col: 8, row: 6, arrow: '↵' }, // Tikungan Kanan-Bawah (Titik Tengah)
-
-  // Sisi Lurus Bawah (Lari ke Kiri ⬅)
-  13: { col: 7, row: 6, arrow: '⬅' },
-  14: { col: 6, row: 6, arrow: '⬅' },
-  15: { col: 5, row: 6, arrow: '⬅' },
-  16: { col: 4, row: 6, arrow: '⬅' },
-  17: { col: 3, row: 6, arrow: '⬅' },
-  18: { col: 2, row: 6, arrow: '⬅' },
-  19: { col: 1, row: 6, arrow: '↰' }, // Tikungan Kiri-Bawah
-
-  // Sisi Kiri (Lari ke Atas Menuju Garis Finish ↑)
-  20: { col: 1, row: 5, arrow: '↑' },
-  21: { col: 1, row: 4, arrow: '↑' },
-  22: { col: 1, row: 3, arrow: '↑' },
-  23: { col: 1, row: 2, arrow: '↑' },
-
-  // Petak 24 (Garis Finish yang Sama dengan Petak 0 di Col 1, Row 1)
-  24: { col: 1, row: 1, arrow: '🏆' },
+  0:  { col: 1, row: 1, dir: 'Kanan' },
+  1:  { col: 2, row: 1, dir: 'Kanan' },
+  2:  { col: 3, row: 1, dir: 'Kanan' },
+  3:  { col: 4, row: 1, dir: 'Kanan' },
+  4:  { col: 5, row: 1, dir: 'Kanan' },
+  5:  { col: 6, row: 1, dir: 'Kanan' },
+  6:  { col: 7, row: 1, dir: 'Kanan' },
+  7:  { col: 8, row: 1, dir: 'Turun' },
+  8:  { col: 8, row: 2, dir: 'Turun' },
+  9:  { col: 8, row: 3, dir: 'Turun' },
+  10: { col: 8, row: 4, dir: 'Turun' },
+  11: { col: 8, row: 5, dir: 'Turun' },
+  12: { col: 8, row: 6, dir: 'Kiri' },
+  13: { col: 7, row: 6, dir: 'Kiri' },
+  14: { col: 6, row: 6, dir: 'Kiri' },
+  15: { col: 5, row: 6, dir: 'Kiri' },
+  16: { col: 4, row: 6, dir: 'Kiri' },
+  17: { col: 3, row: 6, dir: 'Kiri' },
+  18: { col: 2, row: 6, dir: 'Kiri' },
+  19: { col: 1, row: 6, dir: 'Naik' },
+  20: { col: 1, row: 5, dir: 'Naik' },
+  21: { col: 1, row: 4, dir: 'Naik' },
+  22: { col: 1, row: 3, dir: 'Naik' },
+  23: { col: 1, row: 2, dir: 'Naik' },
+  24: { col: 1, row: 1, dir: 'Finish' },
 };
 
 export default function MagicalAthleteGame() {
-  // --- USER STATE ---
   const [currentUser, setCurrentUser] = useState({
     nim: '',
     nama: '',
@@ -56,7 +42,6 @@ export default function MagicalAthleteGame() {
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
 
-  // --- ROOM STATE ---
   const [roomCode, setRoomCode] = useState('');
   const [inputRoomCode, setInputRoomCode] = useState('');
   const [isInRoom, setIsInRoom] = useState(false);
@@ -67,7 +52,6 @@ export default function MagicalAthleteGame() {
   const [showAlumniModal, setShowAlumniModal] = useState(false);
   const [targetSlot, setTargetSlot] = useState(null);
 
-  // --- GAMEPLAY LOCAL STATE ---
   const [diceRolling, setDiceRolling] = useState(false);
   const [lastDice, setLastDice] = useState(null);
   const [displayDice, setDisplayDice] = useState(1);
@@ -77,7 +61,6 @@ export default function MagicalAthleteGame() {
   const [toastMessage, setToastMessage] = useState('');
   const [isProcessingMove, setIsProcessingMove] = useState(false);
 
-  // Ref to prevent stale closures in realtime and bot ticks
   const roomDataRef = useRef(null);
   const playersRef = useRef([]);
   const isBotThinkingRef = useRef(false);
@@ -90,7 +73,18 @@ export default function MagicalAthleteGame() {
     playersRef.current = players;
   }, [players]);
 
-  // Sync Dadu dari Realtime Room Data (agar lawan / spectator melihat dadu yang sama)
+  useEffect(() => {
+    if (!showAlumniModal) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowAlumniModal(false);
+        setTargetSlot(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAlumniModal]);
+
   useEffect(() => {
     if (roomData?.round_winners && typeof roomData.round_winners === 'object' && !Array.isArray(roomData.round_winners)) {
       const synced = roomData.round_winners;
@@ -111,7 +105,6 @@ export default function MagicalAthleteGame() {
     }
   }, [roomData?.round_winners]);
 
-  // 1. CEK SESI LOGIN DARI LOCALSTORAGE
   useEffect(() => {
     const savedNim = localStorage.getItem('user_nim');
     const savedNama = localStorage.getItem('user_nama');
@@ -127,7 +120,6 @@ export default function MagicalAthleteGame() {
     }
   }, []);
 
-  // 2. FETCH DAFTAR ALUMNI UNTUK ADMIN SELECTOR
   useEffect(() => {
     if (currentUser.isAdmin) {
       const fetchAlumni = async () => {
@@ -141,7 +133,6 @@ export default function MagicalAthleteGame() {
     }
   }, [currentUser.isAdmin]);
 
-  // 3. LOGIN MANUAL DI HALAMAN TERSEMBUNYI JIKA BELUM ADA SESI
   const handleManualLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
@@ -189,12 +180,10 @@ export default function MagicalAthleteGame() {
     setLoginLoading(false);
   };
 
-  // 4. BUAT ROOM BARU (KHUSUS ADMIN)
   const handleCreateRoom = async () => {
     const generatedCode = 'ENV' + Math.floor(100 + Math.random() * 900);
     const poolCharIds = ATHLETE_CHARACTERS.map(c => c.id);
 
-    // Insert Room
     const { error: roomErr } = await supabase.from('athlete_rooms').insert([
       {
         room_code: generatedCode,
@@ -210,11 +199,10 @@ export default function MagicalAthleteGame() {
     ]);
 
     if (roomErr) {
-      alert('Gagal membuat room: ' + roomErr.message);
+      alert('Gagal membuat ruangan: ' + roomErr.message);
       return;
     }
 
-    // Insert Admin sebagai Slot 1
     const { error: playErr } = await supabase.from('athlete_players').insert([
       {
         room_code: generatedCode,
@@ -241,7 +229,6 @@ export default function MagicalAthleteGame() {
     setIsInRoom(true);
   };
 
-  // 5. GABUNG KE ROOM (UNTUK PEMAIN LAIN)
   const handleJoinRoom = async (e) => {
     e?.preventDefault();
     const code = inputRoomCode.trim().toUpperCase();
@@ -254,7 +241,7 @@ export default function MagicalAthleteGame() {
       .single();
 
     if (error || !room) {
-      alert('Ruangan tidak ditemukan! Pastikan kode room benar.');
+      alert('Ruangan tidak ditemukan! Pastikan kode ruangan benar.');
       return;
     }
 
@@ -262,11 +249,9 @@ export default function MagicalAthleteGame() {
     setIsInRoom(true);
   };
 
-  // 6. REALTIME RADAR & SYNC ROOM DATA
   useEffect(() => {
     if (!isInRoom || !roomCode) return;
 
-    // Load initial
     const loadGameData = async () => {
       const { data: room } = await supabase
         .from('athlete_rooms')
@@ -285,7 +270,6 @@ export default function MagicalAthleteGame() {
 
     loadGameData();
 
-    // Subscribe to channels
     const channel = supabase
       .channel(`athlete_game:${roomCode}`)
       .on(
@@ -319,15 +303,12 @@ export default function MagicalAthleteGame() {
     };
   }, [isInRoom, roomCode]);
 
-  // Helper Player Ku
   const myPlayer = players.find(p => p.nim === currentUser.nim);
   const mySlot = myPlayer?.slot_number;
 
-  // 7. ADMIN CONTROLS: ASSIGN PEMAIN KE SLOT ATAU BOT
   const handleAssignPlayer = async (alumnus) => {
     if (!targetSlot) return;
 
-    // Cek apakah nim sudah ada di slot lain
     const existing = players.find(p => p.nim === alumnus.nim);
     if (existing) {
       alert(`${alumnus.nama} sudah berada di Slot ${existing.slot_number}!`);
@@ -350,21 +331,17 @@ export default function MagicalAthleteGame() {
       is_ready: true
     };
 
-    // Optimistic UI update
     setPlayers(prev => [...prev.filter(p => p.slot_number !== targetSlot), newPlayer].sort((a, b) => a.slot_number - b.slot_number));
     setShowAlumniModal(false);
     setTargetSlot(null);
 
-    // Hapus player di slot tersebut jika ada
     await supabase.from('athlete_players').delete().eq('room_code', roomCode).eq('slot_number', targetSlot);
 
-    // Insert player baru
     const { error } = await supabase.from('athlete_players').insert([newPlayer]);
     if (error) {
       console.error('Gagal assign pemain:', error);
     }
 
-    // Refresh data dari database
     const { data: updated } = await supabase.from('athlete_players').select('*').eq('room_code', roomCode).order('slot_number', { ascending: true });
     if (updated) setPlayers(updated);
   };
@@ -390,7 +367,6 @@ export default function MagicalAthleteGame() {
       is_ready: true
     };
 
-    // Optimistic UI update
     setPlayers(prev => [...prev.filter(p => p.slot_number !== slotNum), newBot].sort((a, b) => a.slot_number - b.slot_number));
 
     await supabase.from('athlete_players').delete().eq('room_code', roomCode).eq('slot_number', slotNum);
@@ -400,16 +376,13 @@ export default function MagicalAthleteGame() {
       console.error('Gagal tambah bot:', error);
     }
 
-    // Refresh data dari database
     const { data: updated } = await supabase.from('athlete_players').select('*').eq('room_code', roomCode).order('slot_number', { ascending: true });
     if (updated) setPlayers(updated);
   };
 
   const handleRemoveSlot = async (slotNum) => {
-    // 1. Optimistic UI update langsung hilang dari layar
     setPlayers(prev => prev.filter(p => p.slot_number !== slotNum));
 
-    // 2. Hapus dari database Supabase
     const { error } = await supabase
       .from('athlete_players')
       .delete()
@@ -421,7 +394,6 @@ export default function MagicalAthleteGame() {
       alert('Gagal menghapus pemain: ' + error.message);
     }
 
-    // 3. Pastikan state tersinkron dengan database
     const { data: updated } = await supabase
       .from('athlete_players')
       .select('*')
@@ -430,15 +402,12 @@ export default function MagicalAthleteGame() {
     if (updated) setPlayers(updated);
   };
 
-  // 8. MULAI FASE DRAFT (ADMIN TRIGGER)
   const handleStartDraft = async () => {
     if (players.length < 2) {
-      alert('Minimal butuh 2 pemain (atau Bot) untuk memulai balapan!');
+      alert('Minimal diperlukan 2 pemain (atau Bot) untuk memulai balapan!');
       return;
     }
 
-    // Buat Urutan Snake Draft (4 Ronde Draft)
-    // Contoh 4 Pemain: [1,2,3,4, 4,3,2,1, 1,2,3,4, 4,3,2,1]
     const pSlots = players.map(p => p.slot_number);
     let order = [];
     for (let r = 0; r < 4; r++) {
@@ -454,14 +423,12 @@ export default function MagicalAthleteGame() {
       draft_turn_index: 0,
       draft_order: order,
       pool_characters: ATHLETE_CHARACTERS.map(c => c.id),
-      last_action: '🔥 Bursa Transfer Dimulai! Pemain pertama silakan pilih atlet jagoanmu!'
+      last_action: 'Bursa Transfer Dimulai! Pemain pertama silakan pilih atlet jagoanmu!'
     }).eq('room_code', roomCode);
   };
 
-  // Helper Host check: Room creator or Admin
   const isHost = roomData?.admin_nim === currentUser.nim || currentUser.isAdmin || mySlot === 1;
 
-  // 9. EKSEKUSI PEMILIHAN ATLET (DRAFT PICK)
   const handleDraftPick = async (charId) => {
     const currentR = roomDataRef.current || roomData;
     const currentP = playersRef.current || players;
@@ -472,7 +439,6 @@ export default function MagicalAthleteGame() {
 
     if (!currentDraftPlayer) return;
 
-    // Pastikan ini giliran player terkait (atau Host mengeksekusi untuk bot)
     if (currentDraftPlayer.nim !== currentUser.nim && !currentDraftPlayer.is_bot) {
       alert('Bukan giliran Anda memilih!');
       return;
@@ -481,7 +447,6 @@ export default function MagicalAthleteGame() {
     const updatedPool = (currentR.pool_characters || []).filter(id => id !== charId);
     const updatedDrafted = [...(currentDraftPlayer.drafted_characters || []), charId];
 
-    // Optimistic UI updates
     setPlayers(prev => prev.map(p => p.id === currentDraftPlayer.id ? { ...p, drafted_characters: updatedDrafted } : p));
     setRoomData(prev => prev ? {
       ...prev,
@@ -489,7 +454,6 @@ export default function MagicalAthleteGame() {
       pool_characters: updatedPool
     } : prev);
 
-    // Update Player di database
     await supabase.from('athlete_players').update({
       drafted_characters: updatedDrafted
     }).eq('id', currentDraftPlayer.id);
@@ -499,13 +463,12 @@ export default function MagicalAthleteGame() {
     const chosenChar = ATHLETE_CHARACTERS.find(c => c.id === charId);
 
     if (isDraftFinished) {
-      // Draft Selesai! Pindah ke fase Pemilihan Atlet Ronde 1
       await supabase.from('athlete_rooms').update({
         status: 'RACE_SELECT',
         current_round: 1,
         draft_turn_index: nextIndex,
         pool_characters: updatedPool,
-        last_action: `🎉 Draft selesai! ${currentDraftPlayer.nama} memilih ${chosenChar?.name}. Waktunya pilih atlet untuk Ronde 1!`
+        last_action: `Draft selesai! ${currentDraftPlayer.nama} memilih ${chosenChar?.name}. Waktunya pilih atlet untuk Ronde 1!`
       }).eq('room_code', roomCode);
     } else {
       const nextSlot = currentR.draft_order[nextIndex];
@@ -514,18 +477,16 @@ export default function MagicalAthleteGame() {
       await supabase.from('athlete_rooms').update({
         draft_turn_index: nextIndex,
         pool_characters: updatedPool,
-        last_action: `✨ ${currentDraftPlayer.nama} memilih ${chosenChar?.name}! Giliran: ${nextPlayer?.nama}.`
+        last_action: `${currentDraftPlayer.nama} memilih ${chosenChar?.name}! Giliran: ${nextPlayer?.nama}.`
       }).eq('room_code', roomCode);
     }
 
     setSelectedDraftChar(null);
   };
 
-  // 10. BOT AUTOMATION (HANYA DIEKSEKUSI OLEH CLIENT HOST AGAR TIDAK DUPLIKAT)
   useEffect(() => {
     if (!isHost || !roomData) return;
 
-    // BOT TICK PADA FASE DRAFT
     if (roomData.status === 'DRAFT') {
       const currentDraftSlot = roomData.draft_order?.[roomData.draft_turn_index];
       const currentDraftPlayer = players.find(p => p.slot_number === currentDraftSlot);
@@ -554,7 +515,6 @@ export default function MagicalAthleteGame() {
       }
     }
 
-    // BOT TICK PADA FASE RACE_SELECT (LOCK-IN)
     if (roomData.status === 'RACE_SELECT') {
       const botWaiting = players.find(p => p.is_bot && !p.active_character_id);
       if (botWaiting && !isBotThinkingRef.current) {
@@ -585,7 +545,6 @@ export default function MagicalAthleteGame() {
       }
     }
 
-    // BOT TICK PADA FASE RACING (LEMPAR DADU)
     if (roomData.status === 'RACING') {
       const activeSlot = roomData.current_turn_slot;
       const activePlayer = players.find(p => p.slot_number === activeSlot);
@@ -610,7 +569,6 @@ export default function MagicalAthleteGame() {
     }
   }, [roomData, players, isHost, diceRolling]);
 
-  // 11. LOCK-IN ATLET UNTUK BALAPAN RONDE SAAT INI
   const handleLockInCharacter = async () => {
     if (!myPlayer || !secretSelectedChar) return;
 
@@ -622,22 +580,18 @@ export default function MagicalAthleteGame() {
     setSecretSelectedChar(null);
   };
 
-  // Cek apakah semua pemain sudah lock-in atlet untuk ronde ini
   useEffect(() => {
     if (!isHost || !roomData || roomData.status !== 'RACE_SELECT') return;
 
     const allReady = players.length >= 2 && players.every(p => p.active_character_id);
     if (allReady) {
-      // Semua sudah lock-in! Buka tirai dan mulai balapan!
       const timer = setTimeout(async () => {
-        // Reset posisi ke 0 untuk semua pemain
         await supabase.from('athlete_players').update({
           position: 0,
           is_ready: false,
           skill_used: false
         }).eq('room_code', roomCode);
 
-        // Eksekusi skill awal (Oxygen Boost: +3 petak di awal ronde)
         const updatedPlayers = await supabase.from('athlete_players').select('*').eq('room_code', roomCode);
         if (updatedPlayers.data) {
           for (const p of updatedPlayers.data) {
@@ -652,27 +606,24 @@ export default function MagicalAthleteGame() {
         await supabase.from('athlete_rooms').update({
           status: 'RACING',
           current_turn_slot: 1,
-          last_action: `🏁 Ronde ${roomData.current_round} Resmi Dimulai! Semua atlet berada di lintasan!`
+          last_action: `Ronde ${roomData.current_round} Resmi Dimulai! Semua atlet berada di lintasan!`
         }).eq('room_code', roomCode);
       }, 1000);
       return () => clearTimeout(timer);
     }
   }, [players, roomData, currentUser.isAdmin]);
 
-  // 12. LOGIKA UTAMA LEMPAR DADU & PERGERAKAN ATLET
   const executePlayerMove = async (playerToMove, overrideSteps = null) => {
     if (isProcessingMove) return;
     setIsProcessingMove(true);
     setDiceRolling(true);
 
-    // Animasi putaran kocok dadu acak (shuffling faces)
     const shuffleInterval = setInterval(() => {
       setDisplayDice(Math.floor(1 + Math.random() * 6));
     }, 60);
 
     let roll = overrideSteps !== null ? overrideSteps : Math.floor(1 + Math.random() * 6);
 
-    // Durasi animasi kocok dadu 850ms
     await new Promise(r => setTimeout(r, 850));
     clearInterval(shuffleInterval);
 
@@ -684,38 +635,32 @@ export default function MagicalAthleteGame() {
     let steps = roll;
     let skillNote = '';
 
-    // --- SKILL CHECK SEBELUM MELANGKAH ---
-    // 1. Alum Coagulant: Jika 1 atau 2, lempar ulang
     if (charData?.id === 'alum_coagulant' && (roll === 1 || roll === 2) && overrideSteps === null) {
       const secondRoll = Math.floor(1 + Math.random() * 6);
       steps = Math.max(roll, secondRoll);
-      skillNote = ` [💧 Flash Flocculation: lempar ulang dari ${roll} jadi ${steps}!]`;
+      skillNote = ` [Flash Flocculation: lempar ulang dari ${roll} jadi ${steps}!]`;
       setDisplayDice(steps);
       setLastDice(steps);
     }
 
-    // 2. Activated Sludge: Dadu genap +1
     if (charData?.id === 'activated_sludge' && roll % 2 === 0 && overrideSteps === null) {
       steps += 1;
-      skillNote = ` [🦠 Organic Breakdown: genap +1 langkah!]`;
+      skillNote = ` [Organic Breakdown: genap +1 langkah!]`;
     }
 
-    // 3. Biogas Methane: Jika di posisi paling bontot, +3 langkah
     if (charData?.id === 'biogas_methane' && overrideSteps === null) {
       const minPos = Math.min(...players.map(p => p.position));
       if (playerToMove.position === minPos) {
         steps += 3;
-        skillNote = ` [🔥 Methane Flare: posisi bontot +3 langkah!]`;
+        skillNote = ` [Methane Flare: posisi bontot +3 langkah!]`;
       }
     }
 
-    // 4. Magmatic Pressure: Setelah petak 12, +2 langkah
     if (charData?.id === 'magma_pressure' && playerToMove.position >= 12 && overrideSteps === null) {
       steps += 2;
-      skillNote = ` [🌋 Magma Burst: paruh kedua +2 langkah!]`;
+      skillNote = ` [Magma Burst: paruh kedua +2 langkah!]`;
     }
 
-    // Simpan detail lemparan dadu untuk ditampilkan besar di tengah lapangan
     setDiceRollDetails({
       rollerName: playerToMove.nama,
       charName: charData?.name,
@@ -725,7 +670,6 @@ export default function MagicalAthleteGame() {
       skillNote: skillNote
     });
 
-    // Sync info dadu ke Supabase agar lawan & spectator melihat dadu yang sama
     await supabase.from('athlete_rooms').update({
       round_winners: {
         last_dice: roll,
@@ -737,15 +681,11 @@ export default function MagicalAthleteGame() {
         skill_note: skillNote,
         rolled_at: Date.now()
       },
-      last_action: `🎲 ${playerToMove.nama} melempar dadu: [ ${roll} ] ${steps !== roll ? `(Skill +${steps - roll} = ${steps} Petak)` : ''}`
+      last_action: `${playerToMove.nama} melempar dadu: [ ${roll} ] ${steps !== roll ? `(Skill +${steps - roll} = ${steps} Petak)` : ''}`
     }).eq('room_code', roomCode);
 
-    // Jeda sejenak 450ms agar pemain dapat melihat jelas angka dadu di tengah sebelum pion melompat
     await new Promise(r => setTimeout(r, 450));
 
-    // =========================================================================
-    // ANIMASI GERAKAN LANGKAH-DEMI-LANGKAH (TIDAK BLINK / TELEPORTASI)
-    // =========================================================================
     let currentPos = playerToMove.position;
     const tailingPlayer = players.find(p => p.active_character_id === 'slurry_tailing' && p.id !== playerToMove.id);
 
@@ -755,26 +695,23 @@ export default function MagicalAthleteGame() {
       await new Promise(r => setTimeout(r, 220));
     };
 
-    // 1. LANGKAH MAJU SATU-PER-SATU
     for (let s = 1; s <= steps; s++) {
       if (currentPos >= 24) break;
       await stepTo(currentPos + 1);
 
-      // Cek apakah terhadang Viscous Trap dari Slurry Tailing
       if (tailingPlayer && currentPos === tailingPlayer.position) {
-        skillNote += ` [🪨 Terjebak Viscous Trap dari ${tailingPlayer.nama}!]`;
-        setToastMessage(`🪨 ${playerToMove.nama} terhenti di petak Slurry Tailing milik ${tailingPlayer.nama}!`);
+        skillNote += ` [Terjebak Viscous Trap dari ${tailingPlayer.nama}!]`;
+        setToastMessage(`${playerToMove.nama} terhenti di petak Slurry Tailing milik ${tailingPlayer.nama}!`);
         await new Promise(r => setTimeout(r, 350));
         break;
       }
     }
 
-    // 2. CEK PETAK KHUSUS (BOOST / TRAP) PADA PETAK PENDARATAN
     const targetTile = TRACK_TILES.find(t => t.index === currentPos);
     if (targetTile && currentPos < 24) {
       if (targetTile.type === 'boost') {
-        skillNote += ` [⚡ Meluncur di petak Boost +2!]`;
-        setToastMessage(`⚡ ${playerToMove.nama} menginjak petak Boost! Meluncur +2 langkah maju!`);
+        skillNote += ` [Meluncur di petak Boost +2!]`;
+        setToastMessage(`${playerToMove.nama} menginjak petak Boost! Meluncur +2 langkah maju!`);
         await new Promise(r => setTimeout(r, 350));
         for (let b = 0; b < 2; b++) {
           if (currentPos >= 24) break;
@@ -782,14 +719,13 @@ export default function MagicalAthleteGame() {
         }
       } else if (targetTile.type === 'trap') {
         if (charData?.id === 'phytoremediation') {
-          skillNote += ` [🌲 Phyto-Immunity: Kebal jebakan!]`;
-          setToastMessage(`🌲 ${playerToMove.nama} kebal terhadap jebakan!`);
+          skillNote += ` [Phyto-Immunity: Kebal jebakan!]`;
+          setToastMessage(`${playerToMove.nama} kebal terhadap jebakan!`);
           await new Promise(r => setTimeout(r, 300));
         } else {
-          skillNote += ` [⚠️ Terperosok jebakan -2!]`;
-          setToastMessage(`⚠️ ${playerToMove.nama} terperosok jebakan! Melangkah mundur 2 petak!`);
+          skillNote += ` [Terperosok jebakan -2!]`;
+          setToastMessage(`${playerToMove.nama} terperosok jebakan! Melangkah mundur 2 petak!`);
           await new Promise(r => setTimeout(r, 400));
-          // LANGKAH MUNDUR SATU-PER-SATU (ANIMASI MUNDUR)
           for (let t = 0; t < 2; t++) {
             if (currentPos <= 0) break;
             await stepTo(currentPos - 1);
@@ -798,30 +734,25 @@ export default function MagicalAthleteGame() {
       }
     }
 
-    // 3. CEK MENDARAT DI PETAK ACID MINE DRAINAGE (MUNDUR 3 PETAK)
     const acidPlayer = players.find(p => p.active_character_id === 'acid_mine' && p.id !== playerToMove.id);
     if (acidPlayer && acidPlayer.position === currentPos && currentPos < 24) {
-      skillNote += ` [🧪 Terpental Corrosive Leach mundur 3 petak!]`;
-      setToastMessage(`🧪 ${playerToMove.nama} mendarat di petak Acid Mine! Terpental mundur 3 petak!`);
+      skillNote += ` [Terpental Corrosive Leach mundur 3 petak!]`;
+      setToastMessage(`${playerToMove.nama} mendarat di petak Acid Mine! Terpental mundur 3 petak!`);
       await new Promise(r => setTimeout(r, 400));
-      // LANGKAH MUNDUR 3 PETAK SATU-PER-SATU
       for (let a = 0; a < 3; a++) {
         if (currentPos <= 0) break;
         await stepTo(currentPos - 1);
       }
     }
 
-    // UPDATE POSISI FINAL PEMAIN KE DATABASE SUPABASE
     await supabase.from('athlete_players').update({
       position: currentPos
     }).eq('id', playerToMove.id);
 
-    // 4. SKILL CEK PENUMPANG: Groundwater Flow (Subsurface Surge)
-    // Jika ada lawan menyalip groundwater, groundwater ikut maju +2 petak dengan animasi
     const gwPlayer = players.find(p => p.active_character_id === 'groundwater' && p.id !== playerToMove.id);
     if (gwPlayer && playerToMove.position < gwPlayer.position && currentPos > gwPlayer.position) {
       let gwPos = gwPlayer.position;
-      setToastMessage(`🌊 ${gwPlayer.nama} terseret Subsurface Surge maju +2 petak!`);
+      setToastMessage(`${gwPlayer.nama} terseret Subsurface Surge maju +2 petak!`);
       await new Promise(r => setTimeout(r, 350));
       for (let g = 0; g < 2; g++) {
         if (gwPos >= 24) break;
@@ -830,50 +761,46 @@ export default function MagicalAthleteGame() {
         await new Promise(r => setTimeout(r, 220));
       }
       await supabase.from('athlete_players').update({ position: gwPos }).eq('id', gwPlayer.id);
-      skillNote += ` [🌊 ${gwPlayer.nama} terseret Subsurface Surge +2!]`;
+      skillNote += ` [${gwPlayer.nama} terseret Subsurface Surge +2!]`;
     }
 
-    // CEK APAKAH RONDE BERAKHIR (ATLET MENCAPAI FINISH LINE 24)
     if (currentPos >= 24) {
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-      await handleFinishRound(playerToMove, `${playerToMove.nama} (${charData?.name}) Menembus Garis FINISH! 🏆`);
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!prefersReducedMotion) {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      }
+      await handleFinishRound(playerToMove, `${playerToMove.nama} (${charData?.name}) Menembus Garis FINISH!`);
       setIsProcessingMove(false);
       return;
     }
 
-    // Cek giliran berikutnya
     const currentSlotIdx = players.findIndex(p => p.slot_number === roomData.current_turn_slot);
     const nextSlotIdx = (currentSlotIdx + 1) % players.length;
     const nextSlot = players[nextSlotIdx].slot_number;
     const nextPlayer = players[nextSlotIdx];
 
-    // Compost Nutrient: Jika dapat angka 6, dapat 1x lemparan tambahan!
     if (charData?.id === 'compost_nutrient' && roll === 6) {
       await supabase.from('athlete_rooms').update({
-        last_action: `♻️ ${playerToMove.nama} dapat angka 6! Bio-Enrichment memberi giliran tambahan!`
+        last_action: `${playerToMove.nama} dapat angka 6! Bio-Enrichment memberi giliran tambahan!`
       }).eq('room_code', roomCode);
     } else {
       await supabase.from('athlete_rooms').update({
         current_turn_slot: nextSlot,
-        last_action: `🎲 ${playerToMove.nama} melangkah ${steps} petak (ke petak ${currentPos}).${skillNote} Giliran: ${nextPlayer.nama}.`
+        last_action: `${playerToMove.nama} melangkah ${steps} petak (ke petak ${currentPos}).${skillNote} Giliran: ${nextPlayer.nama}.`
       }).eq('room_code', roomCode);
     }
 
     setIsProcessingMove(false);
   };
 
-  // 13. PENYELESAIAN RONDE & PEMBAGIAN MEDALI
   const handleFinishRound = async (finisher, victoryText) => {
-    // Hitung poin: Ronde 4 adalah DOUBLE POINTS!
     const multiplier = roomData.current_round === 4 ? 2 : 1;
     const pointsAwarded = 5 * multiplier;
 
-    // Tambahkan poin ke finisher
     await supabase.from('athlete_players').update({
       score: (finisher.score || 0) + pointsAwarded
     }).eq('id', finisher.id);
 
-    // Tandai karakter yang sudah dipakai di ronde ini agar tidak bisa dipakai lagi
     for (const p of players) {
       if (p.active_character_id) {
         const updatedUsed = [...(p.used_characters || []), p.active_character_id];
@@ -886,16 +813,14 @@ export default function MagicalAthleteGame() {
     }
 
     if (roomData.current_round >= 4) {
-      // PERMAINAN SELESAI (GAME OVER)!
       await supabase.from('athlete_rooms').update({
         status: 'GAME_OVER',
-        last_action: `🏆 TURNAMEN SELESAI! ${victoryText} Selamat kepada para juara!`
+        last_action: `TURNAMEN SELESAI! ${victoryText} Selamat kepada para juara!`
       }).eq('room_code', roomCode);
     } else {
-      // LANJUT KE RONDE BERIKUTNYA
       await supabase.from('athlete_rooms').update({
         status: 'ROUND_OVER',
-        last_action: `🏁 ${victoryText} Memperoleh ${pointsAwarded} Medali! Siapkan atlet ronde berikutnya!`
+        last_action: `${victoryText} Memperoleh ${pointsAwarded} Medali! Siapkan atlet ronde berikutnya!`
       }).eq('room_code', roomCode);
     }
   };
@@ -908,11 +833,10 @@ export default function MagicalAthleteGame() {
       status: 'RACE_SELECT',
       current_round: nextRound,
       current_turn_slot: 1,
-      last_action: `🔥 Ronde ${nextRound} Dimulai! Silakan kunci atlet pilihanmu!`
+      last_action: `Ronde ${nextRound} Dimulai! Silakan kunci atlet pilihanmu!`
     }).eq('room_code', roomCode);
   };
 
-  // 14. RESET GAME (ADMIN)
   const handleResetGame = async () => {
     if (!currentUser.isAdmin) return;
     if (!confirm('Yakin ingin mereset permainan kembali ke Lobi?')) return;
@@ -938,48 +862,46 @@ export default function MagicalAthleteGame() {
     }).eq('room_code', roomCode);
   };
 
-  // ==========================================
-  // RENDER: LAYAR 0 - LOGIN JIKA BELUM ADA SESI
-  // ==========================================
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
-        <div className="bg-slate-900 border border-emerald-500/30 p-8 rounded-3xl max-w-md w-full shadow-[0_0_50px_rgba(16,185,129,0.15)] text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-emerald-500/10 border border-emerald-500/40 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
-            🧪
-          </div>
-          <h1 className="text-2xl font-black tracking-wider text-emerald-400 uppercase mb-2">
-            Magical Athlete
+      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4">
+        <div className="bg-slate-800 border border-slate-700 p-8 rounded-2xl max-w-md w-full shadow-md text-center">
+          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+            Olimpiade Sains Teknik Lingkungan
+          </p>
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Magical Athlete TL 2016
           </h1>
-          <p className="text-xs text-slate-400 font-mono tracking-widest uppercase mb-6">
-            Olimpiade Teknik Lingkungan TL16
+          <p className="text-xs text-slate-300 mb-6">
+            Masukkan NIM untuk bergabung ke lintasan balap spesial 1 Dekade.
           </p>
 
           {loginError && (
-            <div className="p-3 mb-4 bg-rose-500/10 border border-rose-500/40 rounded-xl text-rose-400 text-sm">
+            <div role="alert" className="p-3 mb-4 bg-rose-950/60 border border-rose-500/40 rounded-xl text-rose-300 text-sm">
               {loginError}
             </div>
           )}
 
           <form onSubmit={handleManualLogin} className="space-y-4">
             <div className="text-left">
-              <label className="text-xs font-mono uppercase tracking-widest text-slate-400 block mb-1">
-                Masukkan NIM Anda
+              <label htmlFor="athlete-login-nim" className="text-xs font-mono uppercase tracking-wider text-slate-200 block mb-1.5 font-bold">
+                Nomor Induk Mahasiswa (NIM)
               </label>
               <input
+                id="athlete-login-nim"
                 type="text"
                 value={inputNim}
                 onChange={(e) => setInputNim(e.target.value)}
                 placeholder="Contoh: 114160001"
-                className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-3 text-slate-100 font-mono text-center tracking-wider outline-none transition"
+                className="w-full min-h-[48px] bg-slate-900 border border-slate-600 focus:border-amber-400 rounded-xl px-4 py-3 text-slate-100 font-mono text-center tracking-wider transition-colors"
               />
             </div>
             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black py-3 rounded-xl tracking-wider uppercase transition shadow-lg shadow-emerald-500/20 active:scale-95"
+              className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition-colors shadow-md"
             >
-              {loginLoading ? 'Memeriksa NIM...' : 'Masuk Arena Rahasia'}
+              {loginLoading ? 'Memeriksa NIM...' : 'Masuk ke Arena Balap'}
             </button>
           </form>
         </div>
@@ -987,32 +909,29 @@ export default function MagicalAthleteGame() {
     );
   }
 
-  // ==========================================
-  // RENDER: LAYAR 1 - LOBBY SELEKSI ROOM
-  // ==========================================
   if (!isInRoom) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4">
-        <div className="bg-slate-900/90 border border-slate-800 p-8 rounded-3xl max-w-lg w-full shadow-2xl backdrop-blur-xl text-center">
-          <div className="inline-block px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono rounded-full mb-3 uppercase tracking-widest">
-            🔒 Sandbox Mode / Area Tersembunyi
-          </div>
-          <h1 className="text-3xl font-black tracking-tight text-white mb-2">
-            MAGICAL <span className="text-emerald-400">ATHLETE</span>
+      <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col items-center justify-center p-4">
+        <div className="bg-slate-800 border border-slate-700 p-8 rounded-2xl max-w-lg w-full shadow-md text-center">
+          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+            Edisi Reuni 1 Dekade TL 2016
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
+            Magical Athlete TL 2016
           </h1>
-          <p className="text-sm text-slate-400 mb-6">
-            Balap Karakter Sains Lingkungan & Geologi FTM (Edisi TL16)
+          <p className="text-sm text-slate-300 mb-6">
+            Balap Karakter Sains Lingkungan dan Geologi FTM bersama Sedulur 16.
           </p>
 
-          <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 mb-6 text-left flex items-center justify-between">
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 mb-6 text-left flex items-center justify-between">
             <div>
-              <div className="text-xs text-slate-400 font-mono">Pemain Aktif</div>
+              <div className="text-xs text-slate-300 font-mono">Pemain Aktif</div>
               <div className="font-bold text-white">{currentUser.nama}</div>
               <div className="text-xs text-emerald-400 font-mono">NIM: {currentUser.nim}</div>
             </div>
             {currentUser.isAdmin && (
-              <span className="px-2.5 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-bold rounded-lg uppercase tracking-wider">
-                👑 Admin / Host
+              <span className="px-2.5 py-1 bg-amber-400 text-slate-950 text-xs font-bold rounded-lg uppercase tracking-wider">
+                Admin / Host
               </span>
             )}
           </div>
@@ -1020,62 +939,60 @@ export default function MagicalAthleteGame() {
           {currentUser.isAdmin ? (
             <div className="space-y-4">
               <button
+                type="button"
                 onClick={handleCreateRoom}
-                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black py-4 rounded-2xl tracking-wider uppercase text-base transition shadow-[0_0_30px_rgba(16,185,129,0.3)] active:scale-95"
+                className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 px-6 rounded-xl text-base transition-colors shadow-md"
               >
-                🚀 Buat Ruang Balapan Baru
+                Buat Ruang Balapan Baru
               </button>
-              <div className="text-xs text-slate-500 font-mono">
-                Sebagai Admin, Anda bisa memilih 2–4 alumni berdasarkan NIM atau menguji coba dengan Bot.
+              <div className="text-xs text-slate-300 font-mono">
+                Sebagai Admin, Anda bisa memilih 2 sampai 4 alumni berdasarkan NIM atau menguji coba dengan Bot.
               </div>
             </div>
           ) : (
             <form onSubmit={handleJoinRoom} className="space-y-4">
+              <label htmlFor="athlete-room-code" className="sr-only">
+                Kode Ruangan Balapan
+              </label>
               <input
+                id="athlete-room-code"
                 type="text"
                 value={inputRoomCode}
                 onChange={(e) => setInputRoomCode(e.target.value)}
-                placeholder="Masukkan Kode Room (misal: ENV123)"
-                className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-3 text-slate-100 font-mono text-center uppercase tracking-widest outline-none"
+                placeholder="Masukkan Kode Ruangan (misal: ENV123)"
+                className="w-full min-h-[48px] bg-slate-900 border border-slate-600 focus:border-amber-400 rounded-xl px-4 py-3 text-slate-100 font-mono text-center uppercase tracking-widest"
               />
               <button
                 type="submit"
-                className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl tracking-wider uppercase transition"
+                className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition-colors"
               >
-                Gabung Room Balapan
+                Gabung Ruang Balapan
               </button>
             </form>
           )}
 
-          <div className="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-center gap-2 text-xs text-slate-500">
+          <div className="mt-8 pt-4 border-t border-slate-700 flex items-center justify-center gap-2 text-xs text-slate-300">
             <span>Kembali ke</span>
-            <a href="/" className="text-emerald-400 hover:underline">Game Dashboard Utama</a>
+            <a href="/" className="text-amber-400 font-bold hover:underline">Beranda Utama</a>
           </div>
         </div>
       </div>
     );
   }
 
-  // ==========================================
-  // RENDER: LAYAR 2 - DALAM ROOM / GAMEPLAY
-  // ==========================================
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
-      {/* TOP BAR / HEADER */}
-      <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+    <div className="min-h-screen bg-slate-900 text-slate-100 pb-16">
+      <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700 px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-xl">
-              🏃
-            </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-black tracking-wide text-white text-base">MAGICAL ATHLETE</span>
-                <span className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-mono text-xs rounded-md">
+                <span className="font-bold tracking-wide text-white text-base">Magical Athlete TL16</span>
+                <span className="px-2.5 py-0.5 bg-slate-800 border border-amber-400/50 text-amber-400 font-mono text-xs font-bold rounded-md">
                   {roomCode}
                 </span>
               </div>
-              <div className="text-xs text-slate-400 font-mono">
+              <div className="text-xs text-slate-300 font-mono">
                 {roomData?.status === 'LOBBY' && 'Lobi Penataan Pemain'}
                 {roomData?.status === 'DRAFT' && `Bursa Draft Atlet (${roomData.draft_turn_index + 1}/16)`}
                 {roomData?.status === 'RACE_SELECT' && `Pilihan Atlet Ronde ${roomData.current_round}/4`}
@@ -1089,63 +1006,57 @@ export default function MagicalAthleteGame() {
           <div className="flex items-center gap-3">
             {currentUser.isAdmin && (
               <button
+                type="button"
                 onClick={handleResetGame}
-                className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 rounded-lg text-xs font-mono transition"
+                className="px-3.5 py-2 min-h-[44px] bg-rose-700 hover:bg-rose-600 text-white rounded-xl text-xs font-mono font-bold transition-colors"
               >
-                Reset
+                Reset Ruangan
               </button>
             )}
             <div className="text-right hidden sm:block">
               <div className="text-xs font-bold text-slate-200">{currentUser.nama}</div>
-              <div className="text-[10px] font-mono text-emerald-400">{currentUser.nim}</div>
+              <div className="text-xs font-mono text-emerald-400">{currentUser.nim}</div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* TOAST NOTIFICATION / ACTION LOG */}
       {toastMessage && (
         <div className="max-w-4xl mx-auto mt-4 px-4">
-          <div className="p-3 bg-slate-900/90 border border-emerald-500/40 rounded-2xl text-emerald-300 text-xs sm:text-sm font-mono shadow-[0_0_20px_rgba(16,185,129,0.15)] flex items-center justify-between animate-in fade-in slide-in-from-top duration-300">
-            <div className="flex items-center gap-2">
-              <span className="text-base">📢</span>
-              <span>{toastMessage}</span>
-            </div>
+          <div className="p-3.5 bg-slate-800 border border-amber-400/40 rounded-xl text-amber-300 text-xs sm:text-sm font-mono flex items-center justify-between">
+            <span>{toastMessage}</span>
           </div>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* KONDISIONAL 1: TAMPILAN LOBBY (ADMIN PILIH NIM & BOT)                     */}
-      {/* ========================================================================= */}
       {roomData?.status === 'LOBBY' && (
         <main className="max-w-5xl mx-auto mt-6 px-4">
-          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 mb-6">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-xl font-black text-white">Susunan Pemain Balapan</h2>
-                <p className="text-xs text-slate-400 font-mono">
+                <h2 className="text-xl font-bold text-white">Susunan Pemain Balapan</h2>
+                <p className="text-xs text-slate-300 font-mono mt-0.5">
                   {currentUser.isAdmin
-                    ? 'Pilih 2 hingga 4 alumni berdasarkan NIM untuk mengisi slot, atau gunakan Bot untuk simulasi.'
+                    ? 'Pilih 2 sampai 4 alumni berdasarkan NIM untuk mengisi slot, atau gunakan Bot untuk simulasi.'
                     : 'Menunggu Admin menyelesaikan susunan pemain...'}
                 </p>
               </div>
               {currentUser.isAdmin && (
                 <button
+                  type="button"
                   onClick={handleStartDraft}
                   disabled={players.length < 2}
-                  className={`px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm transition shadow-lg ${
+                  className={`px-6 py-3 min-h-[48px] rounded-xl font-bold text-sm transition-colors shadow-md ${
                     players.length >= 2
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-emerald-500/20 active:scale-95'
-                      : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                      ? 'bg-amber-400 hover:bg-amber-300 text-slate-950'
+                      : 'bg-slate-700 text-slate-300 cursor-not-allowed border border-slate-600'
                   }`}
                 >
-                  🚀 Mulai Bursa Draft ({players.length}/4 Siap)
+                  Mulai Bursa Draft ({players.length}/4 Siap)
                 </button>
               )}
             </div>
 
-            {/* 4 SLOTS GRID */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((slotNum) => {
                 const player = players.find(p => p.slot_number === slotNum);
@@ -1154,20 +1065,20 @@ export default function MagicalAthleteGame() {
                 return (
                   <div
                     key={slotNum}
-                    className={`rounded-2xl border p-4 transition relative overflow-hidden flex flex-col justify-between min-h-[170px] ${
+                    className={`rounded-2xl border p-4 transition-colors relative overflow-hidden flex flex-col justify-between min-h-[175px] ${
                       player
-                        ? `${colorConfig.bg} ${colorConfig.border} ${colorConfig.glow}`
-                        : 'bg-slate-950/40 border-slate-800 border-dashed'
+                        ? `bg-slate-900 ${colorConfig.border}`
+                        : 'bg-slate-900/60 border-slate-700 border-dashed'
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold ${colorConfig.badge}`}>
+                        <span className={`text-xs font-mono uppercase px-2.5 py-0.5 rounded font-bold ${colorConfig.badge}`}>
                           Slot {slotNum}
                         </span>
                         {player?.is_bot && (
-                          <span className="text-[10px] font-mono bg-purple-500/20 border border-purple-500/40 text-purple-300 px-1.5 py-0.5 rounded">
-                            AI BOT
+                          <span className="text-xs font-mono bg-slate-800 border border-slate-600 text-amber-300 px-2 py-0.5 rounded">
+                            Bot AI
                           </span>
                         )}
                       </div>
@@ -1175,18 +1086,17 @@ export default function MagicalAthleteGame() {
                       {player ? (
                         <div className="mt-2">
                           <div className="font-bold text-base text-white truncate">{player.nama}</div>
-                          <div className="text-xs font-mono text-slate-400">NIM: {player.nim}</div>
+                          <div className="text-xs font-mono text-slate-300">NIM: {player.nim}</div>
                         </div>
                       ) : (
-                        <div className="text-center py-4 text-slate-600 font-mono text-xs">
+                        <div className="text-center py-4 text-slate-300 font-mono text-xs">
                           Slot Kosong
                         </div>
                       )}
                     </div>
 
-                    {/* ADMIN ACTION BUTTONS FOR SLOTS */}
                     {currentUser.isAdmin && (
-                      <div className="mt-3 pt-3 border-t border-slate-800/80 flex flex-col gap-1.5">
+                      <div className="mt-3 pt-3 border-t border-slate-800 flex flex-col gap-2">
                         {player ? (
                           slotNum !== 1 && (
                             <button
@@ -1195,25 +1105,27 @@ export default function MagicalAthleteGame() {
                                 e.stopPropagation();
                                 handleRemoveSlot(slotNum);
                               }}
-                              className="w-full py-1.5 text-xs font-mono font-bold bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 rounded-lg transition active:scale-95 cursor-pointer shadow-sm"
+                              className="w-full min-h-[44px] py-2 text-xs font-mono font-bold bg-rose-700 hover:bg-rose-600 text-white rounded-xl transition-colors"
                             >
-                              ✕ Keluarkan
+                              Keluarkan
                             </button>
                           )
                         ) : (
-                          <div className="grid grid-cols-2 gap-1.5">
+                          <div className="grid grid-cols-2 gap-2">
                             <button
+                              type="button"
                               onClick={() => {
                                 setTargetSlot(slotNum);
                                 setShowAlumniModal(true);
                               }}
-                              className="py-1.5 px-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-mono font-bold transition truncate"
+                              className="min-h-[44px] py-2 px-2 bg-slate-800 hover:bg-slate-700 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-mono font-bold transition-colors"
                             >
-                              🔍 Pilih NIM
+                              Pilih NIM
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleAddBot(slotNum)}
-                              className="py-1.5 px-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-lg text-xs font-mono font-bold transition truncate"
+                              className="min-h-[44px] py-2 px-2 bg-slate-800 hover:bg-slate-700 border border-amber-400/40 text-amber-300 rounded-xl text-xs font-mono font-bold transition-colors"
                             >
                               + Bot AI
                             </button>
@@ -1229,37 +1141,32 @@ export default function MagicalAthleteGame() {
         </main>
       )}
 
-      {/* ========================================================================= */}
-      {/* KONDISIONAL 2: FASE 1 - BURSA SNAKE DRAFT ATLET                           */}
-      {/* ========================================================================= */}
       {roomData?.status === 'DRAFT' && (
         <main className="max-w-6xl mx-auto mt-6 px-4">
-          {/* DRAFT STATUS HEADER */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <div className="text-xs font-mono text-emerald-400 uppercase tracking-widest">
+              <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
                 Fase Pemilihan Tim (Snake Draft)
-              </div>
-              <h2 className="text-xl font-black text-white mt-0.5">
+              </p>
+              <h2 className="text-xl font-bold text-white mt-0.5">
                 Pilih 4 Atlet Sains Terbaik Untuk Tim Kamu
               </h2>
             </div>
 
-            {/* INDICATOR GILIRAN SIAPA */}
             {(() => {
               const currentDraftSlot = roomData.draft_order[roomData.draft_turn_index];
               const currentDraftPlayer = players.find(p => p.slot_number === currentDraftSlot);
               const isMyTurn = currentDraftPlayer?.nim === currentUser.nim;
 
               return (
-                <div className={`px-5 py-3 rounded-2xl border text-center font-mono ${
+                <div className={`px-5 py-3 rounded-xl border text-center font-mono ${
                   isMyTurn
-                    ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_25px_rgba(245,158,11,0.3)] animate-pulse'
-                    : 'bg-slate-800 border-slate-700 text-slate-300'
+                    ? 'bg-slate-900 border-amber-400 text-amber-300'
+                    : 'bg-slate-900 border-slate-700 text-slate-200'
                 }`}>
-                  <div className="text-[10px] uppercase tracking-widest text-slate-400">Giliran Memilih</div>
-                  <div className="font-bold text-sm">
-                    {isMyTurn ? '👉 GILIRAN KAMU SEKARANG! 👈' : `${currentDraftPlayer?.nama} (Slot ${currentDraftSlot})`}
+                  <div className="text-xs uppercase tracking-wider text-slate-300">Giliran Memilih</div>
+                  <div className="font-bold text-sm mt-0.5">
+                    {isMyTurn ? 'Giliran Kamu Sekarang!' : `${currentDraftPlayer?.nama} (Slot ${currentDraftSlot})`}
                   </div>
                   {currentDraftPlayer?.is_bot && (
                     <button
@@ -1271,9 +1178,9 @@ export default function MagicalAthleteGame() {
                           handleDraftPick(randomPick);
                         }
                       }}
-                      className="mt-2 px-3 py-1 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold text-xs rounded-lg transition active:scale-95 cursor-pointer"
+                      className="mt-2 min-h-[44px] px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl transition-colors"
                     >
-                      ⚡ Klik: Paksa Bot Memilih Sekarang
+                      Jalankan Pilihan Bot
                     </button>
                   )}
                 </div>
@@ -1281,7 +1188,6 @@ export default function MagicalAthleteGame() {
             })()}
           </div>
 
-          {/* DRAFT CARDS GRID (16 ATLET) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {ATHLETE_CHARACTERS.map((char) => {
               const isAvailable = roomData.pool_characters.includes(char.id);
@@ -1291,85 +1197,77 @@ export default function MagicalAthleteGame() {
               const isMyTurn = currentDraftPlayer?.nim === currentUser.nim;
 
               return (
-                <div
+                <article
                   key={char.id}
-                  onClick={() => {
-                    if (isAvailable && isMyTurn) {
-                      setSelectedDraftChar(char);
-                    }
-                  }}
-                  className={`rounded-2xl border p-4 transition-all relative flex flex-col justify-between min-h-[220px] ${
+                  className={`rounded-2xl border p-4 transition-colors relative flex flex-col justify-between min-h-[220px] ${
                     isAvailable
                       ? isMyTurn
-                        ? 'bg-slate-900 border-slate-700 hover:border-emerald-400 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] cursor-pointer'
-                        : 'bg-slate-900/60 border-slate-800 opacity-90'
-                      : 'bg-slate-950/40 border-slate-900 opacity-40 grayscale'
+                        ? 'bg-slate-800 border-slate-600 hover:border-amber-400'
+                        : 'bg-slate-800 border-slate-700'
+                      : 'bg-slate-900/60 border-slate-800 opacity-50'
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-3xl p-1 bg-slate-800/80 rounded-xl">{char.emoji}</span>
-                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 uppercase">
+                      <span className="text-2xl p-1.5 bg-slate-900 rounded-xl">{char.emoji}</span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-300 uppercase">
                         {char.division}
                       </span>
                     </div>
 
-                    <h3 className="font-black text-white text-base leading-tight">{char.name}</h3>
+                    <h3 className="font-bold text-white text-base leading-tight">{char.name}</h3>
                     <p className="text-xs font-mono text-emerald-400 mb-2">{char.subname}</p>
 
-                    <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80 mb-2">
-                      <div className="text-[10px] font-mono font-bold text-amber-400 flex items-center gap-1">
-                        <span>⚡</span> {char.skillName}
+                    <div className="p-2.5 bg-slate-900 rounded-xl border border-slate-700 mb-2">
+                      <div className="text-xs font-mono font-bold text-amber-400">
+                        {char.skillName}
                       </div>
-                      <p className="text-[11px] text-slate-300 leading-snug mt-1">
+                      <p className="text-xs text-slate-200 leading-snug mt-1">
                         {char.skillDesc}
                       </p>
                     </div>
                   </div>
 
                   {!isAvailable && ownerPlayer && (
-                    <div className="mt-2 text-center py-1 bg-slate-800 border border-slate-700 rounded-lg text-[10px] font-mono text-slate-400 uppercase">
+                    <div className="mt-2 text-center py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-300 uppercase">
                       Diambil {ownerPlayer.nama}
                     </div>
                   )}
 
                   {isAvailable && isMyTurn && (
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDraftPick(char.id);
-                      }}
-                      className="mt-2 w-full py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl uppercase tracking-wider transition active:scale-95"
+                      type="button"
+                      onClick={() => handleDraftPick(char.id)}
+                      className="mt-2 w-full min-h-[44px] py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl uppercase tracking-wider transition-colors"
                     >
-                      Pilih Atlet Ini 🎯
+                      Pilih Atlet Ini
                     </button>
                   )}
-                </div>
+                </article>
               );
             })}
           </div>
 
-          {/* DAFTAR ATLET TIAP PEMAIN (BOTTOM TRAY) */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5">
-            <h3 className="text-sm font-mono uppercase tracking-widest text-slate-400 mb-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+            <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-slate-200 mb-4">
               Atlet Terpilih Tiap Pemain ({players.length} Pemain)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {players.map(p => {
                 const colorConfig = PLAYER_COLORS[p.slot_number - 1];
                 return (
-                  <div key={p.id} className={`p-4 rounded-2xl border ${colorConfig.bg} ${colorConfig.border}`}>
+                  <div key={p.id} className={`p-4 rounded-xl border bg-slate-900 ${colorConfig.border}`}>
                     <div className="font-bold text-sm text-white flex items-center justify-between mb-2">
                       <span>{p.nama}</span>
-                      <span className="text-xs font-mono opacity-60">({(p.drafted_characters || []).length}/4)</span>
+                      <span className="text-xs font-mono text-slate-300">({(p.drafted_characters || []).length}/4)</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {(p.drafted_characters || []).map(cid => {
                         const c = ATHLETE_CHARACTERS.find(x => x.id === cid);
                         return (
-                          <span key={cid} className="px-2 py-1 bg-slate-950/80 border border-slate-800 rounded-lg text-xs font-mono flex items-center gap-1">
+                          <span key={cid} className="px-2 py-1 bg-slate-800 border border-slate-700 rounded-lg text-xs font-mono flex items-center gap-1 text-slate-200">
                             <span>{c?.emoji}</span>
-                            <span className="truncate max-w-[80px]">{c?.name}</span>
+                            <span className="truncate max-w-[90px]">{c?.name}</span>
                           </span>
                         );
                       })}
@@ -1382,35 +1280,31 @@ export default function MagicalAthleteGame() {
         </main>
       )}
 
-      {/* ========================================================================= */}
-      {/* KONDISIONAL 3: FASE BLIND LOCK-IN (PILIH ATLET UNTUK RONDE INI)            */}
-      {/* ========================================================================= */}
       {roomData?.status === 'RACE_SELECT' && (
         <main className="max-w-4xl mx-auto mt-6 px-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center mb-6">
-            <div className="inline-block px-3 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-mono rounded-full mb-3 uppercase tracking-widest font-bold">
-              {roomData.current_round === 4 ? '🔥 RONDE 4 - FINAL CLIMAX (POIN 2X LIPAT!)' : `RONDE ${roomData.current_round} DARI 4`}
-            </div>
-            <h2 className="text-2xl font-black text-white mb-2">
-              Kunci Atlet Jagoanmu Untuk Balapan Ini! 🃏
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 text-center mb-6">
+            <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+              {roomData.current_round === 4 ? 'Ronde 4 - Poin Ganda (2x Lipat)' : `Ronde ${roomData.current_round} dari 4`}
+            </p>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Kunci Atlet Jagoanmu Untuk Balapan Ini
             </h2>
-            <p className="text-xs text-slate-400 max-w-lg mx-auto mb-6">
-              Pilihan bersifat rahasia. Begitu semua pemain selesai memilih, tirai kartu akan dibuka serentak di garis Start!
+            <p className="text-xs text-slate-300 max-w-lg mx-auto mb-6">
+              Pilihan bersifat rahasia. Begitu semua pemain selesai memilih, seluruh atlet akan tampil serentak di garis Start.
             </p>
 
-            {/* STATUS LOCK-IN PEMAIN */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
               {players.map(p => (
-                <div key={p.id} className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center">
+                <div key={p.id} className="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center">
                   <div className="font-bold text-xs text-white truncate">{p.nama}</div>
-                  <div className="mt-1">
+                  <div className="mt-1.5">
                     {p.active_character_id ? (
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                        ✅ Terkunci
+                      <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">
+                        Terkunci
                       </span>
                     ) : (
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">
-                        ⏳ Memilih...
+                      <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                        Memilih...
                       </span>
                     )}
                   </div>
@@ -1418,12 +1312,11 @@ export default function MagicalAthleteGame() {
               ))}
             </div>
 
-            {/* PILIHAN KARTU MILIK PEMAIN INI */}
             {myPlayer && (
               <div className="text-left">
-                <h4 className="text-xs font-mono uppercase tracking-widest text-slate-400 mb-3">
+                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200 mb-3">
                   Pilih 1 dari 4 Atlet Milikmu:
-                </h4>
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   {(myPlayer.drafted_characters || []).map(cid => {
                     const c = ATHLETE_CHARACTERS.find(x => x.id === cid);
@@ -1431,47 +1324,52 @@ export default function MagicalAthleteGame() {
                     const isSelected = secretSelectedChar === cid;
 
                     return (
-                      <div
+                      <button
                         key={cid}
+                        type="button"
+                        disabled={isUsed || Boolean(myPlayer.active_character_id)}
                         onClick={() => {
                           if (!isUsed && !myPlayer.active_character_id) {
                             setSecretSelectedChar(cid);
                           }
                         }}
-                        className={`p-4 rounded-2xl border transition relative ${
+                        className={`p-4 rounded-2xl border transition-colors relative text-left flex flex-col justify-between ${
                           isUsed
-                            ? 'bg-slate-950 border-slate-900 opacity-40 cursor-not-allowed'
+                            ? 'bg-slate-900 border-slate-800 opacity-50 cursor-not-allowed'
                             : isSelected
-                            ? 'bg-emerald-500/20 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer'
-                            : 'bg-slate-950/80 border-slate-800 hover:border-slate-700 cursor-pointer'
+                            ? 'bg-slate-900 border-2 border-amber-400'
+                            : 'bg-slate-900 border-slate-700 hover:border-amber-400/60'
                         }`}
                       >
-                        <div className="text-3xl mb-2">{c?.emoji}</div>
-                        <div className="font-bold text-sm text-white">{c?.name}</div>
-                        <div className="text-xs font-mono text-emerald-400 mb-2">{c?.subname}</div>
-                        <div className="text-[11px] text-slate-400 line-clamp-2">{c?.skillDesc}</div>
+                        <div>
+                          <div className="text-3xl mb-2">{c?.emoji}</div>
+                          <div className="font-bold text-sm text-white">{c?.name}</div>
+                          <div className="text-xs font-mono text-emerald-400 mb-2">{c?.subname}</div>
+                          <div className="text-xs text-slate-300 leading-snug">{c?.skillDesc}</div>
+                        </div>
 
                         {isUsed && (
-                          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm rounded-2xl flex items-center justify-center font-mono text-xs font-bold text-rose-400">
-                            SUDAH TERPAKAI
+                          <div className="mt-3 py-1 px-2 bg-rose-950/90 border border-rose-500/40 rounded-lg text-center font-mono text-xs font-bold text-rose-300">
+                            Sudah Terpakai
                           </div>
                         )}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
 
                 {!myPlayer.active_character_id && (
                   <button
+                    type="button"
                     onClick={handleLockInCharacter}
                     disabled={!secretSelectedChar}
-                    className={`mt-6 w-full py-4 rounded-xl font-black uppercase tracking-wider text-sm transition ${
+                    className={`mt-6 w-full min-h-[48px] py-3.5 rounded-xl font-bold text-sm transition-colors ${
                       secretSelectedChar
-                        ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_25px_rgba(16,185,129,0.4)] active:scale-95'
-                        : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                        ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md'
+                        : 'bg-slate-700 text-slate-300 cursor-not-allowed'
                     }`}
                   >
-                    🔒 Kunci Pilihan Atlet Untuk Ronde {roomData.current_round}
+                    Kunci Pilihan Atlet Untuk Ronde {roomData.current_round}
                   </button>
                 )}
               </div>
@@ -1480,38 +1378,42 @@ export default function MagicalAthleteGame() {
         </main>
       )}
 
-      {/* ========================================================================= */}
-      {/* KONDISIONAL 4: FASE BALAPAN DI LINTASAN 24 KOTAK                           */}
-      {/* ========================================================================= */}
       {(roomData?.status === 'RACING' || roomData?.status === 'ROUND_OVER' || roomData?.status === 'GAME_OVER') && (
         <main className="max-w-6xl mx-auto mt-6 px-4">
-          {/* TRACK STATUS BOARD */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 mb-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 mb-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
               <div>
-                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <span>🏟️</span> Sirkuit Stadion 24 Petak (Loop Arena)
-                </span>
-                <h2 className="text-xl font-black text-white">
+                <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
+                  Sirkuit Stadion 24 Petak
+                </p>
+                <h2 className="text-xl font-bold text-white">
                   Ronde {roomData.current_round} dari 4
                 </h2>
               </div>
 
-              {/* ROUND OVER / NEXT ROUND BUTTON (ADMIN / HOST) */}
               {roomData.status === 'ROUND_OVER' && isHost && (
                 <button
+                  type="button"
                   onClick={handleNextRound}
-                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl uppercase tracking-wider text-sm shadow-lg transition active:scale-95 cursor-pointer"
+                  className="min-h-[48px] px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-sm shadow-md transition-colors"
                 >
-                  Lanjut Ronde {roomData.current_round + 1} ⏩
+                  Lanjut ke Ronde {roomData.current_round + 1}
                 </button>
               )}
             </div>
 
-            {/* ========================================================================= */}
-            {/* LINTASAN BALAP 24 KOTAK STADION OVAL (BERPUTAR SEPERTI BALAPAN LARI)       */}
-            {/* ========================================================================= */}
-            <div className="p-3 sm:p-5 bg-slate-950/90 rounded-3xl border border-slate-800 overflow-x-auto shadow-2xl">
+            {/* PANEL KONTROL DADU & GILIRAN UNTUK LAYAR HP (< MD) */}
+            <div className="md:hidden mb-4 rounded-2xl border border-slate-700 bg-slate-900 p-4 text-center">
+              {renderInfieldControl()}
+            </div>
+
+            {/* LINTASAN RESPONSIF LAYAR HP (< MD): 4 KOLOM TANPA SCROLL HORIZONTAL */}
+            <div className="md:hidden grid grid-cols-4 gap-2 bg-slate-950 p-3 rounded-2xl border border-slate-700">
+              {TRACK_TILES.slice(0, 24).map(tile => renderTile(tile, true))}
+            </div>
+
+            {/* LINTASAN OVAL STADION DESKTOP (MD KE ATAS): 8 KOLOM X 6 BARIS */}
+            <div className="hidden md:block p-4 bg-slate-950 rounded-2xl border border-slate-700 shadow-md">
               <div
                 style={{
                   display: 'grid',
@@ -1519,173 +1421,23 @@ export default function MagicalAthleteGame() {
                   gridTemplateRows: 'repeat(6, minmax(0, 1fr))',
                   gap: '0.5rem'
                 }}
-                className="min-w-[800px] relative"
+                className="relative"
               >
-                {/* 1. PETAK LINTASAN 0 S/D 23 (24 PETAK OVAL LENGKAP DIMULAI DAN BERAKHIR DI COL 1 ROW 1) */}
-                {TRACK_TILES.slice(0, 24).map(tile => renderTile(tile))}
+                {TRACK_TILES.slice(0, 24).map(tile => renderTile(tile, false))}
 
-                {/* 2. LAPANGAN TENGAH STADION (INFIELD: COL 2..7, ROW 2..5) */}
                 <div
                   style={{
                     gridColumn: '2 / 8',
                     gridRow: '2 / 6'
                   }}
-                  className="rounded-3xl border-2 border-emerald-500/20 bg-gradient-to-b from-emerald-950/20 via-slate-950/95 to-slate-900/90 p-5 flex flex-col justify-between items-center text-center backdrop-blur-md relative overflow-hidden my-0.5 shadow-inner"
+                  className="rounded-2xl border border-slate-700 bg-slate-900 p-5 flex flex-col justify-between items-center text-center relative overflow-hidden my-0.5"
                 >
-                  {/* HEADER LAPANGAN TENGAH */}
-                  <div className="flex items-center gap-2">
-                    <span className="px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold uppercase tracking-widest">
-                      🏟️ SIRKUIT ATLETIK TL16 (1 PUTARAN PENUH)
-                    </span>
-                  </div>
-
-                  {/* ACTION PUSAT / DADU & STATUS GILIRAN */}
-                  <div className="flex flex-col items-center justify-center gap-3 my-auto py-2 w-full max-w-lg">
-                    {roomData.status === 'RACING' && (() => {
-                      const isMyTurn = mySlot === roomData.current_turn_slot;
-                      const activePlayer = players.find(p => p.slot_number === roomData.current_turn_slot);
-                      const activeChar = ATHLETE_CHARACTERS.find(c => c.id === activePlayer?.active_character_id);
-
-                      return (
-                        <div className="flex flex-col items-center gap-3 w-full">
-                          {/* 1. INDIKATOR GILIRAN PELARI */}
-                          <div className="text-xs sm:text-sm font-mono text-slate-300 flex items-center gap-2">
-                            <span className="text-emerald-400">📍</span>
-                            <span>Giliran:</span>
-                            <strong className="text-white bg-slate-800/90 px-3 py-1 rounded-xl border border-slate-700 shadow-sm flex items-center gap-1.5">
-                              <span>{activeChar?.emoji || '🏃'}</span>
-                              <span>{activePlayer?.nama}</span>
-                              <span className="text-xs text-slate-400 font-normal">({activeChar?.name || `Slot ${activePlayer?.slot_number}`})</span>
-                            </strong>
-                          </div>
-
-                          {/* 2. PANGGUNG DADU 3D ANIMASI & DISPLAY ANGKA BESAR */}
-                          <div className="flex items-center justify-center gap-4 sm:gap-6 p-3 sm:p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 shadow-2xl w-full max-w-md my-0.5 relative overflow-hidden">
-                            {/* Dadu 3D */}
-                            <div className="flex flex-col items-center gap-1">
-                              <DiceCube value={displayDice || 1} isRolling={diceRolling} />
-                              <span className="text-[9px] font-mono text-slate-400 font-bold uppercase tracking-wider">
-                                {diceRolling ? 'Mengocok...' : 'Dadu 3D'}
-                              </span>
-                            </div>
-
-                            {/* Display Angka & Detail Langkah */}
-                            <div className="flex flex-col items-start justify-center flex-1">
-                              <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400">
-                                {diceRolling ? '🎲 Mengacak Angka...' : diceRollDetails?.rollerName ? `Lemparan ${diceRollDetails.rollerName}:` : 'Angka Dadu:'}
-                              </div>
-
-                              <div className="flex items-center gap-3 mt-1">
-                                <div className={`text-3xl sm:text-4xl font-mono font-black px-4 py-1.5 rounded-2xl flex items-center gap-2 border shadow-lg ${
-                                  diceRolling
-                                    ? 'bg-blue-600/20 text-cyan-400 border-cyan-500/50 animate-pulse'
-                                    : 'bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 border-amber-300 shadow-[0_0_25px_rgba(245,158,11,0.5)]'
-                                }`}>
-                                  <span className="text-xl sm:text-2xl">🎲</span>
-                                  <span>{diceRolling ? '...' : (displayDice || '-')}</span>
-                                </div>
-
-                                {!diceRolling && diceRollDetails && (
-                                  <div className="flex flex-col text-left">
-                                    <span className="text-xs sm:text-sm font-black text-white font-mono">
-                                      = {diceRollDetails.totalSteps} Petak
-                                    </span>
-                                    {diceRollDetails.bonus !== 0 && (
-                                      <span className={`text-[10px] font-mono font-bold ${diceRollDetails.bonus > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                        {diceRollDetails.bonus > 0 ? `(+${diceRollDetails.bonus} Bonus Skill)` : `(${diceRollDetails.bonus} Penalti)`}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-
-                              {!diceRolling && diceRollDetails?.skillNote && (
-                                <div className="text-[10px] sm:text-[11px] font-mono text-teal-300 mt-1.5 line-clamp-2 text-left bg-teal-500/10 px-2 py-0.5 rounded-lg border border-teal-500/20">
-                                  {diceRollDetails.skillNote.trim()}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* 3. TOMBOL KONTROL LEMPAR DADU / STATUS MENUNGGU */}
-                          {isMyTurn ? (
-                            <div className="flex flex-wrap items-center justify-center gap-3">
-                              {myPlayer?.active_character_id === 'clarifier_unit' && (
-                                <button
-                                  type="button"
-                                  onClick={() => executePlayerMove(myPlayer, 3)}
-                                  disabled={diceRolling || isProcessingMove}
-                                  className="px-5 py-3.5 bg-teal-500/20 border border-teal-400 text-teal-300 hover:bg-teal-500/30 rounded-2xl font-mono text-xs font-bold transition active:scale-95 cursor-pointer shadow-lg"
-                                >
-                                  ⚖️ Maju Pasti 3 Langkah
-                                </button>
-                              )}
-
-                              <button
-                                type="button"
-                                onClick={() => executePlayerMove(myPlayer, null)}
-                                disabled={diceRolling || isProcessingMove}
-                                className={`px-10 py-3.5 rounded-2xl uppercase tracking-wider font-mono text-sm sm:text-base font-black transition flex items-center gap-3 cursor-pointer shadow-xl ${
-                                  diceRolling || isProcessingMove
-                                    ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-[0_0_35px_rgba(16,185,129,0.5)] active:scale-95'
-                                }`}
-                              >
-                                <span className={`text-2xl ${diceRolling ? 'animate-spin' : 'animate-bounce'}`}>🎲</span>
-                                <span>{diceRolling ? 'Mengocok Dadu...' : 'LEMPAR DADU SEKARANG'}</span>
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex flex-wrap items-center justify-center gap-2">
-                              <div className="px-5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-2xl text-xs font-mono text-slate-400 flex items-center gap-2 shadow-inner">
-                                <span className="animate-pulse">⏳</span>
-                                <span>Menunggu <strong className="text-white">{activePlayer?.nama}</strong> melangkah di lintasan...</span>
-                              </div>
-                              {activePlayer?.is_bot && isHost && (
-                                <button
-                                  type="button"
-                                  onClick={() => executePlayerMove(activePlayer, null)}
-                                  disabled={diceRolling || isProcessingMove}
-                                  className="px-4 py-2.5 bg-purple-500 hover:bg-purple-400 text-slate-950 text-xs font-bold rounded-xl transition active:scale-95 cursor-pointer shadow-md"
-                                >
-                                  ⚡ Paksa Bot Jalan
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
-
-                  {/* LIVE PROGRESS STATUS UNTUK KEEMPAT PELARI */}
-                  <div className="w-full max-w-xl grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-800/80">
-                    {players.map(p => {
-                      const colorConfig = PLAYER_COLORS[p.slot_number - 1];
-                      const pct = Math.min(100, Math.round((p.position / 24) * 100));
-                      return (
-                        <div key={p.id} className="p-2 bg-slate-950/80 rounded-xl border border-slate-800/80 text-left">
-                          <div className="flex items-center justify-between text-[10px] font-mono mb-1">
-                            <span className="font-bold text-white truncate max-w-[70px]">{p.nama}</span>
-                            <span className={colorConfig.text}>{pct}%</span>
-                          </div>
-                          <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                            <div
-                              style={{ width: `${pct}%` }}
-                              className={`h-full rounded-full transition-all duration-500 ${colorConfig.badge.split(' ')[0]}`}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {renderInfieldControl()}
                 </div>
-
               </div>
             </div>
           </div>
 
-          {/* STANDINGS & RUNNER CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {players.map(p => {
               const char = ATHLETE_CHARACTERS.find(c => c.id === p.active_character_id);
@@ -1695,34 +1447,34 @@ export default function MagicalAthleteGame() {
               return (
                 <div
                   key={p.id}
-                  className={`p-4 rounded-2xl border transition ${
+                  className={`p-4 rounded-2xl border transition-colors ${
                     isCurrentTurn
-                      ? `${colorConfig.border} bg-slate-900 shadow-[0_0_25px_rgba(16,185,129,0.3)] ring-2 ring-emerald-400/50`
-                      : 'bg-slate-900/60 border-slate-800'
+                      ? `${colorConfig.border} bg-slate-800 ring-2 ring-amber-400`
+                      : 'bg-slate-800 border-slate-700'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${colorConfig.badge}`}>
+                    <span className={`text-xs font-mono px-2.5 py-0.5 rounded font-bold ${colorConfig.badge}`}>
                       P{p.slot_number}
                     </span>
                     <span className="text-xs font-mono font-bold text-amber-400">
-                      🏅 {p.score || 0} Poin
+                      {p.score || 0} Poin
                     </span>
                   </div>
 
                   <div className="font-bold text-base text-white">{p.nama}</div>
-                  <div className="text-xs font-mono text-slate-400 mb-3">Posisi: Petak {p.position} / 24</div>
+                  <div className="text-xs font-mono text-slate-300 mb-3">Posisi: Petak {p.position} / 24</div>
 
                   {char && (
-                    <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl">
+                    <div className="p-3 bg-slate-900 border border-slate-700 rounded-xl">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xl">{char.emoji}</span>
                         <div>
-                          <div className="text-xs font-bold text-slate-200">{char.name}</div>
-                          <div className="text-[10px] font-mono text-emerald-400">{char.skillName}</div>
+                          <div className="text-xs font-bold text-slate-100">{char.name}</div>
+                          <div className="text-xs font-mono text-emerald-400">{char.skillName}</div>
                         </div>
                       </div>
-                      <div className="text-[10px] text-slate-400 leading-tight">
+                      <div className="text-xs text-slate-300 leading-snug mt-1">
                         {char.skillDesc}
                       </div>
                     </div>
@@ -1732,15 +1484,20 @@ export default function MagicalAthleteGame() {
             })}
           </div>
 
-          {/* GAME OVER MODAL / PODIUM */}
           {roomData.status === 'GAME_OVER' && (
-            <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-              <div className="bg-slate-900 border border-amber-500/40 p-8 rounded-3xl max-w-lg w-full text-center shadow-[0_0_50px_rgba(245,158,11,0.2)]">
-                <div className="text-5xl mb-3">🏆</div>
-                <h2 className="text-3xl font-black text-amber-400 mb-1">JUARA OLIMPIADE TL16</h2>
-                <p className="text-xs font-mono text-slate-400 mb-6">
-                  Turnamen 4 Ronde Magical Athlete Telah Selesai!
+            <div
+              className="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="gameover-modal-title"
+            >
+              <div className="bg-slate-800 border border-amber-400/60 p-8 rounded-2xl max-w-lg w-full text-center shadow-xl">
+                <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+                  Turnamen 4 Ronde Selesai
                 </p>
+                <h2 id="gameover-modal-title" className="text-3xl font-bold text-white mb-6">
+                  Juara Olimpiade TL 2016
+                </h2>
 
                 <div className="space-y-3 mb-6">
                   {[...players]
@@ -1748,24 +1505,22 @@ export default function MagicalAthleteGame() {
                     .map((p, idx) => (
                       <div
                         key={p.id}
-                        className={`p-4 rounded-2xl border flex items-center justify-between ${
+                        className={`p-4 rounded-xl border flex items-center justify-between ${
                           idx === 0
-                            ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
-                            : idx === 1
-                            ? 'bg-slate-800/80 border-slate-700 text-slate-200'
-                            : 'bg-slate-950 border-slate-800 text-slate-400'
+                            ? 'bg-slate-900 border-amber-400 text-amber-300 font-bold'
+                            : 'bg-slate-900 border-slate-700 text-slate-200'
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="text-xl">
-                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '🎖️'}
+                          <span className="text-sm font-mono font-bold text-amber-400">
+                            #{idx + 1}
                           </span>
                           <div className="text-left">
                             <div className="text-sm font-bold text-white">{p.nama}</div>
-                            <div className="text-[11px] font-mono text-slate-400">NIM: {p.nim}</div>
+                            <div className="text-xs font-mono text-slate-300">NIM: {p.nim}</div>
                           </div>
                         </div>
-                        <div className="text-base font-black font-mono">
+                        <div className="text-base font-bold font-mono text-emerald-400">
                           {p.score || 0} Poin
                         </div>
                       </div>
@@ -1774,10 +1529,11 @@ export default function MagicalAthleteGame() {
 
                 {currentUser.isAdmin && (
                   <button
+                    type="button"
                     onClick={handleResetGame}
-                    className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-xl uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 active:scale-95"
+                    className="w-full min-h-[48px] py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl transition-colors shadow-md"
                   >
-                    Mulai Pertandingan Baru 🔄
+                    Mulai Pertandingan Baru
                   </button>
                 )}
               </div>
@@ -1786,34 +1542,51 @@ export default function MagicalAthleteGame() {
         </main>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL SEARCH ALUMNI BY NIM (UNTUK ADMIN DI LOBBY)                         */}
-      {/* ========================================================================= */}
       {showAlumniModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl max-w-md w-full shadow-2xl flex flex-col max-h-[85vh]">
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="alumni-modal-title"
+          onClick={() => {
+            setShowAlumniModal(false);
+            setTargetSlot(null);
+          }}
+        >
+          <div
+            className="bg-slate-800 border border-slate-700 p-6 rounded-2xl max-w-md w-full shadow-xl flex flex-col max-h-[85vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-bold text-base text-white">Pilih Alumni Untuk Slot {targetSlot}</h3>
-                <p className="text-xs text-slate-400 font-mono">Cari berdasarkan Nama atau NIM</p>
+                <h3 id="alumni-modal-title" className="font-bold text-base text-white">
+                  Pilih Alumni Untuk Slot {targetSlot}
+                </h3>
+                <p className="text-xs text-slate-300 font-mono">Cari berdasarkan Nama atau NIM</p>
               </div>
               <button
+                type="button"
+                aria-label="Tutup daftar alumni"
                 onClick={() => {
                   setShowAlumniModal(false);
                   setTargetSlot(null);
                 }}
-                className="text-slate-500 hover:text-white text-lg font-mono p-1"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-700 text-slate-200 border border-slate-700 font-mono"
               >
-                ✕
+                &times;
               </button>
             </div>
 
+            <label htmlFor="search-alumni-input" className="sr-only">
+              Cari Nama atau NIM Alumni
+            </label>
             <input
+              id="search-alumni-input"
               type="text"
               value={searchAlumni}
               onChange={(e) => setSearchAlumni(e.target.value)}
               placeholder="Ketik Nama atau NIM..."
-              className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm font-mono text-white mb-4 outline-none transition"
+              className="w-full min-h-[44px] bg-slate-900 border border-slate-600 focus:border-amber-400 rounded-xl px-4 py-2.5 text-sm font-mono text-white mb-4"
             />
 
             <div className="overflow-y-auto space-y-2 flex-1 pr-1">
@@ -1824,17 +1597,18 @@ export default function MagicalAthleteGame() {
                 )
                 .slice(0, 30)
                 .map(alumnus => (
-                  <div
+                  <button
                     key={alumnus.nim}
+                    type="button"
                     onClick={() => handleAssignPlayer(alumnus)}
-                    className="p-3 bg-slate-950/60 hover:bg-emerald-500/10 border border-slate-800 hover:border-emerald-500/40 rounded-xl cursor-pointer transition flex items-center justify-between"
+                    className="w-full min-h-[48px] p-3 bg-slate-900 hover:bg-slate-700 border border-slate-700 hover:border-amber-400 rounded-xl transition-colors flex items-center justify-between text-left"
                   >
                     <div>
                       <div className="text-sm font-bold text-white">{alumnus.nama}</div>
                       <div className="text-xs font-mono text-emerald-400">{alumnus.nim}</div>
                     </div>
-                    <span className="text-xs font-mono text-slate-400">Pilih ➔</span>
-                  </div>
+                    <span className="text-xs font-mono font-bold text-amber-400">Pilih</span>
+                  </button>
                 ))}
             </div>
           </div>
@@ -1843,8 +1617,149 @@ export default function MagicalAthleteGame() {
     </div>
   );
 
-  // Helper render tile di lintasan oval berputar (1 putaran penuh, Start & Finish di petak yang sama)
-  function renderTile(tile) {
+  function renderInfieldControl() {
+    return (
+      <>
+        <div className="mb-2">
+          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
+            Sirkuit Atletik TL 2016 (1 Putaran Penuh)
+          </p>
+        </div>
+
+        <div className="flex flex-col items-center justify-center gap-3 my-auto py-2 w-full max-w-lg mx-auto">
+          {roomData.status === 'RACING' && (() => {
+            const isMyTurn = mySlot === roomData.current_turn_slot;
+            const activePlayer = players.find(p => p.slot_number === roomData.current_turn_slot);
+            const activeChar = ATHLETE_CHARACTERS.find(c => c.id === activePlayer?.active_character_id);
+
+            return (
+              <div className="flex flex-col items-center gap-3 w-full">
+                <div className="text-xs sm:text-sm font-mono text-slate-200 flex flex-wrap items-center justify-center gap-2">
+                  <span>Giliran:</span>
+                  <strong className="text-white bg-slate-800 px-3 py-1 rounded-xl border border-slate-700 flex items-center gap-1.5">
+                    <span>{activeChar?.emoji || '🏃'}</span>
+                    <span>{activePlayer?.nama}</span>
+                    <span className="text-xs text-slate-300 font-normal">({activeChar?.name || `Slot ${activePlayer?.slot_number}`})</span>
+                  </strong>
+                </div>
+
+                <div className="flex items-center justify-center gap-4 sm:gap-6 p-3 sm:p-4 rounded-2xl bg-slate-950 border border-slate-800 w-full max-w-md my-0.5">
+                  <div className="flex flex-col items-center gap-1">
+                    <DiceCube value={displayDice || 1} isRolling={diceRolling} />
+                    <span className="text-[10px] font-mono text-slate-300 font-bold uppercase tracking-wider">
+                      {diceRolling ? 'Mengocok...' : 'Dadu'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col items-start justify-center flex-1">
+                    <div className="text-xs font-mono uppercase tracking-wider text-slate-300">
+                      {diceRolling ? 'Mengacak Angka...' : diceRollDetails?.rollerName ? `Lemparan ${diceRollDetails.rollerName}:` : 'Angka Dadu:'}
+                    </div>
+
+                    <div className="flex items-center gap-3 mt-1">
+                      <div className={`text-2xl sm:text-3xl font-mono font-bold px-4 py-1.5 rounded-xl flex items-center gap-2 border ${
+                        diceRolling
+                          ? 'bg-slate-800 text-amber-300 border-amber-400/50'
+                          : 'bg-amber-400 text-slate-950 border-amber-300'
+                      }`}>
+                        <span>{diceRolling ? '...' : (displayDice || '-')}</span>
+                      </div>
+
+                      {!diceRolling && diceRollDetails && (
+                        <div className="flex flex-col text-left">
+                          <span className="text-xs sm:text-sm font-bold text-white font-mono">
+                            = {diceRollDetails.totalSteps} Petak
+                          </span>
+                          {diceRollDetails.bonus !== 0 && (
+                            <span className={`text-xs font-mono font-bold ${diceRollDetails.bonus > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {diceRollDetails.bonus > 0 ? `(+${diceRollDetails.bonus} Bonus Skill)` : `(${diceRollDetails.bonus} Penalti)`}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {!diceRolling && diceRollDetails?.skillNote && (
+                      <div className="text-xs font-mono text-emerald-300 mt-1.5 line-clamp-2 text-left bg-slate-900 px-2.5 py-1 rounded-lg border border-emerald-500/30">
+                        {diceRollDetails.skillNote.trim()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {isMyTurn ? (
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    {myPlayer?.active_character_id === 'clarifier_unit' && (
+                      <button
+                        type="button"
+                        onClick={() => executePlayerMove(myPlayer, 3)}
+                        disabled={diceRolling || isProcessingMove}
+                        className="min-h-[48px] px-5 py-3 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl font-mono text-xs font-bold transition-colors"
+                      >
+                        Maju Pasti 3 Langkah
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => executePlayerMove(myPlayer, null)}
+                      disabled={diceRolling || isProcessingMove}
+                      className={`min-h-[48px] px-8 py-3 rounded-xl uppercase tracking-wider font-mono text-sm font-bold transition-colors shadow-md ${
+                        diceRolling || isProcessingMove
+                          ? 'bg-slate-700 text-slate-300 border border-slate-600 cursor-not-allowed'
+                          : 'bg-amber-400 hover:bg-amber-300 text-slate-950'
+                      }`}
+                    >
+                      {diceRolling ? 'Mengocok Dadu...' : 'Lempar Dadu Sekarang'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <div className="px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-300">
+                      Menunggu <strong className="text-white">{activePlayer?.nama}</strong> melangkah di lintasan...
+                    </div>
+                    {activePlayer?.is_bot && isHost && (
+                      <button
+                        type="button"
+                        onClick={() => executePlayerMove(activePlayer, null)}
+                        disabled={diceRolling || isProcessingMove}
+                        className="min-h-[44px] px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold rounded-xl transition-colors"
+                      >
+                        Jalankan Giliran Bot
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+
+        <div className="w-full max-w-xl grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-800 mx-auto">
+          {players.map(p => {
+            const colorConfig = PLAYER_COLORS[p.slot_number - 1];
+            const pct = Math.min(100, Math.round((p.position / 24) * 100));
+            return (
+              <div key={p.id} className="p-2 bg-slate-950 rounded-xl border border-slate-800 text-left">
+                <div className="flex items-center justify-between text-xs font-mono mb-1">
+                  <span className="font-bold text-white truncate max-w-[75px]">{p.nama}</span>
+                  <span className={colorConfig.text}>{pct}%</span>
+                </div>
+                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    style={{ width: `${pct}%` }}
+                    className={`h-full rounded-full transition-all duration-500 ${colorConfig.badge.split(' ')[0]}`}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </>
+    );
+  }
+
+  function renderTile(tile, isCompactMobile = false) {
     const isStartFinish = tile.index === 0 || tile.type === 'start_finish';
     const racersOnThisTile = players.filter(p => {
       if (isStartFinish) {
@@ -1852,48 +1767,40 @@ export default function MagicalAthleteGame() {
       }
       return p.position === tile.index;
     });
-    const coord = TRACK_LOOP_COORDS[tile.index] || { col: 1, row: 1, arrow: '➔' };
+    const coord = TRACK_LOOP_COORDS[tile.index] || { col: 1, row: 1, dir: 'Kanan' };
 
     return (
       <div
         key={tile.index}
-        style={{
-          gridColumn: coord.col,
-          gridRow: coord.row
-        }}
-        className={`h-20 sm:h-24 rounded-2xl border p-1.5 sm:p-2 flex flex-col justify-between relative transition-all shadow-md ${
+        style={
+          isCompactMobile
+            ? undefined
+            : {
+                gridColumn: coord.col,
+                gridRow: coord.row
+              }
+        }
+        className={`h-20 sm:h-24 rounded-xl border p-1.5 sm:p-2 flex flex-col justify-between relative transition-colors ${
           isStartFinish
-            ? 'bg-gradient-to-br from-amber-500/25 via-slate-900/90 to-blue-600/25 border-amber-400/80 shadow-[0_0_25px_rgba(245,158,11,0.35)] ring-2 ring-amber-400/60'
+            ? 'bg-slate-900 border-2 border-amber-400'
             : tile.type === 'boost'
-            ? 'bg-teal-500/15 border-teal-400/70 shadow-[0_0_12px_rgba(20,184,166,0.2)]'
+            ? 'bg-emerald-950/50 border-emerald-400/70'
             : tile.type === 'trap'
-            ? 'bg-rose-500/15 border-rose-400/70 shadow-[0_0_12px_rgba(244,63,94,0.2)]'
+            ? 'bg-rose-950/50 border-rose-400/70'
             : tile.type === 'halfway'
-            ? 'bg-purple-500/20 border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
-            : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+            ? 'bg-slate-800 border-amber-400/60'
+            : 'bg-slate-900 border-slate-800'
         }`}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <span className={`text-[10px] sm:text-xs font-mono font-black ${isStartFinish ? 'text-amber-300' : 'text-slate-300'}`}>
-              {tile.label}
-            </span>
-            <span className="text-[10px] text-emerald-400 font-bold">
-              {coord.arrow}
-            </span>
-          </div>
-          {isStartFinish && (
-            <div className="flex items-center gap-0.5 text-xs">
-              <span title="Garis Awal">🚀</span>
-              <span className="animate-pulse" title="Garis Akhir">🏁</span>
-            </div>
-          )}
-          {tile.type === 'boost' && <span className="text-xs" title="Arus Deras (+2)">⚡</span>}
-          {tile.type === 'trap' && <span className="text-xs" title="Jebakan (-2)">⚠️</span>}
-          {tile.type === 'halfway' && <span className="text-xs" title="Titik Tengah">📍</span>}
+          <span className={`text-[10px] sm:text-xs font-mono font-bold ${isStartFinish ? 'text-amber-300' : 'text-slate-200'}`}>
+            {isStartFinish ? '0/24' : `#${tile.label}`}
+          </span>
+          {tile.type === 'boost' && <span className="text-[10px] font-mono font-bold text-emerald-300">+2</span>}
+          {tile.type === 'trap' && <span className="text-[10px] font-mono font-bold text-rose-300">-2</span>}
+          {tile.type === 'halfway' && <span className="text-[10px] font-mono font-bold text-amber-300">Tengah</span>}
         </div>
 
-        {/* PION ATLET DI ATAS PETAK */}
         <div className="flex flex-wrap items-center justify-center gap-1 my-auto">
           {racersOnThisTile.map(p => {
             const char = ATHLETE_CHARACTERS.find(c => c.id === p.active_character_id);
@@ -1904,34 +1811,28 @@ export default function MagicalAthleteGame() {
             return (
               <div
                 key={p.id}
-                title={`${p.nama} (${char?.name})${hasFinished ? ' - FINISH! 🏆' : ''}`}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm sm:text-base border-2 shadow-lg transition-all duration-200 z-10 relative ${colorConfig.badge} ${colorConfig.border} ${colorConfig.glow} ${
-                  isMoving ? 'animate-bounce ring-2 ring-white scale-115 z-20 shadow-[0_0_20px_rgba(255,255,255,0.8)]' : 'hover:scale-110'
+                title={`${p.nama} (${char?.name})${hasFinished ? ' - FINISH!' : ''}`}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm sm:text-base border-2 transition-transform duration-200 z-10 relative ${colorConfig.badge} ${colorConfig.border} ${
+                  isMoving ? 'ring-2 ring-white scale-110 z-20' : ''
                 }`}
               >
                 {char?.emoji || '🏃'}
-                {hasFinished && (
-                  <span className="absolute -top-1.5 -right-1.5 text-xs">🏆</span>
-                )}
               </div>
             );
           })}
         </div>
 
-        <div className="text-[8px] sm:text-[9px] font-mono text-slate-400 truncate text-center">
-          {isStartFinish && <span className="text-amber-400 font-bold">START / FINISH</span>}
-          {tile.type === 'boost' && '+2 Langkah'}
-          {tile.type === 'trap' && '-2 Langkah'}
-          {tile.type === 'halfway' && 'Titik Tengah (12)'}
+        <div className="text-[9px] font-mono text-slate-300 truncate text-center">
+          {isStartFinish && <span className="text-amber-300 font-bold">START/FINISH</span>}
+          {tile.type === 'boost' && 'Maju +2'}
+          {tile.type === 'trap' && 'Mundur -2'}
+          {tile.type === 'halfway' && 'Petak 12'}
         </div>
       </div>
     );
   }
 }
 
-// =========================================================================
-// KOMPONEN DADU 3D DENGAN DOT PIPS FISIK & ANIMASI SHUFFLE/SHAKE
-// =========================================================================
 const DICE_PIPS = {
   1: [4],
   2: [0, 8],
@@ -1946,41 +1847,31 @@ function DiceCube({ value = 1, isRolling = false }) {
   const isOne = value === 1;
 
   return (
-    <>
-      <style>{`
-        @keyframes diceShakeKeyframes {
-          0% { transform: rotate(-14deg) scale(1.08) translateY(-3px); }
-          50% { transform: rotate(14deg) scale(0.94) translateY(3px); }
-          100% { transform: rotate(-8deg) scale(1.04) translateY(-1px); }
-        }
-      `}</style>
-      <div
-        style={isRolling ? { animation: 'diceShakeKeyframes 0.16s infinite alternate ease-in-out' } : {}}
-        className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-white via-slate-100 to-slate-200 p-2 sm:p-2.5 border-2 border-slate-300 flex items-center justify-center transition-all duration-200 select-none shadow-[0_12px_28px_rgba(0,0,0,0.5),inset_0_-3px_5px_rgba(0,0,0,0.15),inset_0_2px_4px_rgba(255,255,255,0.95)] ${
-          isRolling
-            ? 'shadow-[0_0_35px_rgba(59,130,246,0.6)] ring-4 ring-cyan-400 rotate-6 scale-105'
-            : 'ring-2 ring-amber-400/80 hover:scale-105'
-        }`}
-      >
-        <div className="grid grid-cols-3 grid-rows-3 gap-1 sm:gap-1.5 w-full h-full">
-          {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(idx => {
-            const hasPip = pips.includes(idx);
-            if (!hasPip) {
-              return <div key={idx} className="w-full h-full" />;
-            }
-            return (
-              <div
-                key={idx}
-                className={`w-full h-full rounded-full transition-transform ${
-                  isOne && idx === 4
-                    ? 'bg-rose-600 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)] scale-110'
-                    : 'bg-slate-900 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]'
-                }`}
-              />
-            );
-          })}
-        </div>
+    <div
+      className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 p-2 sm:p-2.5 border-2 border-slate-300 flex items-center justify-center transition-transform duration-200 select-none shadow-md ${
+        isRolling
+          ? 'ring-2 ring-amber-400 rotate-6 scale-105'
+          : 'ring-2 ring-amber-400/80'
+      }`}
+    >
+      <div className="grid grid-cols-3 grid-rows-3 gap-1 sm:gap-1.5 w-full h-full">
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(idx => {
+          const hasPip = pips.includes(idx);
+          if (!hasPip) {
+            return <div key={idx} className="w-full h-full" />;
+          }
+          return (
+            <div
+              key={idx}
+              className={`w-full h-full rounded-full ${
+                isOne && idx === 4
+                  ? 'bg-rose-600 scale-110'
+                  : 'bg-slate-900'
+              }`}
+            />
+          );
+        })}
       </div>
-    </>
+    </div>
   );
 }

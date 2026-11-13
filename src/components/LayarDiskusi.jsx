@@ -4,30 +4,38 @@ import { supabase } from '../lib/supabaseClient';
 export default function LayarDiskusi({ pemain, isHidup, currentUser }) {
   const [pesan, setPesan] = useState('');
   const [daftarChat, setDaftarChat] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
   const [sayaSiapSkip, setSayaSiapSkip] = useState(false);
   
   const chatEndRef = useRef(null);
 
-  // Hitung pemain hidup dan berapa orang yang sudah klik skip
   const pemainHidup = pemain.filter(p => p.is_hidup);
   const jumlahSiapSkip = pemain.filter(p => p.siap_skip).length;
 
   useEffect(() => {
-    // 1. Ambil data chat awal
     const fetchChat = async () => {
-      const { data } = await supabase
-        .from('dosen_killer_chat')
-        .select('*')
-        .order('created_at', { ascending: true });
-      if (data) setDaftarChat(data);
+      setIsLoading(true);
+      setErrorMsg('');
+      try {
+        const { data, error } = await supabase
+          .from('dosen_killer_chat')
+          .select('*')
+          .order('created_at', { ascending: true });
+        if (error) throw error;
+        if (data) setDaftarChat(data);
+      } catch (err) {
+        console.error('Gagal memuat pesan diskusi:', err.message);
+        setErrorMsg('Gagal memuat riwayat percakapan.');
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchChat();
 
-    // 2. Ambil status tombol skip milik pribadi
     const mhsKu = pemain.find(p => p.nim === currentUser.nim);
     if (mhsKu) setSayaSiapSkip(mhsKu.siap_skip || false);
 
-    // 3. Radar Realtime untuk pesan chat baru masuk
     const chatSub = supabase.channel('public:dosen_killer_chat')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dosen_killer_chat' }, (payload) => {
         setDaftarChat(prev => [...prev, payload.new]);
@@ -37,7 +45,6 @@ export default function LayarDiskusi({ pemain, isHidup, currentUser }) {
   }, [pemain]);
 
   useEffect(() => {
-    // Auto scroll chat ke baris paling bawah saat ada pesan baru
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [daftarChat]);
 
@@ -46,7 +53,7 @@ export default function LayarDiskusi({ pemain, isHidup, currentUser }) {
     if (!pesan.trim() || !isHidup) return;
 
     await supabase.from('dosen_killer_chat').insert([{
-      room_code: currentUser.roomCode, // <-- Wajib ikut dikirim agar chat masuk ke room yang benar
+      room_code: currentUser.roomCode,
       nim: currentUser.nim,
       nama: currentUser.nama,
       pesan: pesan
@@ -63,72 +70,91 @@ export default function LayarDiskusi({ pemain, isHidup, currentUser }) {
     await supabase
       .from('mahasiswa_roles')
       .update({ siap_skip: statusBaru })
-      .eq('room_code', currentUser.roomCode) // <-- Tambahan penyaring room
+      .eq('room_code', currentUser.roomCode)
       .eq('nim', currentUser.nim);
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-[75vh] shadow-2xl overflow-hidden animate-in fade-in duration-300">
+    <div className="max-w-xl mx-auto bg-slate-800 border border-slate-700 rounded-2xl flex flex-col h-[75vh] shadow-md overflow-hidden">
       
-      {/* HEADER: KONTROL BAR KESEPAKATAN SKIP VOTING */}
-      <div className="bg-slate-950 p-4 border-b border-slate-800 flex justify-between items-center">
+      <div className="bg-slate-900 p-4 border-b border-slate-700 flex justify-between items-center gap-3">
         <div>
-          <h2 className="text-white font-bold text-sm">💬 Ruang Sidang Angkatan</h2>
-          <p className="text-[10px] text-slate-500 font-mono mt-0.5">
-            {jumlahSiapSkip} / {pemainHidup.length} Sepakat Langsung Voting
+          <h2 className="text-white font-bold text-base">Ruang Diskusi Kelas</h2>
+          <p className="text-xs text-slate-300 font-mono mt-0.5">
+            {jumlahSiapSkip} / {pemainHidup.length} Mahasiswa Siap Pemungutan Suara
           </p>
         </div>
 
         {isHidup ? (
           <button 
+            type="button"
             onClick={handleToggleSkip}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+            className={`px-4 py-2 min-h-[44px] rounded-xl text-xs font-bold transition-colors ${
               sayaSiapSkip 
-                ? 'bg-slate-800 border border-slate-700 text-slate-400' 
-                : 'bg-yellow-500 text-slate-950 shadow-md shadow-yellow-500/10 hover:bg-yellow-400'
+                ? 'bg-slate-800 border border-slate-600 text-slate-200' 
+                : 'bg-amber-400 hover:bg-amber-300 text-slate-950'
             }`}
           >
-            {sayaSiapSkip ? '❌ Batal Skip' : '⏩ Siap Voting'}
+            {sayaSiapSkip ? 'Batal Lewati Diskusi' : 'Siap Pemungutan Suara'}
           </button>
         ) : (
-          <span className="text-xs text-red-500 font-bold font-mono">SILENT MODE (DEAD)</span>
+          <span className="text-xs text-rose-400 font-bold font-mono">Mode Penonton</span>
         )}
       </div>
 
-      {/* ISI KOTAK LIVE CHAT */}
       <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-900/50">
-        {daftarChat.map(c => {
-          const isMe = c.nim === currentUser.nim;
-          return (
-            <div key={c.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-              <span className="text-[10px] text-slate-500 mb-0.5 px-1 font-mono">{c.nama}</span>
-              <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                isMe 
-                  ? 'bg-red-600 text-white rounded-tr-none' 
-                  : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700/60'
-              }`}>
-                {c.pesan}
+        {isLoading ? (
+          <div className="h-full flex items-center justify-center text-slate-300 text-sm font-mono">
+            Memuat percakapan kelas...
+          </div>
+        ) : errorMsg ? (
+          <div role="alert" className="p-4 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs text-center">
+            {errorMsg}
+          </div>
+        ) : daftarChat.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-6">
+            <p className="text-slate-200 font-bold text-sm mb-1">Belum Ada Pesan Diskusi</p>
+            <p className="text-slate-300 text-xs max-w-xs">
+              Mulai percakapan untuk berbagi petunjuk dan menemukan siapa Dosen Killer di kelas ini!
+            </p>
+          </div>
+        ) : (
+          daftarChat.map(c => {
+            const isMe = c.nim === currentUser.nim;
+            return (
+              <div key={c.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                <span className="text-xs text-slate-300 mb-0.5 px-1 font-mono">{c.nama}</span>
+                <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  isMe 
+                    ? 'bg-emerald-700 text-white rounded-tr-none' 
+                    : 'bg-slate-800 text-slate-100 rounded-tl-none border border-slate-700'
+                }`}>
+                  {c.pesan}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
         <div ref={chatEndRef} />
       </div>
 
-      {/* INPUT FORM KETIK CHAT */}
-      <form onSubmit={KirimPesan} className="p-3 bg-slate-950 border-t border-slate-800 flex gap-2">
+      <form onSubmit={KirimPesan} className="p-3 bg-slate-900 border-t border-slate-700 flex gap-2">
+        <label htmlFor="diskusi-chat-input" className="sr-only">
+          Tulis pesan diskusi
+        </label>
         <input
+          id="diskusi-chat-input"
           type="text"
           value={pesan}
           onChange={(e) => setPesan(e.target.value)}
           disabled={!isHidup}
-          placeholder={isHidup ? "Ketik alibi atau tuduhanmu di sini..." : "Anda sudah di-DO, dilarang mengetik."}
-          className="flex-1 bg-slate-900 border border-slate-800 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-red-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          placeholder={isHidup ? "Tulis pendapat atau petunjukmu di sini..." : "Kamu sedang menjadi penonton."}
+          className="flex-1 min-h-[44px] bg-slate-800 border border-slate-600 text-white px-4 py-2.5 rounded-xl text-sm focus:border-amber-400 placeholder:text-slate-400 disabled:opacity-50"
         />
         <button 
           type="submit" 
           disabled={!isHidup || !pesan.trim()}
-          className="bg-red-600 hover:bg-red-500 text-white font-bold px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="min-h-[44px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 rounded-xl transition-colors disabled:bg-slate-700 disabled:text-slate-300"
         >
           Kirim
         </button>

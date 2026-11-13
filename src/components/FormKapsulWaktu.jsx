@@ -8,11 +8,14 @@ export default function FormKapsulWaktu({ userLocal }) {
   const [pesan, setPesan] = useState('');
   
   const [savedData, setSavedData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
 
-  // READ: Ambil data dari kolom yang sudah bersih
   const fetchSavedData = async () => {
+    setIsLoading(true);
+    setErrorMsg('');
     try {
       const { data, error } = await supabase
         .from('alumni')
@@ -32,12 +35,17 @@ export default function FormKapsulWaktu({ userLocal }) {
       }
     } catch (error) {
       console.error("Gagal menarik data lama:", error.message);
+      setErrorMsg('Gagal memuat data Kapsul Waktu. Silakan muat ulang atau coba beberapa saat lagi.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     if (userLocal?.nim) {
       fetchSavedData();
+    } else {
+      setIsLoading(false);
     }
   }, [userLocal]);
 
@@ -46,25 +54,26 @@ export default function FormKapsulWaktu({ userLocal }) {
     if (selectedFile) {
       setFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
+      setErrorMsg('');
     }
   };
 
-  // CREATE / UPDATE: Menggunakan nama kolom baru
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file || !pesan.trim()) {
-      alert("Pilih foto and isi pesannya dulu dong bos!");
+      setErrorMsg("Pilih foto dan isi pesannya terlebih dahulu.");
       return;
     }
 
+    setErrorMsg('');
     setIsUploading(true);
-    setUploadStatus('Memeras ukuran foto... 🗜️');
+    setUploadStatus('Mengoptimalkan ukuran foto...');
 
     try {
       const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1080, useWebWorker: true };
       const compressedFile = await imageCompression(file, options);
 
-      setUploadStatus('Mengirim ke Kapsul Waktu... 🚀');
+      setUploadStatus('Mengirim ke Kapsul Waktu...');
       const fileName = `${userLocal.nim}_now.jpg`;
 
       const { error: uploadError } = await supabase.storage
@@ -77,7 +86,7 @@ export default function FormKapsulWaktu({ userLocal }) {
         .from('foto_anniversary')
         .getPublicUrl(fileName);
 
-      setUploadStatus('Menyimpan ke database... 💾');
+      setUploadStatus('Menyimpan ke buku kenangan...');
 
       const { error: dbError } = await supabase
         .from('alumni')
@@ -89,31 +98,29 @@ export default function FormKapsulWaktu({ userLocal }) {
 
       if (dbError) throw dbError;
 
-      setUploadStatus('Berhasil! Kapsul Waktu terkunci. 🔒');
-      alert('Mantap! Data Kapsul Waktu kamu berhasil disimpan.');
-      
+      setUploadStatus('Berhasil! Kapsul Waktu tersimpan.');
       setFile(null);
       setPreviewUrl('');
       setPesan('');
-      fetchSavedData();
+      await fetchSavedData();
 
     } catch (error) {
       console.error("Gagal upload:", error);
-      setUploadStatus('Gagal upload! Coba lagi.');
-      alert(`Error: ${error.message}`);
+      setUploadStatus('');
+      setErrorMsg(`Gagal mengunggah kapsul waktu: ${error.message}`);
     } finally {
       setIsUploading(false);
       setTimeout(() => setUploadStatus(''), 3000);
     }
   };
 
-  // DELETE: Mengosongkan kolom baru
   const handleDelete = async () => {
-    const isConfirm = window.confirm('Yakin mau menghapus data Kapsul Waktu kamu? Foto dan pesan lama bakal hilang permanen.');
+    const isConfirm = window.confirm('Yakin ingin mengganti isi Kapsul Waktu kamu? Foto dan pesan sebelumnya akan dihapus.');
     if (!isConfirm) return;
 
+    setErrorMsg('');
     setIsUploading(true);
-    setUploadStatus('Menghapus data lama... 🗑️');
+    setUploadStatus('Menghapus data lama...');
 
     try {
       const fileName = `${userLocal.nim}_now.jpg`;
@@ -129,12 +136,11 @@ export default function FormKapsulWaktu({ userLocal }) {
 
       if (error) throw error;
 
-      alert('Data kapsul berhasil dihapus! Silakan isi data baru.');
-      fetchSavedData(); 
+      await fetchSavedData(); 
 
     } catch (error) {
       console.error("Gagal menghapus:", error);
-      alert(`Gagal menghapus: ${error.message}`);
+      setErrorMsg(`Gagal menghapus data kapsul: ${error.message}`);
     } finally {
       setIsUploading(false);
       setUploadStatus('');
@@ -145,60 +151,101 @@ export default function FormKapsulWaktu({ userLocal }) {
 
   return (
     <div className="flex flex-col items-center w-full text-white font-sans">
-      <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-3xl p-6 md:p-8 shadow-2xl">
+      <div className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-md">
         
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-black text-yellow-500 tracking-wider">KAPSUL WAKTU TL16</h2>
-          <p className="text-slate-400 mt-2 text-sm">Setor 1 foto terkece & 1 pesan maut terbaikmu sekarang!</p>
+        <div className="mb-6">
+          <p className="text-xs font-mono font-bold text-amber-400 tracking-wider uppercase mb-1">
+            Buku Kenangan 1 Dekade
+          </p>
+          <h3 className="text-2xl md:text-3xl font-bold text-white">Kapsul Waktu TL 2016</h3>
+          <p className="text-slate-300 mt-1 text-sm">
+            Unggah foto terbarumu di tahun 2026 beserta doa atau pesan hangat untuk Sedulur 16.
+          </p>
         </div>
 
-        <div className={`p-5 rounded-2xl border-2 transition-all ${isSaved ? 'bg-green-900/10 border-green-500/50' : 'bg-slate-800 border-slate-700'}`}>
+        {errorMsg && (
+          <div role="alert" className="mb-5 p-4 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span>{errorMsg}</span>
+            <button
+              type="button"
+              onClick={fetchSavedData}
+              className="px-3 py-2 min-h-[44px] rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold border border-slate-700 shrink-0"
+            >
+              Muat Ulang
+            </button>
+          </div>
+        )}
+
+        <div className={`p-5 rounded-xl border transition-colors ${isSaved ? 'bg-slate-900 border-emerald-500/40' : 'bg-slate-900 border-slate-700'}`}>
           
-          <div className="flex justify-between items-center mb-4 border-b border-slate-700/50 pb-2">
-            <h3 className={`font-bold ${isSaved ? 'text-green-400' : 'text-yellow-400'}`}>
-              📦 KAPSUL WAKTU KAMU {isSaved && "— TERKUNCI 🔒"}
-            </h3>
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-4 border-b border-slate-800 pb-3">
+            <h4 className={`font-bold text-base ${isSaved ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {isSaved ? "Kapsul Waktu Kamu (Tersimpan)" : "Isi Kapsul Waktu Kamu"}
+            </h4>
             
             {isSaved && (
               <button 
                 type="button"
                 onClick={handleDelete}
                 disabled={isUploading}
-                className="text-xs bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1 rounded-lg font-bold transition-colors disabled:opacity-50"
+                className="text-xs bg-rose-700 hover:bg-rose-600 text-white px-4 py-2 min-h-[44px] rounded-lg font-bold transition-colors disabled:opacity-50"
               >
-                Hapus & Ganti
+                Hapus & Ganti Isi
               </button>
             )}
           </div>
 
-          {isSaved ? (
+          {isLoading ? (
+            <div className="py-10 text-center text-slate-300 text-sm font-mono">
+              Memeriksa Kapsul Waktu kamu...
+            </div>
+          ) : isSaved ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-              <div className="h-48 w-full rounded-xl overflow-hidden border border-slate-600 bg-slate-950">
-                <img src={savedData.foto} alt="Saved Kapsul" className="w-full h-full object-cover" />
+              <div className="h-52 w-full rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+                <img
+                  src={savedData.foto}
+                  alt={`Foto terbaru ${userLocal?.nama || 'Alumni TL 2016'}`}
+                  width="360"
+                  height="208"
+                  loading="lazy"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-700 h-48 overflow-y-auto flex flex-col justify-center">
-                <p className="text-xs text-slate-500 mb-1 font-bold font-mono">ISI PESAN UNTUK ANGKATAN:</p>
-                <p className="text-sm text-slate-200 italic leading-relaxed">"{savedData.pesan}"</p>
+              <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 h-52 overflow-y-auto flex flex-col justify-center">
+                <p className="text-xs text-amber-400 mb-2 font-bold font-mono uppercase">Pesan Untuk Angkatan:</p>
+                <p className="text-sm text-slate-100 leading-relaxed">{savedData.pesan}</p>
               </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 
                 <div>
-                  <label className="block text-xs font-bold mb-2 text-slate-300">Upload Foto (2026)</label>
-                  <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-500 border-dashed rounded-xl cursor-pointer hover:border-yellow-500 transition-all overflow-hidden relative bg-slate-900">
+                  <label htmlFor="upload-foto-kapsul" className="block text-xs font-bold mb-2 text-slate-200">
+                    Unggah Foto Terbaru (2026)
+                  </label>
+                  <label
+                    htmlFor="upload-foto-kapsul"
+                    className="flex flex-col items-center justify-center w-full h-44 border-2 border-slate-600 border-dashed rounded-xl cursor-pointer hover:border-amber-400 transition-colors overflow-hidden relative bg-slate-800"
+                  >
                     {previewUrl ? (
-                      <img src={previewUrl} alt="Preview" className="w-full h-full object-cover opacity-90" />
+                      <img
+                        src={previewUrl}
+                        alt="Pratinjau foto kapsul waktu"
+                        width="320"
+                        height="176"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <div className="text-center p-4">
-                        <span className="text-3xl">📸</span>
-                        <p className="text-xs text-slate-400 mt-2">Tap untuk pilih foto</p>
+                        <p className="text-sm font-bold text-amber-400">Pilih Foto Terbaru</p>
+                        <p className="text-xs text-slate-300 mt-1">Format JPG/PNG/WebP, otomatis dikompresi</p>
                       </div>
                     )}
                     <input 
+                      id="upload-foto-kapsul"
                       type="file" 
-                      className="hidden" 
+                      className="sr-only" 
                       accept="image/*" 
                       onChange={handleFileChange} 
                       disabled={isUploading} 
@@ -207,35 +254,35 @@ export default function FormKapsulWaktu({ userLocal }) {
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="block text-xs font-bold mb-1 text-slate-300">
-                    Apa pesan yang ingin kalian sampaikan untuk anak-anak Tekling 16 yang lain?
+                  <label htmlFor="pesan-kapsul" className="block text-xs font-bold mb-2 text-slate-200">
+                    Pesan & Doa untuk Sedulur 16
                   </label>
-                  <p className="text-[10px] text-yellow-400 mb-2 italic font-mono"></p>
                   <textarea
+                    id="pesan-kapsul"
                     rows="4"
                     maxLength={200}
                     value={pesan}
                     onChange={(e) => setPesan(e.target.value)}
-                    placeholder="Tulis pesan haru, doa, atau jokes tongkrongan kuliah..."
-                    className="flex-1 w-full bg-slate-900 border border-slate-600 rounded-xl p-3 text-sm text-white placeholder-slate-500 focus:border-yellow-500 resize-none"
+                    placeholder="Tulis pesan hangat, doa, atau kenangan seru waktu kuliah..."
+                    className="flex-1 w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-sm text-white placeholder-slate-400 focus:border-amber-400 resize-none"
                     disabled={isUploading}
                   />
-                  <div className="text-right mt-1">
-                    <span className={`text-[10px] font-mono ${pesan.length >= 200 ? 'text-red-500' : 'text-slate-500'}`}>
-                      {pesan.length}/200
+                  <div className="text-right mt-1.5">
+                    <span className={`text-xs font-mono ${pesan.length >= 200 ? 'text-rose-400 font-bold' : 'text-slate-300'}`}>
+                      {pesan.length}/200 karakter
                     </span>
                   </div>
                 </div>
 
               </div>
 
-              <div className="pt-2">
+              <div className="pt-1">
                 <button
                   type="submit"
                   disabled={isUploading}
-                  className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black text-lg py-4 rounded-xl shadow-[0_10px_20px_rgba(234,179,8,0.2)] transition-all active:scale-95 disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
+                  className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-base py-3.5 px-6 rounded-xl shadow-md transition-colors disabled:bg-slate-700 disabled:text-slate-300"
                 >
-                  {isUploading ? (uploadStatus || "Memproses...") : "KIRIM KE KAPSUL WAKTU ✉️"}
+                  {isUploading ? (uploadStatus || "Memproses...") : "Simpan ke Kapsul Waktu"}
                 </button>
               </div>
             </form>

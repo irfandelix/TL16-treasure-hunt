@@ -5,7 +5,6 @@ export default function RahasiaDapur() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [errorMssg, setErrorMssg] = useState('');
 
-  // GANTI PASSWORD INI SESUAI KESEPAKATAN DENGAN KOMTING
   const KATA_SANDI_RAHASIA = "TL16ROOT"; 
 
   const handleUnlock = (e) => {
@@ -14,34 +13,47 @@ export default function RahasiaDapur() {
       setIsUnlocked(true);
       setErrorMssg('');
     } else {
-      setErrorMssg('Akses Ditolak. Anda bukan Admin.');
+      setErrorMssg('Kode akses belum tepat. Khusus panitia inti TL 2016.');
       setPasscode('');
     }
   };
 
-  // TAMPILAN JIKA BELUM MEMASUKKAN PASSWORD
   if (!isUnlocked) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 font-mono">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 p-8 rounded-xl shadow-2xl text-center">
-          <span className="text-5xl block mb-6 animate-pulse">🔒</span>
-          <h1 className="text-red-500 font-bold text-xl tracking-widest mb-2">RESTRICTED AREA</h1>
-          <p className="text-slate-500 text-xs mb-8">Masukkan kode otorisasi untuk mengakses Dev's Note.</p>
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 font-sans">
+        <div className="max-w-md w-full bg-slate-800 border border-slate-700 p-8 rounded-2xl shadow-md text-center">
+          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+            Dokumentasi Panitia
+          </p>
+          <h1 className="text-white font-bold text-2xl mb-2">Arsip Dapur Panitia TL 2016</h1>
+          <p className="text-slate-300 text-sm mb-6">
+            Masukkan kode panitia untuk membuka dokumentasi teknis perayaan 1 Dekade.
+          </p>
           
           <form onSubmit={handleUnlock} className="flex flex-col gap-4">
-            <input 
-              type="password" 
-              value={passcode}
-              onChange={(e) => setPasscode(e.target.value)}
-              placeholder="Enter Passcode..."
-              className="bg-black border border-slate-700 text-green-500 text-center px-4 py-3 rounded-lg focus:outline-none focus:border-green-500 tracking-widest uppercase font-bold"
-            />
-            {errorMssg && <p className="text-red-500 text-[10px] animate-bounce">{errorMssg}</p>}
+            <div>
+              <label htmlFor="passcode-input" className="sr-only">
+                Kode Panitia
+              </label>
+              <input 
+                id="passcode-input"
+                type="password" 
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                placeholder="Masukkan kode panitia..."
+                className="w-full min-h-[48px] bg-slate-900 border border-slate-600 text-amber-400 text-center px-4 py-3 rounded-xl focus:border-amber-400 tracking-widest uppercase font-mono font-bold placeholder:text-slate-400 placeholder:normal-case placeholder:tracking-normal"
+              />
+            </div>
+            {errorMssg && (
+              <p role="alert" className="text-rose-400 text-xs font-semibold">
+                {errorMssg}
+              </p>
+            )}
             <button 
               type="submit"
-              className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-lg transition-colors text-sm"
+              className="min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3 px-6 rounded-xl transition-colors text-sm"
             >
-              DECRYPT DATA
+              Buka Catatan Panitia
             </button>
           </form>
         </div>
@@ -49,92 +61,88 @@ export default function RahasiaDapur() {
     );
   }
 
-  // TAMPILAN DEV'S NOTE SETELAH UNLOCK
   return (
-    <div className="min-h-screen bg-slate-950 p-4 md:p-8 font-mono text-slate-300 selection:bg-green-900 selection:text-green-400">
+    <div className="min-h-screen bg-slate-900 p-4 md:p-8 font-sans text-slate-200">
       <div className="max-w-3xl mx-auto">
         
-        {/* HEADER */}
-        <div className="border-b border-slate-800 pb-6 mb-8 flex justify-between items-end">
+        <div className="border-b border-slate-700 pb-6 mb-8 flex flex-wrap justify-between items-center gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-green-500 mb-2 tracking-widest uppercase">
-              🛠️ DEV'S NOTE
+            <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+              Arsip Teknis Perayaan 1 Dekade
+            </p>
+            <h1 className="text-2xl md:text-3xl font-bold text-white">
+              Catatan Dapur Panitia Sedulur 16
             </h1>
-            <p className="text-xs text-slate-500">SYSTEM ARCHITECTURE & PATCH NOTES</p>
           </div>
           <button 
+            type="button"
             onClick={() => setIsUnlocked(false)}
-            className="text-[10px] bg-red-950/30 text-red-500 px-3 py-1 rounded border border-red-900/50 hover:bg-red-900 hover:text-white transition-colors"
+            className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 min-h-[44px] rounded-xl border border-slate-600 font-bold transition-colors"
           >
-            LOCK SYSTEM
+            Kunci Kembali
           </button>
         </div>
 
-        {/* ISI KONTEN */}
-        <div className="space-y-8 text-sm leading-relaxed">
+        <div className="space-y-6 text-sm leading-relaxed">
           
-          {/* INTRO */}
-          <section className="bg-slate-900/50 p-6 rounded-xl border border-slate-800 border-l-4 border-l-green-500">
-            <p>
-              <strong className="text-white">Status:</strong> <span className="text-green-400 animate-pulse">🟢 100% ONLINE & READY TO DEPLOY</span>
+          <section className="bg-slate-800 p-6 rounded-2xl border border-emerald-500/40">
+            <p className="text-xs font-mono font-bold text-emerald-400 uppercase mb-1">
+              Status Sistem: Siap Digunakan
             </p>
-            <p className="mt-4">
-              Laporan teknis internal untuk Komting / Tim Inti. Seluruh ekosistem modul interaktif (Mini-Games & Fitur Memori) telah terintegrasi dengan database Supabase secara realtime.
+            <p className="text-slate-200">
+              Panduan teknis internal untuk Komting dan Tim Inti Reuni 1 Dekade. Seluruh permainan interaktif dan fitur Kapsul Waktu telah terhubung langsung dengan basis data Supabase.
             </p>
           </section>
 
-          {/* MODUL 1 & 2 */}
           <div className="grid md:grid-cols-2 gap-6">
-            <section className="bg-slate-900 p-6 rounded-xl border border-slate-800 hover:border-slate-600 transition-colors">
-              <h2 className="text-yellow-500 font-bold mb-4 flex items-center gap-2">
-                <span className="text-xl">🎲</span> MODUL 1: MONOPOLI TL16
+            <section className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+              <h2 className="text-amber-400 font-bold text-base mb-2">
+                Modul 1: Monopoli TL16
               </h2>
-              <ul className="list-disc list-outside ml-4 space-y-2 text-slate-400 text-xs">
-                <li><strong className="text-slate-200">Papan Custom:</strong> Bergerak virtual serentak di satu papan realtime.</li>
-                <li><strong className="text-slate-200">Mekanik UKT & ToD:</strong> Fitur Truth or Dare aktif. Database siap menampung log aktivitas.</li>
-              </ul>
-            </section>
-
-            <section className="bg-slate-900 p-6 rounded-xl border border-slate-800 hover:border-slate-600 transition-colors">
-              <h2 className="text-red-500 font-bold mb-4 flex items-center gap-2">
-                <span className="text-xl">🧛‍♂️</span> MODUL 2: DOSEN KILLER
-              </h2>
-              <ul className="list-disc list-outside ml-4 space-y-2 text-slate-400 text-xs">
-                <li><strong className="text-slate-200">Auto-Balancing:</strong> Rasio otomatis 1 Dosen : 1 Intel : 1 Ahli per 10 pemain.</li>
-                <li><strong className="text-slate-200">Bot Moderator:</strong> Siklus Malam &rarr; Pagi &rarr; Diskusi &rarr; Voting dieksekusi client-side (Interval JS).</li>
-              </ul>
-            </section>
-          </div>
-
-          {/* MODUL 3 & 4 */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <section className="bg-slate-900 p-6 rounded-xl border border-slate-800 hover:border-slate-600 transition-colors">
-              <h2 className="text-blue-500 font-bold mb-4 flex items-center gap-2">
-                <span className="text-xl">🎡</span> MODUL 3: WHEEL OF FAMILY
-              </h2>
-              <p className="text-slate-400 text-xs">
-                Sistem Gacha/Roulette tersinkronisasi. Algoritma <code className="bg-slate-950 px-1 text-blue-400">Math.random()</code> murni tanpa intervensi data.
+              <p className="text-slate-300 text-xs leading-relaxed mb-2">
+                Seluruh peserta bergerak serentak di satu papan virtual waktu nyata dengan mekanik UKT dan kartu Jujur atau Berani.
               </p>
             </section>
 
-            <section className="bg-slate-900 p-6 rounded-xl border border-slate-800 hover:border-slate-600 transition-colors">
-              <h2 className="text-purple-500 font-bold mb-4 flex items-center gap-2">
-                <span className="text-xl">⏳</span> MODUL 4: KAPSUL WAKTU
+            <section className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+              <h2 className="text-emerald-400 font-bold text-base mb-2">
+                Modul 2: Sidang Dosen Killer
               </h2>
-              <p className="text-slate-400 text-xs">
-                Skema penyimpanan Blob/Text terkunci di database. Trigger buka otomatis berdasarkan <code className="bg-slate-950 px-1 text-purple-400">timestamp</code> hari H.
+              <p className="text-slate-300 text-xs leading-relaxed mb-2">
+                Pembagian peran otomatis menyesuaikan jumlah peserta di ruangan, dengan alur Malam, Pagi, Diskusi, dan Pemungutan Suara yang dipandu otomatis.
               </p>
             </section>
           </div>
 
-          {/* WARNING SECTION */}
-          <section className="bg-red-950/20 p-6 rounded-xl border border-red-900/50 mt-8">
-            <h2 className="text-red-500 font-bold mb-4">⚠️ PROTOKOL ADMIN / HOST ROOM</h2>
-            <p className="text-slate-300 mb-3 text-xs">Arsitektur aplikasi menggunakan skema <em>Serverless Client-Hosted</em>. Perangkat Admin bertindak sebagai mesin.</p>
-            <ol className="list-decimal list-inside space-y-2 text-slate-400 text-xs">
-              <li>Koneksi Host wajib memiliki latensi rendah.</li>
-              <li>Dilarang menutup tab, me-refresh, atau <em>sleep</em> layar.</li>
-              <li>Gunakan tombol <strong className="text-white">RESET ROOM</strong> hanya saat <em>desync / fatal error</em>.</li>
+          <div className="grid md:grid-cols-2 gap-6">
+            <section className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+              <h2 className="text-amber-400 font-bold text-base mb-2">
+                Modul 3: Wheel of Family
+              </h2>
+              <p className="text-slate-300 text-xs leading-relaxed">
+                Roda undian terhubung otomatis dengan daftar alumni yang telah mengisi Kapsul Waktu menggunakan pengacakan murni.
+              </p>
+            </section>
+
+            <section className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+              <h2 className="text-emerald-400 font-bold text-base mb-2">
+                Modul 4: Kapsul Waktu
+              </h2>
+              <p className="text-slate-300 text-xs leading-relaxed">
+                Menyimpan foto terbaru tahun 2026 beserta pesan ulang tahun untuk angkatan yang ditampilkan saat sesi nostalgia bersama.
+              </p>
+            </section>
+          </div>
+
+          <section className="bg-slate-800 p-6 rounded-2xl border border-amber-400/40">
+            <h2 className="text-amber-400 font-bold text-base mb-3">Panduan Pemandu Ruangan (Host)</h2>
+            <p className="text-slate-200 mb-3 text-xs">
+              Aplikasi menggunakan sinkronisasi langsung dari perangkat Host. Agar jalannya permainan mulus:
+            </p>
+            <ol className="list-decimal list-inside space-y-1.5 text-slate-300 text-xs">
+              <li>Pastikan koneksi internet Host stabil selama acara berlangsung.</li>
+              <li>Biarkan tab peramban tetap terbuka dan layar tidak masuk mode tidur.</li>
+              <li>Gunakan tombol atur ulang ruangan hanya jika ingin memulai sesi baru dari awal.</li>
             </ol>
           </section>
 

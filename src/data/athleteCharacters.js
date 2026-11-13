@@ -1,7 +1,4 @@
-// src/data/athleteCharacters.js
-
 export const ATHLETE_CHARACTERS = [
-  // --- DIVISI 1: WATER ENGINEERING ---
   {
     id: 'acid_mine',
     name: 'Acid Mine Drainage',
@@ -46,8 +43,6 @@ export const ATHLETE_CHARACTERS = [
     skillDesc: 'Arus bawah tanah! Jika disalip lawan, otomatis ikut terseret maju 2 petak.',
     type: 'PARASITE'
   },
-
-  // --- DIVISI 2: WASTEWATER & BIOREMEDIATION ---
   {
     id: 'activated_sludge',
     name: 'Activated Sludge',
@@ -92,8 +87,6 @@ export const ATHLETE_CHARACTERS = [
     skillDesc: 'Lonjakan oksigen! Khusus di giliran pertama balapan langsung melesat maju +3 petak.',
     type: 'SPEED'
   },
-
-  // --- DIVISI 3: SOLID & HAZARDOUS WASTE ---
   {
     id: 'waste_compactor',
     name: 'Waste Compactor',
@@ -138,8 +131,6 @@ export const ATHLETE_CHARACTERS = [
     skillDesc: 'Siklus baru! Setiap kali dadu keluar angka 6, langsung dapat 1x lemparan tambahan.',
     type: 'SPEED'
   },
-
-  // --- DIVISI 4: GEOLOGY & EARTH DYNAMICS ---
   {
     id: 'active_fault',
     name: 'Active Fault',
@@ -191,68 +182,68 @@ export const TRACK_TILES = [
   { index: 1, label: '1', type: 'normal' },
   { index: 2, label: '2', type: 'normal' },
   { index: 3, label: '3', type: 'normal' },
-  { index: 4, label: '4', type: 'boost', desc: '⚡ Arus Deras (+2 Langkah)' },
+  { index: 4, label: '4', type: 'boost', desc: 'Arus Deras (+2 Langkah)' },
   { index: 5, label: '5', type: 'normal' },
-  { index: 6, label: '6', type: 'trap', desc: '⚠️ Lumpur Limbah (-2 Langkah)' },
+  { index: 6, label: '6', type: 'trap', desc: 'Lumpur Limbah (-2 Langkah)' },
   { index: 7, label: '7', type: 'normal' },
   { index: 8, label: '8', type: 'normal' },
   { index: 9, label: '9', type: 'normal' },
   { index: 10, label: '10', type: 'normal' },
-  { index: 11, label: '11', type: 'boost', desc: '⚡ Turbulensi Oksigen (+2 Langkah)' },
-  { index: 12, label: '12', type: 'halfway', desc: '🏁 Titik Tengah (Halfway)' },
+  { index: 11, label: '11', type: 'boost', desc: 'Turbulensi Oksigen (+2 Langkah)' },
+  { index: 12, label: '12', type: 'halfway', desc: 'Titik Tengah (Halfway)' },
   { index: 13, label: '13', type: 'normal' },
-  { index: 14, label: '14', type: 'trap', desc: '⚠️ Gas Beracun (-2 Langkah)' },
+  { index: 14, label: '14', type: 'trap', desc: 'Gas Beracun (-2 Langkah)' },
   { index: 15, label: '15', type: 'normal' },
   { index: 16, label: '16', type: 'normal' },
-  { index: 17, label: '17', type: 'boost', desc: '⚡ Sesar Gravitasi (+2 Langkah)' },
+  { index: 17, label: '17', type: 'boost', desc: 'Sesar Gravitasi (+2 Langkah)' },
   { index: 18, label: '18', type: 'normal' },
-  { index: 19, label: '19', type: 'trap', desc: '⚠️ Retakan Tanah (-2 Langkah)' },
+  { index: 19, label: '19', type: 'trap', desc: 'Retakan Tanah (-2 Langkah)' },
   { index: 20, label: '20', type: 'normal' },
   { index: 21, label: '21', type: 'normal' },
   { index: 22, label: '22', type: 'normal' },
   { index: 23, label: '23', type: 'normal' },
-  { index: 24, label: 'START / FINISH', type: 'start_finish', desc: '🏆 Garis Akhir' }
+  { index: 24, label: 'START / FINISH', type: 'start_finish', desc: 'Garis Akhir' }
 ];
 
 export const PLAYER_COLORS = [
   {
     id: 'blue',
-    name: 'Biru Neon',
-    bg: 'bg-cyan-500/20',
+    name: 'Biru Langit',
+    bg: 'bg-cyan-500/15',
     border: 'border-cyan-400',
-    text: 'text-cyan-400',
-    glow: 'shadow-[0_0_20px_rgba(6,182,212,0.6)]',
+    text: 'text-cyan-300',
+    glow: 'shadow-sm',
     ring: 'ring-cyan-400',
-    badge: 'bg-cyan-500 text-slate-950'
+    badge: 'bg-cyan-400 text-slate-950'
   },
   {
     id: 'red',
-    name: 'Merah Crimson',
-    bg: 'bg-rose-500/20',
+    name: 'Merah Marun',
+    bg: 'bg-rose-500/15',
     border: 'border-rose-400',
-    text: 'text-rose-400',
-    glow: 'shadow-[0_0_20px_rgba(244,63,94,0.6)]',
+    text: 'text-rose-300',
+    glow: 'shadow-sm',
     ring: 'ring-rose-400',
-    badge: 'bg-rose-500 text-white'
+    badge: 'bg-rose-700 text-white'
   },
   {
     id: 'green',
-    name: 'Hijau Zamrud',
-    bg: 'bg-emerald-500/20',
+    name: 'Hijau Rimba',
+    bg: 'bg-emerald-500/15',
     border: 'border-emerald-400',
-    text: 'text-emerald-400',
-    glow: 'shadow-[0_0_20px_rgba(16,185,129,0.6)]',
+    text: 'text-emerald-300',
+    glow: 'shadow-sm',
     ring: 'ring-emerald-400',
-    badge: 'bg-emerald-500 text-slate-950'
+    badge: 'bg-emerald-400 text-slate-950'
   },
   {
     id: 'gold',
-    name: 'Emas Mulia',
-    bg: 'bg-amber-500/20',
+    name: 'Kuning Emas',
+    bg: 'bg-amber-500/15',
     border: 'border-amber-400',
-    text: 'text-amber-400',
-    glow: 'shadow-[0_0_20px_rgba(245,158,11,0.6)]',
+    text: 'text-amber-300',
+    glow: 'shadow-sm',
     ring: 'ring-amber-400',
-    badge: 'bg-amber-500 text-slate-950'
+    badge: 'bg-amber-400 text-slate-950'
   }
 ];
