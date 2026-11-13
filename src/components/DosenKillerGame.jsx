@@ -154,10 +154,10 @@ export default function DosenKillerGame() {
       const dks = pemain.filter(p => p.peran === 'DOSEN_KILLER' && p.is_hidup);
       const wargas = pemain.filter(p => p.peran !== 'DOSEN_KILLER' && p.peran !== 'INTEL' && p.is_hidup);
       
-      if (dks.length > 0 && wargas.length >= 2) {
+      if (dks.length > 0 && wargas.length >= 1) {
         const pickedDk = dks[Math.floor(Math.random() * dks.length)];
         const shuffledWarga = [...wargas].sort(() => 0.5 - Math.random());
-        const pickedWargas = shuffledWarga.slice(0, 2);
+        const pickedWargas = shuffledWarga.slice(0, Math.min(2, shuffledWarga.length));
         
         const combined = [pickedDk, ...pickedWargas].sort(() => 0.5 - Math.random());
         setIntelSuspects(combined);
@@ -213,8 +213,8 @@ export default function DosenKillerGame() {
 
             if (votesAhli[korbanNim]) {
               pesanBaru = "Seseorang hampir terkena DO, tetapi nilainya berhasil diselamatkan oleh Mahasiswa Ahli!";
-            } else if (korbanData?.peran === 'UPTODATE') {
-              pesanBaru = "Dosen Killer mencoba memberi nilai E semalam, tetapi Mahasiswa Uptodate berhasil menghindar karena sudah tahu infonya lebih dulu!";
+            } else if (korbanData?.peran === 'UPTODATE' && (state.ronde || 1) === 1) {
+              pesanBaru = "Dosen Killer mencoba memberi nilai E semalam, tetapi Mahasiswa Uptodate berhasil menghindar di malam pertama!";
             } else {
               await supabase.from('mahasiswa_roles').update({ is_hidup: false }).eq('room_code', roomCode).eq('nim', korbanNim);
               pesanBaru = `Kabar Kampus: ${korbanData?.nama} terkena DO semalam!`;
@@ -357,6 +357,7 @@ export default function DosenKillerGame() {
     });
 
     await supabase.from('mahasiswa_roles').upsert(updates);
+    await supabase.from('dosen_killer_chat').delete().eq('room_code', roomCode);
 
     const durasiMalam = 30; 
     const waktuSelesaiMalam = new Date(Date.now() + durasiMalam * 1000).toISOString();

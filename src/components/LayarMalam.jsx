@@ -51,14 +51,20 @@ export default function LayarMalam({ peranKu, isHidup, pemain, currentUser }) {
           Saatnya peran khusus mengambil tindakan secara rahasia...
         </p>
 
-        {(peranKu === 'BIASA' || peranKu === 'UPTODATE') ? (
+        {(peranKu === 'BIASA' || peranKu === 'UPTODATE' || peranKu === 'INTEL') ? (
           <div className="bg-slate-800 border border-slate-700 p-6 rounded-2xl">
             <h3 className="text-amber-400 font-bold text-lg">
-              {peranKu === 'UPTODATE' ? 'Mahasiswa Uptodate' : 'Mahasiswa Biasa'}
+              {peranKu === 'UPTODATE'
+                ? 'Mahasiswa Uptodate'
+                : peranKu === 'INTEL'
+                ? 'Mahasiswa Intel'
+                : 'Mahasiswa Biasa'}
             </h3>
             <p className="text-slate-200 text-sm mt-2 leading-relaxed">
               {peranKu === 'UPTODATE'
-                ? 'Kamu kebal terhadap ancaman nilai E pada malam hari. Tunggu hingga pagi tiba untuk berdiskusi.'
+                ? 'Kamu kebal terhadap ancaman nilai E pada malam pertama. Tunggu hingga pagi tiba untuk berdiskusi.'
+                : peranKu === 'INTEL'
+                ? 'Kamu sedang mengamati gerak-gerik mencurigakan malam ini. Saat pagi dan sesi diskusi tiba, kamu akan menerima petunjuk 3 nama kandidat yang memuat 1 Dosen Killer.'
                 : 'Tidak ada aksi khusus malam ini. Istirahatlah dan bersiap berdiskusi saat pagi tiba.'}
             </p>
           </div>
@@ -66,7 +72,6 @@ export default function LayarMalam({ peranKu, isHidup, pemain, currentUser }) {
           <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl max-h-[60vh] overflow-y-auto w-full text-left">
             <p className="text-amber-400 font-bold text-xs font-mono uppercase tracking-wider mb-3">
               {peranKu === 'DOSEN_KILLER' && 'Pilih Mahasiswa yang Akan Diberi Nilai E:'}
-              {peranKu === 'INTEL' && 'Pilih Mahasiswa yang Ingin Diperiksa Perannya:'}
               {peranKu === 'AHLI' && 'Pilih Mahasiswa yang Ingin Diselamatkan Nilainya:'}
             </p>
 

@@ -47,6 +47,15 @@ export default function TreasureHunt() {
   const [isRevealed, setIsRevealed] = useState(false);
   const [result, setResult] = useState({ distance: 0, points: 0 });
 
+  const saveHuntSession = (missions, idx, scr) => {
+    const userNim = localStorage.getItem('user_nim') || 'guest';
+    localStorage.setItem(`session_hunt_${userNim}`, JSON.stringify({
+      missions,
+      currentIdx: idx,
+      totalScore: scr
+    }));
+  };
+
   const initGame = async () => {
     setLoading(true);
     setErrorMsg('');
@@ -60,6 +69,22 @@ export default function TreasureHunt() {
       setCurrentIdx(20); 
       setLoading(false);
       return;
+    }
+
+    const savedSession = localStorage.getItem(`session_hunt_${userNim}`);
+    if (savedSession) {
+      try {
+        const parsed = JSON.parse(savedSession);
+        if (Array.isArray(parsed.missions) && parsed.missions.length > 0) {
+          setMyMissions(parsed.missions);
+          setCurrentIdx(parsed.currentIdx || 0);
+          setTotalScore(parsed.totalScore || 0);
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.error('Gagal membaca sesi peta:', e);
+      }
     }
 
     const { data: dbLocations, error } = await supabase
@@ -83,6 +108,7 @@ export default function TreasureHunt() {
     setMyMissions(selected20);
     setCurrentIdx(0);
     setTotalScore(0);
+    saveHuntSession(selected20, 0, 0);
     setLoading(false);
   };
 
@@ -119,6 +145,7 @@ export default function TreasureHunt() {
 
     const newScore = totalScore + points;
     setTotalScore(newScore);
+    saveHuntSession(myMissions, currentIdx, newScore);
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (points >= 80 && !prefersReducedMotion) {
@@ -138,9 +165,12 @@ export default function TreasureHunt() {
     setIsRevealed(false);
 
     if (nextIdx >= 20) {
-      const userNim = localStorage.getItem('user_nim');
+      const userNim = localStorage.getItem('user_nim') || 'guest';
       localStorage.setItem(`hunt_completed_${userNim}`, 'true');
       localStorage.setItem(`hunt_final_score_${userNim}`, totalScore.toString());
+      localStorage.removeItem(`session_hunt_${userNim}`);
+    } else {
+      saveHuntSession(myMissions, nextIdx, totalScore);
     }
   };
 
@@ -185,8 +215,21 @@ export default function TreasureHunt() {
           <span className="text-emerald-400 font-mono font-bold text-5xl">{totalScore}</span>
         </p>
         
-        <div className="flex justify-center">
-          <a href="/" className="inline-flex items-center justify-center bg-amber-400 hover:bg-amber-300 px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-slate-950 transition-colors">
+        <div className="flex flex-col sm:flex-row justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              const userNim = localStorage.getItem('user_nim') || 'guest';
+              localStorage.removeItem(`hunt_completed_${userNim}`);
+              localStorage.removeItem(`hunt_final_score_${userNim}`);
+              localStorage.removeItem(`session_hunt_${userNim}`);
+              initGame();
+            }}
+            className="inline-flex items-center justify-center bg-amber-400 hover:bg-amber-300 px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-slate-950 transition-colors"
+          >
+            Main Ulang Napak Tilas
+          </button>
+          <a href="/" className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-700 border border-slate-600 px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-white transition-colors">
             Kembali ke Beranda
           </a>
         </div>

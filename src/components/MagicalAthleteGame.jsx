@@ -603,15 +603,16 @@ export default function MagicalAthleteGame() {
           }
         }
 
+        const firstTurnSlot = players[0]?.slot_number || 1;
         await supabase.from('athlete_rooms').update({
           status: 'RACING',
-          current_turn_slot: 1,
+          current_turn_slot: firstTurnSlot,
           last_action: `Ronde ${roomData.current_round} Resmi Dimulai! Semua atlet berada di lintasan!`
         }).eq('room_code', roomCode);
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [players, roomData, currentUser.isAdmin]);
+  }, [players, roomData, isHost]);
 
   const executePlayerMove = async (playerToMove, overrideSteps = null) => {
     if (isProcessingMove) return;
@@ -826,19 +827,20 @@ export default function MagicalAthleteGame() {
   };
 
   const handleNextRound = async () => {
-    if (!currentUser.isAdmin) return;
+    if (!isHost) return;
     const nextRound = roomData.current_round + 1;
+    const firstTurnSlot = players[0]?.slot_number || 1;
 
     await supabase.from('athlete_rooms').update({
       status: 'RACE_SELECT',
       current_round: nextRound,
-      current_turn_slot: 1,
+      current_turn_slot: firstTurnSlot,
       last_action: `Ronde ${nextRound} Dimulai! Silakan kunci atlet pilihanmu!`
     }).eq('room_code', roomCode);
   };
 
   const handleResetGame = async () => {
-    if (!currentUser.isAdmin) return;
+    if (!isHost) return;
     if (!confirm('Yakin ingin mereset permainan kembali ke Lobi?')) return;
 
     await supabase.from('athlete_rooms').update({

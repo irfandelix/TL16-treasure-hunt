@@ -14,6 +14,8 @@ export default function LayarDiskusi({ pemain, isHidup, currentUser }) {
   const jumlahSiapSkip = pemain.filter(p => p.siap_skip).length;
 
   useEffect(() => {
+    if (!currentUser?.roomCode) return;
+
     const fetchChat = async () => {
       setIsLoading(true);
       setErrorMsg('');
@@ -21,6 +23,7 @@ export default function LayarDiskusi({ pemain, isHidup, currentUser }) {
         const { data, error } = await supabase
           .from('dosen_killer_chat')
           .select('*')
+          .eq('room_code', currentUser.roomCode)
           .order('created_at', { ascending: true });
         if (error) throw error;
         if (data) setDaftarChat(data);
@@ -33,16 +36,29 @@ export default function LayarDiskusi({ pemain, isHidup, currentUser }) {
     };
     fetchChat();
 
-    const mhsKu = pemain.find(p => p.nim === currentUser.nim);
-    if (mhsKu) setSayaSiapSkip(mhsKu.siap_skip || false);
-
-    const chatSub = supabase.channel('public:dosen_killer_chat')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dosen_killer_chat' }, (payload) => {
-        setDaftarChat(prev => [...prev, payload.new]);
-      }).subscribe();
+    const chatSub = supabase
+      .channel(`dosen_killer_chat:${currentUser.roomCode}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'dosen_killer_chat',
+          filter: `room_code=eq.${currentUser.roomCode}`
+        },
+        (payload) => {
+          setDaftarChat(prev => [...prev, payload.new]);
+        }
+      )
+      .subscribe();
 
     return () => supabase.removeChannel(chatSub);
-  }, [pemain]);
+  }, [currentUser?.roomCode]);
+
+  useEffect(() => {
+    const mhsKu = pemain.find(p => p.nim === currentUser.nim);
+    if (mhsKu) setSayaSiapSkip(Boolean(mhsKu.siap_skip));
+  }, [pemain, currentUser.nim]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });

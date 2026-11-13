@@ -20,7 +20,7 @@ export default function WheelOfFamily() {
     try {
       const { data, error } = await supabase
         .from('alumni')
-        .select('nim, nama, foto_tebak, foto_now, pesan_anniv')
+        .select('nim, nama, foto_now, pesan_anniv')
         .not('foto_now', 'is', null);
 
       if (error) throw error;
@@ -195,7 +195,7 @@ export default function WheelOfFamily() {
               
               <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border-2 border-slate-700 bg-slate-900 shadow-md">
                 <img 
-                  src={pemenang.foto_tebak || `/2016/${pemenang.nim}.webp`} 
+                  src={`/2016/${pemenang.nim}.webp`} 
                   alt={`Foto ${pemenang.nama} tahun 2016`} 
                   width="320"
                   height="426"

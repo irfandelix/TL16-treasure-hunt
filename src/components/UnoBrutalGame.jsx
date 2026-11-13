@@ -26,6 +26,8 @@ export default function UnoBrutalGame() {
   const [errorMsg, setErrorMsg] = useState('');
 
   const [topCard, setTopCard] = useState(() => generateRandomCard());
+  const [currentTurn, setCurrentTurn] = useState(null);
+  const [direction, setDirection] = useState(1);
   const [myHand, setMyHand] = useState([]);
   const [statusNotice, setStatusNotice] = useState('');
 
@@ -46,15 +48,24 @@ export default function UnoBrutalGame() {
         .select('*')
         .eq('room_code', currentRoom)
         .order('joined_at', { ascending: true });
-      if (pData) setPlayers(pData);
+      if (pData) {
+        setPlayers(pData);
+        const me = pData.find((p) => p.nim === (user?.nim || localStorage.getItem('user_nim')));
+        if (me && Array.isArray(me.hand)) {
+          setMyHand(me.hand);
+        }
+      }
 
       const { data: rData } = await supabase
         .from('uno_rooms')
-        .select('status')
+        .select('status, top_card, current_turn, direction')
         .eq('room_code', currentRoom)
         .single();
-      if (rData?.status) {
-        setRoomStatus(rData.status);
+      if (rData) {
+        if (rData.status) setRoomStatus(rData.status);
+        if (rData.top_card) setTopCard(rData.top_card);
+        setCurrentTurn(rData.current_turn || null);
+        if (rData.direction) setDirection(rData.direction);
       }
     };
     fetchRoomState();
@@ -76,9 +87,13 @@ export default function UnoBrutalGame() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'uno_rooms', filter: `room_code=eq.${currentRoom}` },
         (payload) => {
-          if (payload.new?.status) {
-            setRoomStatus(payload.new.status);
+          if (payload.new) {
+            if (payload.new.status) setRoomStatus(payload.new.status);
+            if (payload.new.top_card) setTopCard(payload.new.top_card);
+            setCurrentTurn(payload.new.current_turn || null);
+            if (payload.new.direction) setDirection(payload.new.direction);
           }
+          fetchRoomState();
         }
       )
       .subscribe();
@@ -87,22 +102,14 @@ export default function UnoBrutalGame() {
       supabase.removeChannel(playerSubscription);
       supabase.removeChannel(roomSubscription);
     };
-  }, [currentRoom]);
-
-  useEffect(() => {
-    if (roomStatus === 'playing' && myHand.length === 0) {
-      const initialHand = Array.from({ length: 5 }, () => generateRandomCard());
-      setMyHand(initialHand);
-      setStatusNotice('Permainan dimulai! Pilih kartu dengan warna atau angka yang senada.');
-    }
-  }, [roomStatus]);
+  }, [currentRoom, user?.nim]);
 
   const createRoom = async () => {
     if (!user) return;
     setLoading(true);
     setErrorMsg('');
-    
-    const code = Math.random().toString(36).substring(2, 6).toUpperCase(); 
+
+    const code = Math.random().toString(36).substring(2, 6).toUpperCase();
 
     try {
       const { error: roomError } = await supabase
@@ -112,7 +119,7 @@ export default function UnoBrutalGame() {
 
       const { error: playerError } = await supabase
         .from('uno_players')
-        .insert([{ room_code: code, nim: user.nim, nama: user.nama, is_host: true }]);
+        .insert([{ room_code: code, nim: user.nim, nama: user.nama, is_host: true, hand: [] }]);
       if (playerError) throw playerError;
 
       setRoomStatus('waiting');
@@ -137,15 +144,15 @@ export default function UnoBrutalGame() {
         .select('status')
         .eq('room_code', roomCode)
         .single();
-      
+
       if (roomError || !roomData) throw new Error('Meja tidak ditemukan. Periksa kembali kode meja.');
       if (roomData.status !== 'waiting') throw new Error('Permainan di meja ini sudah dimulai atau selesai.');
 
       const { error: playerError } = await supabase
         .from('uno_players')
-        .insert([{ room_code: roomCode, nim: user.nim, nama: user.nama, is_host: false }]);
-      
-      if (playerError && playerError.code !== '23505') throw playerError; 
+        .insert([{ room_code: roomCode, nim: user.nim, nama: user.nama, is_host: false, hand: [] }]);
+
+      if (playerError && playerError.code !== '23505') throw playerError;
 
       setRoomStatus(roomData.status);
       setCurrentRoom(roomCode);
@@ -166,12 +173,36 @@ export default function UnoBrutalGame() {
     setErrorMsg('');
     setLoading(true);
     try {
+      const initialTopCard = generateRandomCard();
+      const firstPlayerNim = players[0]?.nim || user?.nim;
+
+      await Promise.all(
+        players.map((p) => {
+          const initialHand = Array.from({ length: 5 }, () => generateRandomCard());
+          if (p.nim === user?.nim) setMyHand(initialHand);
+          return supabase
+            .from('uno_players')
+            .update({ hand: initialHand })
+            .match({ room_code: currentRoom, nim: p.nim });
+        })
+      );
+
       const { error } = await supabase
         .from('uno_rooms')
-        .update({ status: 'playing' })
+        .update({
+          status: 'playing',
+          top_card: initialTopCard,
+          current_turn: firstPlayerNim,
+          direction: 1
+        })
         .eq('room_code', currentRoom);
       if (error) throw error;
+
+      setTopCard(initialTopCard);
+      setCurrentTurn(firstPlayerNim);
+      setDirection(1);
       setRoomStatus('playing');
+      setStatusNotice('Permainan dimulai! Keluarkan kartu dengan warna atau nilai yang cocok.');
     } catch (err) {
       console.error(err);
       setErrorMsg('Gagal memulai permainan. Silakan coba lagi.');
@@ -180,31 +211,113 @@ export default function UnoBrutalGame() {
     }
   };
 
-  const handlePlayCard = (card) => {
+  const getNextPlayerNim = (stepCount = 1) => {
+    if (players.length === 0) return user?.nim;
+    const currentIdx = players.findIndex((p) => p.nim === (currentTurn || user?.nim));
+    const baseIdx = currentIdx >= 0 ? currentIdx : 0;
+    const nextIdx = (baseIdx + stepCount * direction + players.length * 10) % players.length;
+    return players[nextIdx]?.nim || user?.nim;
+  };
+
+  const handlePlayCard = async (card) => {
+    if (roomStatus !== 'playing') return;
+    if (currentTurn && currentTurn !== user?.nim) {
+      const activePlayer = players.find((p) => p.nim === currentTurn);
+      setStatusNotice(`Tunggu giliranmu! Saat ini giliran ${activePlayer?.nama?.split(' ')[0] || 'pemain lain'}.`);
+      return;
+    }
+
     const isMatch =
       card.color.name === topCard.color.name ||
       card.value === topCard.value ||
       card.value === 'Titip Absen';
 
     if (!isMatch) {
-      setStatusNotice(`Kartu ${card.color.name} (${card.value}) belum cocok dengan kartu di meja.`);
+      setStatusNotice(`Kartu ${card.color.name} (${card.value}) belum cocok dengan kartu ${topCard.color.name} (${topCard.value}) di meja.`);
       return;
     }
 
-    setTopCard(card);
     const remaining = myHand.filter((c) => c.id !== card.id);
     setMyHand(remaining);
+    setTopCard(card);
+
+    await supabase
+      .from('uno_players')
+      .update({ hand: remaining })
+      .match({ room_code: currentRoom, nim: user.nim });
+
     if (remaining.length === 0) {
+      await supabase
+        .from('uno_rooms')
+        .update({
+          top_card: card,
+          status: 'finished',
+          current_turn: user.nim
+        })
+        .eq('room_code', currentRoom);
+      setRoomStatus('finished');
       setStatusNotice('UNO Habis! Selamat, kamu berhasil menghabiskan semua kartu di tangan!');
-    } else {
-      setStatusNotice(`Berhasil mengeluarkan kartu ${card.color.name} (${card.value})!`);
+      return;
     }
+
+    let nextTurnNim = getNextPlayerNim(1);
+    let noticeText = `Berhasil mengeluarkan kartu ${card.color.name} (${card.value})!`;
+
+    if (card.value === 'Skip') {
+      const skippedPlayer = players.find((p) => p.nim === nextTurnNim);
+      nextTurnNim = getNextPlayerNim(2);
+      noticeText = `Kartu Skip! Giliran ${skippedPlayer?.nama?.split(' ')[0] || 'berikutnya'} dilewati.`;
+    } else if (card.value === '+2') {
+      const targetPlayer = players.find((p) => p.nim === nextTurnNim);
+      if (targetPlayer) {
+        const penaltyCards = [generateRandomCard(), generateRandomCard()];
+        const updatedTargetHand = [...(Array.isArray(targetPlayer.hand) ? targetPlayer.hand : []), ...penaltyCards];
+        await supabase
+          .from('uno_players')
+          .update({ hand: updatedTargetHand })
+          .match({ room_code: currentRoom, nim: targetPlayer.nim });
+        nextTurnNim = getNextPlayerNim(2);
+        noticeText = `Serangan +2! ${targetPlayer.nama.split(' ')[0]} menerima 2 kartu tambahan dan dilewati.`;
+      }
+    }
+
+    setCurrentTurn(nextTurnNim);
+    setStatusNotice(noticeText);
+
+    await supabase
+      .from('uno_rooms')
+      .update({
+        top_card: card,
+        current_turn: nextTurnNim
+      })
+      .eq('room_code', currentRoom);
   };
 
-  const handleDrawCard = () => {
+  const handleDrawCard = async () => {
+    if (roomStatus !== 'playing') return;
+    if (currentTurn && currentTurn !== user?.nim) {
+      const activePlayer = players.find((p) => p.nim === currentTurn);
+      setStatusNotice(`Bukan giliranmu mengambil kartu! Sekarang giliran ${activePlayer?.nama?.split(' ')[0] || 'pemain lain'}.`);
+      return;
+    }
+
     const newCard = generateRandomCard();
-    setMyHand((prev) => [...prev, newCard]);
-    setStatusNotice(`Mengambil 1 kartu tambahan: ${newCard.color.name} (${newCard.value}).`);
+    const updatedHand = [...myHand, newCard];
+    const nextTurnNim = getNextPlayerNim(1);
+
+    setMyHand(updatedHand);
+    setCurrentTurn(nextTurnNim);
+    setStatusNotice(`Mengambil 1 kartu tambahan: ${newCard.color.name} (${newCard.value}). Giliran berpindah.`);
+
+    await supabase
+      .from('uno_players')
+      .update({ hand: updatedHand })
+      .match({ room_code: currentRoom, nim: user.nim });
+
+    await supabase
+      .from('uno_rooms')
+      .update({ current_turn: nextTurnNim })
+      .eq('room_code', currentRoom);
   };
 
   const leaveRoom = async () => {
@@ -213,6 +326,7 @@ export default function UnoBrutalGame() {
     }
     setCurrentRoom(null);
     setRoomStatus('waiting');
+    setCurrentTurn(null);
     setPlayers([]);
     setMyHand([]);
     setRoomCode('');
@@ -350,19 +464,36 @@ export default function UnoBrutalGame() {
       <div className="flex-1 p-6 flex flex-col justify-between bg-slate-900/50 gap-6">
         
         <div className="flex flex-wrap gap-3">
-          {players.map((p) => (
-            <div key={p.nim} className="bg-slate-800 border border-slate-700 px-4 py-2.5 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm">
-              <span className="text-xs font-mono text-amber-400 mb-0.5">
-                {p.is_host ? 'Host Meja' : 'Pemain'}
-              </span>
-              <span className="font-bold text-white text-sm truncate max-w-[140px]">
-                {p.nama.split(' ')[0]}
-              </span>
-              <span className="mt-1 text-xs font-mono text-emerald-300 bg-slate-900 border border-emerald-500/30 px-2 py-0.5 rounded">
-                {roomStatus === 'playing' ? 'Sedang Bermain' : 'Siap'}
-              </span>
-            </div>
-          ))}
+          {players.map((p) => {
+            const isPlayerTurn = roomStatus === 'playing' && currentTurn === p.nim;
+            const cardCount = Array.isArray(p.hand) ? p.hand.length : 0;
+            return (
+              <div
+                key={p.nim}
+                className={`bg-slate-800 border px-4 py-2.5 rounded-xl flex flex-col items-center min-w-[110px] shadow-sm transition-colors ${
+                  isPlayerTurn ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-slate-700'
+                }`}
+              >
+                <span className="text-xs font-mono text-amber-400 mb-0.5">
+                  {p.is_host ? 'Host Meja' : 'Pemain'}
+                </span>
+                <span className="font-bold text-white text-sm truncate max-w-[140px]">
+                  {p.nama.split(' ')[0]} {p.nim === user?.nim ? '(Kamu)' : ''}
+                </span>
+                <span className={`mt-1 text-xs font-mono px-2 py-0.5 rounded border ${
+                  isPlayerTurn
+                    ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold'
+                    : 'text-emerald-300 bg-slate-900 border-emerald-500/30'
+                }`}>
+                  {roomStatus === 'playing'
+                    ? `${cardCount} Kartu${isPlayerTurn ? ' • Giliran' : ''}`
+                    : roomStatus === 'finished'
+                    ? (cardCount === 0 ? 'Pemenang!' : `${cardCount} Kartu`)
+                    : 'Siap'}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex flex-col items-center justify-center my-4">
@@ -370,14 +501,14 @@ export default function UnoBrutalGame() {
             <button
               type="button"
               onClick={roomStatus === 'playing' ? handleDrawCard : undefined}
-              disabled={roomStatus !== 'playing'}
-              className="w-28 h-40 bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 rounded-xl shadow-md flex flex-col items-center justify-center p-3 transition-colors disabled:opacity-60"
+              disabled={roomStatus !== 'playing' || (currentTurn && currentTurn !== user?.nim)}
+              className="w-28 h-40 bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 rounded-xl shadow-md flex flex-col items-center justify-center p-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span className="text-amber-400 font-bold text-lg">AMBIL</span>
               <span className="text-slate-300 text-xs font-mono mt-1">Tumpukan Kartu</span>
             </button>
 
-            {roomStatus === 'playing' ? (
+            {roomStatus === 'playing' || roomStatus === 'finished' ? (
               <div className={`w-28 h-40 ${topCard.color.bg} ${topCard.color.text} border-2 ${topCard.color.border} rounded-xl shadow-md flex flex-col items-center justify-between p-3`}>
                 <span className="text-xs font-mono font-bold self-start">{topCard.color.name}</span>
                 <span className="text-2xl font-bold text-center">{topCard.value}</span>
@@ -421,14 +552,36 @@ export default function UnoBrutalGame() {
               </p>
             )}
           </div>
+        ) : roomStatus === 'finished' ? (
+          <div className="bg-slate-800 border border-emerald-500/50 rounded-xl p-6 text-center">
+            <h2 className="text-2xl font-bold text-emerald-400 mb-2">
+              Permainan Selesai!
+            </h2>
+            <p className="text-slate-200 text-sm mb-4">
+              Pemenang putaran ini: <strong className="text-amber-400">{players.find((p) => (Array.isArray(p.hand) && p.hand.length === 0) || p.nim === currentTurn)?.nama || 'Sedulur 16'}</strong>
+            </p>
+            {isHost && (
+              <button
+                type="button"
+                onClick={startGame}
+                disabled={loading}
+                className="min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-8 py-3 rounded-xl text-sm shadow-md transition-colors"
+              >
+                Main Lagi di Meja Ini
+              </button>
+            )}
+          </div>
         ) : (
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
             <div className="flex justify-between items-center mb-3">
-              <h2 className="text-sm font-bold text-white">Kartu di Tanganmu ({myHand.length})</h2>
+              <h2 className="text-sm font-bold text-white">
+                Kartu di Tanganmu ({myHand.length}) {currentTurn === user?.nim ? <span className="text-amber-400 ml-2">• Giliran Kamu!</span> : ''}
+              </h2>
               <button
                 type="button"
                 onClick={handleDrawCard}
-                className="text-xs font-bold bg-slate-900 hover:bg-slate-700 text-amber-400 border border-slate-600 px-3 py-2 min-h-[44px] rounded-lg transition-colors"
+                disabled={currentTurn && currentTurn !== user?.nim}
+                className="text-xs font-bold bg-slate-900 hover:bg-slate-700 text-amber-400 border border-slate-600 px-3 py-2 min-h-[44px] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 + Ambil 1 Kartu
               </button>
@@ -438,8 +591,9 @@ export default function UnoBrutalGame() {
                 <button
                   key={card.id}
                   type="button"
+                  disabled={currentTurn && currentTurn !== user?.nim}
                   onClick={() => handlePlayCard(card)}
-                  className={`w-24 h-36 ${card.color.bg} ${card.color.text} border-2 ${card.color.border} rounded-xl shadow-sm hover:-translate-y-1 transition-transform flex flex-col items-center justify-between p-2.5`}
+                  className={`w-24 h-36 ${card.color.bg} ${card.color.text} border-2 ${card.color.border} rounded-xl shadow-sm hover:-translate-y-1 transition-transform flex flex-col items-center justify-between p-2.5 disabled:opacity-60 disabled:cursor-not-allowed`}
                 >
                   <span className="text-[11px] font-mono font-bold self-start">{card.color.name}</span>
                   <span className="text-lg font-bold text-center leading-tight">{card.value}</span>
