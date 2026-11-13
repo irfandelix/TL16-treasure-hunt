@@ -118,22 +118,29 @@ export default function MonopoliBoard() {
   useEffect(() => {
     const initUser = async () => {
       const nim = localStorage.getItem('user_nim');
-      const TABEL_ALUMNI = 'alumni'; 
+      const TABEL_ALUMNI = 'alumni';
 
       if (nim) {
         const { data: user } = await supabase.from(TABEL_ALUMNI).select('*').eq('nim', nim).single();
-        
+
         if (user) {
-          setCurrentUser({ 
-            nim: user.nim, 
-            nama: user.nama, 
-            points: user.skor_monopoli || 0 
+          const currentPts = user.skor_monopoli || 0;
+          setCurrentUser({
+            nim: user.nim,
+            nama: user.nama,
+            points: currentPts
           });
+
+          // Sinkronkan ke monopoli_users agar constraint foreign key monopoli_players_nim_fkey terpenuhi
+          await supabase.from('monopoli_users').upsert(
+            [{ nim: user.nim, nama: user.nama, points: currentPts }],
+            { onConflict: 'nim' }
+          );
         } else {
           alert("NIM tidak ditemukan di database alumni!");
         }
       }
-      
+
       const { data: t } = await supabase.from('monopoli_tod').select('*');
       if (t) setTodBank({ truth: t.filter(x => x.tipe === 'TRUTH').map(x => x.pertanyaan), dare: t.filter(x => x.tipe === 'DARE').map(x => x.pertanyaan) });
       const { data: e } = await supabase.from('monopoli_events').select('*');
@@ -149,22 +156,47 @@ export default function MonopoliBoard() {
   };
 
   const joinRoom = async (code) => {
-    const rCode = code || joinCode;
+    const rCode = (code || joinCode).trim();
+    if (!rCode) return alert('Masukkan kode ruangan 4 angka terlebih dahulu!');
+    if (!currentUser.nim) return alert('Data profil belum siap, silakan muat ulang halaman.');
+
     const { data: room } = await supabase.from('monopoli_rooms').select('*').eq('id', rCode).single();
     if (!room) return alert('Ruangan tidak ditemukan!');
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     if (new Date(room.last_active) < oneHourAgo) return alert('Sesi ruangan sudah kedaluwarsa. Silakan buat ruangan baru.');
     if (room.status === 'finished') return alert('Permainan di ruangan ini sudah selesai!');
     const { data: ep } = await supabase.from('monopoli_players').select('*').eq('room_id', rCode);
-    if (ep.length >= 6 && !ep.find(p => p.nim === currentUser.nim)) return alert('Ruangan penuh! Maksimal 6 pemain.');
-    
+    const existingPlayers = ep || [];
+    if (existingPlayers.length >= 6 && !existingPlayers.find(p => p.nim === currentUser.nim)) {
+      return alert('Ruangan penuh! Maksimal 6 pemain.');
+    }
+
+    // Pastikan NIM terdaftar di monopoli_users sebelum insert ke monopoli_players
+    await supabase.from('monopoli_users').upsert(
+      [{ nim: currentUser.nim, nama: currentUser.nama, points: currentUser.points || 0 }],
+      { onConflict: 'nim' }
+    );
+
     await supabase.from('monopoli_players')
       .delete()
       .eq('nim', currentUser.nim)
-      .neq('room_id', rCode); 
-    
-    if (!ep.find(p => p.nim === currentUser.nim))
-      await supabase.from('monopoli_players').insert([{ room_id: rCode, nim: currentUser.nim, nama: currentUser.nama }]);
+      .neq('room_id', rCode);
+
+    const myExistingRecord = existingPlayers.find(p => p.nim === currentUser.nim);
+    if (!myExistingRecord) {
+      hasSelectedColor.current = false;
+      const { error: insertError } = await supabase
+        .from('monopoli_players')
+        .insert([{ room_id: rCode, nim: currentUser.nim, nama: currentUser.nama }]);
+
+      if (insertError) {
+        return alert('Gagal bergabung ke ruangan: ' + insertError.message);
+      }
+    } else {
+      hasSelectedColor.current = Boolean(myExistingRecord.color);
+    }
+
+    setSelectedInfo(null);
     setCurrentRoom(room);
     setAppState(room.status === 'playing' ? 'game' : 'room');
   };
@@ -176,6 +208,9 @@ export default function MonopoliBoard() {
   };
 
   const exitGame = async () => {
+    hasSelectedColor.current = false;
+    setSelectedInfo(null);
+
     if (!currentRoom) {
       setAppState('lobby');
       return;
@@ -214,9 +249,9 @@ export default function MonopoliBoard() {
     if (p) {
       setPlayers(p);
       const me = p.find(x => x.nim === currentUser.nim);
-      if (!isAnimatingRef.current && !isTransacting.current) { 
-        setMyState(me); 
-        if (me) setMyAnimPos(me.pos); 
+      if (!isAnimatingRef.current && !isTransacting.current) {
+        setMyState(me);
+        if (me) setMyAnimPos(me.pos);
       }
       if (me && !me.color && !hasSelectedColor.current && appState === 'game' && !me.is_bankrupt) setShowColorModal(true);
     }
@@ -225,9 +260,9 @@ export default function MonopoliBoard() {
 
   useEffect(() => {
     if (appState === 'lobby' || !currentRoom) return;
-    
+
     loadGameData();
-    
+
     const roomSub = supabase.channel(`rooms:${currentRoom.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'monopoli_rooms', filter: `id=eq.${currentRoom.id}` }, () => {
         loadGameData();
@@ -248,7 +283,7 @@ export default function MonopoliBoard() {
       supabase.removeChannel(playersSub);
       supabase.removeChannel(propSub);
     };
-  }, [currentRoom?.id, appState]);
+  }, [currentRoom?.id, appState, loadGameData]);
 
   useEffect(() => () => clearInterval(journeyTimer.current), []);
 
@@ -270,17 +305,20 @@ export default function MonopoliBoard() {
   };
 
   const selectColor = async (c) => {
+    const takenByOther = players.some(p => p.nim !== currentUser.nim && p.color === c);
+    if (takenByOther) return alert('Warna ini sudah dipilih pemain lain!');
+
     isTransacting.current = true;
     hasSelectedColor.current = true;
-    setShowColorModal(false); 
-    
+    setShowColorModal(false);
+
     setPlayers(prev => prev.map(p => p.nim === currentUser.nim ? { ...p, color: c } : p));
     if (myState) setMyState(prev => ({ ...prev, color: c }));
 
     await supabase.from('monopoli_players')
       .update({ color: c })
       .match({ nim: currentUser.nim, room_id: currentRoom.id });
-      
+
     isTransacting.current = false;
     loadGameData();
   };
@@ -288,9 +326,16 @@ export default function MonopoliBoard() {
   const givePoints = async (nim, amount) => {
     const TABEL_ALUMNI = 'alumni';
     const { data: u } = await supabase.from(TABEL_ALUMNI).select('skor_monopoli').eq('nim', nim).single();
+    const updatedScore = (u?.skor_monopoli || 0) + amount;
     await supabase.from(TABEL_ALUMNI)
-      .update({ skor_monopoli: (u?.skor_monopoli || 0) + amount })
+      .update({ skor_monopoli: updatedScore })
       .eq('nim', nim);
+    await supabase.from('monopoli_users')
+      .update({ points: updatedScore })
+      .eq('nim', nim);
+    if (nim === currentUser.nim) {
+      setCurrentUser(prev => ({ ...prev, points: updatedScore }));
+    }
   };
 
   const declareBankrupt = async () => {
@@ -316,17 +361,17 @@ export default function MonopoliBoard() {
     const active = players.filter(p => !p.is_bankrupt);
     const rank = active.length;
     const pts = rank === 2 ? 1500 : rank === 3 ? 750 : 0;
-    
+
     await supabase.from('monopoli_players')
       .update({ is_bankrupt: true, rank, cash: 0, last_message: 'Kalah karena saldo minus!' })
       .match({ nim: currentUser.nim, room_id: currentRoom.id });
-      
+
     await supabase.from('monopoli_properties')
       .delete()
       .match({ owner_nim: currentUser.nim, room_id: currentRoom.id });
-      
+
     if (pts > 0) await givePoints(currentUser.nim, pts);
-    
+
     if (active.length === 2) {
       const winner = active.find(p => p.nim !== currentUser.nim);
       await supabase.from('monopoli_players')
@@ -337,21 +382,38 @@ export default function MonopoliBoard() {
         .update({ status: 'finished', last_active: new Date() })
         .eq('id', currentRoom.id);
     }
-    updateRoomActivity(); 
-    isTransacting.current = false; 
+    updateRoomActivity();
+    isTransacting.current = false;
     loadGameData();
   };
 
   const buyProperty = async () => {
-    if (!myState || myState.cash < activeTile.price) return alert('Saldo tidak mencukupi!');
+    if (!myState || !activeTile) return;
+    if (myState.cash < activeTile.price) return alert('Saldo tidak mencukupi!');
+    if (properties.some(p => p.tile_id === activeTile.id)) return alert('Properti ini sudah dimiliki pemain!');
+
     isTransacting.current = true;
     const newCash = myState.cash - activeTile.price;
-    setProperties(prev => [...prev, { tile_id: activeTile.id, owner_nim: currentUser.nim, upgrade_level: 0 }]);
+    const { data: insertedProp, error: buyError } = await supabase
+      .from('monopoli_properties')
+      .insert([{ room_id: currentRoom.id, tile_id: activeTile.id, owner_nim: currentUser.nim, upgrade_level: 0 }])
+      .select()
+      .single();
+
+    if (buyError) {
+      isTransacting.current = false;
+      return alert('Gagal membeli properti: ' + buyError.message);
+    }
+
+    if (insertedProp) {
+      setProperties(prev => [...prev, insertedProp]);
+    }
     setMyState(prev => ({ ...prev, cash: newCash }));
-    await supabase.from('monopoli_properties').insert([{ room_id: currentRoom.id, tile_id: activeTile.id, owner_nim: currentUser.nim, upgrade_level: 0 }]);
     await supabase.from('monopoli_players').update({ cash: newCash }).match({ nim: currentUser.nim, room_id: currentRoom.id });
-    updateRoomActivity(); setShowBuyModal(false);
-    setTimeout(() => { isTransacting.current = false; loadGameData(); }, 800);
+    updateRoomActivity();
+    setShowBuyModal(false);
+    isTransacting.current = false;
+    loadGameData();
   };
 
   const upgradeProperty = async () => {
@@ -361,25 +423,37 @@ export default function MonopoliBoard() {
     isTransacting.current = true;
     const newCash = myState.cash - cost;
     const newLevel = (activeProp.upgrade_level || 0) + 1;
-    setProperties(prev => prev.map(p => p.id === activeProp.id ? { ...p, upgrade_level: newLevel } : p));
+    const matchFilter = activeProp.id
+      ? { id: activeProp.id, room_id: currentRoom.id }
+      : { tile_id: activeProp.tile_id, owner_nim: currentUser.nim, room_id: currentRoom.id };
+
+    setProperties(prev => prev.map(p => (p.id ? p.id === activeProp.id : p.tile_id === activeProp.tile_id) ? { ...p, upgrade_level: newLevel } : p));
     setMyState(prev => ({ ...prev, cash: newCash }));
-    await supabase.from('monopoli_properties').update({ upgrade_level: newLevel }).match({ id: activeProp.id, room_id: currentRoom.id });
+    await supabase.from('monopoli_properties').update({ upgrade_level: newLevel }).match(matchFilter);
     await supabase.from('monopoli_players').update({ cash: newCash }).match({ nim: currentUser.nim, room_id: currentRoom.id });
-    updateRoomActivity(); setShowUpgradeModal(false);
-    setTimeout(() => { isTransacting.current = false; loadGameData(); }, 800);
+    updateRoomActivity();
+    setShowUpgradeModal(false);
+    isTransacting.current = false;
+    loadGameData();
   };
 
   const sellProperty = async (prop, e) => {
-    e.stopPropagation(); isTransacting.current = true;
+    e.stopPropagation();
+    isTransacting.current = true;
     const tile = BOARD_DATA.find(t => t.id === prop.tile_id);
     const sellPrice = Math.floor(tile.price * 0.75);
     const newCash = myState.cash + sellPrice;
-    setProperties(prev => prev.filter(p => p.id !== prop.id));
+    const matchFilter = prop.id
+      ? { id: prop.id, room_id: currentRoom.id }
+      : { tile_id: prop.tile_id, owner_nim: currentUser.nim, room_id: currentRoom.id };
+
+    setProperties(prev => prev.filter(p => (prop.id ? p.id !== prop.id : p.tile_id !== prop.tile_id)));
     setMyState(prev => ({ ...prev, cash: newCash }));
-    await supabase.from('monopoli_properties').delete().match({ id: prop.id, room_id: currentRoom.id });
+    await supabase.from('monopoli_properties').delete().match(matchFilter);
     await supabase.from('monopoli_players').update({ cash: newCash }).match({ nim: currentUser.nim, room_id: currentRoom.id });
     updateRoomActivity();
-    setTimeout(() => { isTransacting.current = false; loadGameData(); }, 800);
+    isTransacting.current = false;
+    loadGameData();
   };
 
   const handleTileClick = (tile) => {
@@ -401,12 +475,12 @@ export default function MonopoliBoard() {
     if (myState.skip_turn > 0) {
       const sisaHukuman = myState.skip_turn - 1;
       const pesan = "Giliran dilewati! Sisa hukuman: " + sisaHukuman;
-      
+
       setMyState(prev => ({ ...prev, skip_turn: sisaHukuman, last_message: pesan }));
       await supabase.from('monopoli_players')
         .update({ skip_turn: sisaHukuman, last_message: pesan })
         .match({ nim: currentUser.nim, room_id: currentRoom.id });
-          
+
       updateRoomActivity();
       return;
     }
@@ -419,58 +493,106 @@ export default function MonopoliBoard() {
     }, 80);
   };
 
+  const evaluateNonEventTile = async (tile, currentCash, messages) => {
+    let cashAfter = currentCash;
+    let landedPos = tile.id;
+
+    if (tile.id === 30) {
+      landedPos = 10;
+      setMyAnimPos(10);
+      messages.push('Ketahuan titip absen! Masuk Ruang Interogasi.');
+    } else if (tile.type === 'tod') {
+      setShowToD(true);
+      messages.push(`Berhenti di ${tile.name} (Truth or Dare).`);
+    } else if (tile.type === 'tax') {
+      cashAfter -= tile.price;
+      messages.push(`Bayar ${tile.name} Rp ${tile.price}k`);
+    } else if (tile.type === 'property') {
+      const ownerRecord = properties.find(p => p.tile_id === tile.id);
+      if (!ownerRecord) {
+        setActiveTile(tile);
+        setShowBuyModal(true);
+        messages.push(`Mendarat di ${tile.name}`);
+      } else if (ownerRecord.owner_nim === currentUser.nim) {
+        setActiveTile(tile);
+        setActiveProp(ownerRecord);
+        setShowUpgradeModal(true);
+        messages.push(`Singgah di propertimu: ${tile.name}`);
+      } else {
+        const mult = ownerRecord.upgrade_level >= 5 ? 5 : (1 + (ownerRecord.upgrade_level || 0) * 0.5);
+        const rent = Math.floor(tile.rent * mult);
+        cashAfter -= rent;
+
+        const { data: ownerData } = await supabase
+          .from('monopoli_players')
+          .select('cash, nama')
+          .match({ nim: ownerRecord.owner_nim, room_id: currentRoom.id })
+          .single();
+
+        if (ownerData) {
+          const ownerNewCash = (ownerData.cash || 0) + rent;
+          await supabase
+            .from('monopoli_players')
+            .update({
+              cash: ownerNewCash,
+              last_message: `Terima sewa ${tile.name} Rp ${rent}k dari ${currentUser.nama.split(' ')[0]}!`
+            })
+            .match({ nim: ownerRecord.owner_nim, room_id: currentRoom.id });
+
+          setPlayers(prev => prev.map(p => p.nim === ownerRecord.owner_nim ? { ...p, cash: ownerNewCash } : p));
+        }
+
+        const ownerFirstName = ownerData?.nama?.split(' ')[0] || 'pemilik';
+        messages.push(`Bayar sewa ${tile.name} Rp ${rent}k ke ${ownerFirstName}!`);
+      }
+    }
+
+    return { cashAfter, landedPos };
+  };
+
   const finishRoll = async () => {
     const d1 = Math.floor(Math.random() * 6) + 1;
     const d2 = Math.floor(Math.random() * 6) + 1;
     setDice([d1, d2]); setIsRolling(false); setIsAnimating(true); isAnimatingRef.current = true;
-    
+
     const totalSteps = d1 + d2;
-    let animPos = myState.pos;
+    const startPos = myState.pos || 0;
+    let animPos = startPos;
     const steps = [];
-    for (let i = 0; i < totalSteps; i++) { 
-      animPos = (animPos + 1) % 40; 
-      steps.push(animPos); 
+    for (let i = 0; i < totalSteps; i++) {
+      animPos = (animPos + 1) % 40;
+      steps.push(animPos);
     }
     startJourney(steps);
 
-    animPos = myState.pos;
+    animPos = startPos;
     for (let i = 0; i < totalSteps; i++) {
       animPos = (animPos + 1) % 40;
       setMyAnimPos(animPos);
       await sleep(220);
     }
 
-    let finalPos = animPos; 
-    let newCash = myState.cash; 
-    let newMessage = '';
-    
-    if (finalPos < myState.pos || (myState.pos === 0 && finalPos > 0)) { 
-      newCash += 200; 
-      newMessage = 'KRS-an cair Rp 200k! '; 
+    let finalPos = animPos;
+    let newCash = myState.cash;
+    const messages = [];
+
+    // Bonus melewati atau berhenti di START setelah menyelesaikan satu putaran penuh
+    if (startPos + totalSteps >= 40) {
+      newCash += 200;
+      messages.push('KRS-an cair +Rp 200k!');
     }
 
     const tile = BOARD_DATA[finalPos];
-    
-    if (tile.id === 30) { 
-      finalPos = 10; 
-      setMyAnimPos(10); 
-      newMessage = 'Ketahuan titip absen! Masuk Ruang Interogasi.'; 
-    }
-    else if (tile.type === 'tod') { 
-      setShowToD(true); 
-    }
-    else if (tile.type === 'tax') { 
-      newCash -= tile.price; 
-      newMessage = `Bayar ${tile.name} Rp ${tile.price}k`; 
-    }
-    else if (tile.type === 'event') {
+
+    if (tile.type === 'event') {
       const pool = eventsBank.filter(e => (tile.name.includes('Dana') ? e.tipe === 'DANA_UMUM' : e.tipe === 'KESEMPATAN') && e.side === tile.side);
       if (pool.length > 0) {
         const card = pool[Math.floor(Math.random() * pool.length)];
         setActiveCard({ title: tile.name, text: card.teks });
         setShowEventCard(true);
 
-        let updatedSkip = myState.skip_turn || 0; 
+        let updatedSkip = myState.skip_turn || 0;
+        let movedToNewTile = false;
 
         switch (card.action_type) {
           case 'MUNDUR':
@@ -479,32 +601,32 @@ export default function MonopoliBoard() {
               setMyAnimPos(finalPos);
               await sleep(220);
             }
-            newMessage = "Mundur " + card.action_value + " langkah!";
+            messages.push(`Mundur ${card.action_value} langkah ke ${BOARD_DATA[finalPos].name}!`);
+            movedToNewTile = true;
             break;
           case 'BAYAR':
             newCash -= card.action_value;
-            newMessage = "Bayar denda Rp " + card.action_value + "k!";
+            messages.push(`Bayar denda Rp ${card.action_value}k!`);
             break;
           case 'DAPAT':
             newCash += card.action_value;
-            newMessage = "Dapat dana Rp " + card.action_value + "k!";
+            messages.push(`Dapat dana Rp ${card.action_value}k!`);
             break;
           case 'KE_START':
             finalPos = 0;
             setMyAnimPos(0);
-            newMessage = "Kembali ke START!";
+            newCash += 200;
+            messages.push('Kembali ke START (+Rp 200k)!');
             break;
           case 'TELEPORT':
-            if (card.action_value < finalPos) {
-              newCash += 200;
-            }
             finalPos = card.action_value;
             setMyAnimPos(finalPos);
-            newMessage = "Pindah ke petak " + card.action_value + "!";
+            messages.push(`Pindah ke ${BOARD_DATA[finalPos]?.name || 'petak ' + finalPos}!`);
+            movedToNewTile = true;
             break;
           case 'SKIP_TURN':
             updatedSkip += card.action_value;
-            newMessage = "Kena hukuman lewati giliran!";
+            messages.push('Kena hukuman lewati 1 giliran!');
             break;
         }
 
@@ -512,30 +634,33 @@ export default function MonopoliBoard() {
           setMyState(prev => ({ ...prev, skip_turn: updatedSkip }));
           await supabase.from('monopoli_players').update({ skip_turn: updatedSkip }).match({ nim: currentUser.nim, room_id: currentRoom.id });
         }
+
+        if (movedToNewTile && BOARD_DATA[finalPos]) {
+          const destResult = await evaluateNonEventTile(BOARD_DATA[finalPos], newCash, messages);
+          newCash = destResult.cashAfter;
+          finalPos = destResult.landedPos;
+        }
       }
-    } else if (tile.type === 'property') {
-      const ownerRecord = properties.find(p => p.tile_id === tile.id);
-      if (!ownerRecord) { setActiveTile(tile); setShowBuyModal(true); }
-      else if (ownerRecord.owner_nim === currentUser.nim) { setActiveTile(tile); setActiveProp(ownerRecord); setShowUpgradeModal(true); }
-      else {
-        const mult = ownerRecord.upgrade_level >= 5 ? 5 : (1 + (ownerRecord.upgrade_level || 0) * 0.5);
-        const rent = Math.floor(tile.rent * mult);
-        newCash -= rent; newMessage = `Bayar sewa Rp ${rent}k!`;
-      }
+    } else {
+      const tileResult = await evaluateNonEventTile(tile, newCash, messages);
+      newCash = tileResult.cashAfter;
+      finalPos = tileResult.landedPos;
     }
+
+    const finalMessage = messages.join(' • ');
 
     if (newCash < 0) {
       alert('Saldo kamu bernilai negatif! Kamu dinyatakan bangkrut.');
       await handleAutomaticBankrupt();
       setIsAnimating(false);
       isAnimatingRef.current = false;
-      return; 
+      return;
     }
 
-    setMyState(prev => ({ ...prev, pos: finalPos, cash: newCash, last_message: newMessage }));
-    await supabase.from('monopoli_players').update({ pos: finalPos, cash: newCash, last_message: newMessage }).match({ nim: currentUser.nim, room_id: currentRoom.id });
-    updateRoomActivity(); 
-    setIsAnimating(false); 
+    setMyState(prev => ({ ...prev, pos: finalPos, cash: newCash, last_message: finalMessage }));
+    await supabase.from('monopoli_players').update({ pos: finalPos, cash: newCash, last_message: finalMessage }).match({ nim: currentUser.nim, room_id: currentRoom.id });
+    updateRoomActivity();
+    setIsAnimating(false);
     isAnimatingRef.current = false;
   };
 
@@ -953,17 +1078,21 @@ export default function MonopoliBoard() {
             <h2 id="color-modal-title" className="text-2xl font-bold mb-2 text-white">Pilih Warna Bidak</h2>
             <p className="text-slate-300 text-xs mb-6">Pilih warna penanda bidakmu di papan permainan:</p>
             <div className="grid grid-cols-2 gap-3">
-              {PLAYER_COLOR_OPTIONS.map(c => (
-                <button
-                  key={c.id}
-                  type="button"
-                  aria-label={`Pilih warna bidak ${c.label}`}
-                  onClick={() => selectColor(c.id)}
-                  className={`min-h-[48px] w-full rounded-xl ${c.id} ${c.textClass} font-bold text-sm border-2 border-white shadow-md hover:opacity-95 transition-opacity`}
-                >
-                  {c.label}
-                </button>
-              ))}
+              {PLAYER_COLOR_OPTIONS.map(c => {
+                const takenBy = players.find(p => p.nim !== currentUser.nim && p.color === c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    disabled={Boolean(takenBy)}
+                    aria-label={`Pilih warna bidak ${c.label}`}
+                    onClick={() => selectColor(c.id)}
+                    className={`min-h-[48px] w-full rounded-xl ${c.id} ${c.textClass} font-bold text-sm border-2 border-white shadow-md hover:opacity-95 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed`}
+                  >
+                    {takenBy ? `${c.label} (${takenBy.nama.split(' ')[0]})` : c.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
