@@ -51,13 +51,18 @@ const TILE_TYPE_LABEL = { corner: '', tax: 'PAJAK', event: 'EVENT', tod: 'ToD', 
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const PLAYER_COLOR_OPTIONS = [
-  { id: 'bg-red-500', label: 'Merah', textClass: 'text-stone-900' },
-  { id: 'bg-blue-500', label: 'Biru', textClass: 'text-stone-900' },
+  { id: 'bg-red-500', label: 'Merah', textClass: 'text-white' },
+  { id: 'bg-blue-500', label: 'Biru', textClass: 'text-white' },
   { id: 'bg-green-500', label: 'Hijau', textClass: 'text-slate-950' },
   { id: 'bg-yellow-400', label: 'Kuning', textClass: 'text-slate-950' },
-  { id: 'bg-purple-500', label: 'Ungu', textClass: 'text-stone-900' },
-  { id: 'bg-pink-500', label: 'Merah Muda', textClass: 'text-stone-900' },
+  { id: 'bg-purple-500', label: 'Ungu', textClass: 'text-white' },
+  { id: 'bg-pink-500', label: 'Merah Muda', textClass: 'text-white' },
 ];
+
+const getOwnerTextClass = (colorId) => {
+  const opt = PLAYER_COLOR_OPTIONS.find((c) => c.id === colorId);
+  return opt ? opt.textClass : 'text-white';
+};
 
 const MONO_DICE_PIPS = {
   1: [4],
@@ -1073,7 +1078,7 @@ export default function MonopoliBoard() {
 
   return (
     <div className="w-full max-w-6xl mx-auto bg-[#FAF6EE] text-stone-900 pb-16">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start lg:items-stretch">
 
         {/* KOLOM KIRI (DESKTOP): PAPAN MONOPOLI BESAR */}
         <div className="lg:col-span-8 w-full">
@@ -1306,7 +1311,7 @@ export default function MonopoliBoard() {
         </div>
 
         {/* KOLOM KANAN (DESKTOP) / BAWAH (HP): KONTROL & DETAIL PETAK */}
-        <div className="lg:col-span-4 w-full space-y-4 lg:sticky lg:top-6">
+        <div className="lg:col-span-4 w-full flex flex-col gap-4 lg:h-0 lg:min-h-full">
           {/* Kartu Pemain & Saldo Desktop */}
           <div className="hidden lg:block bg-white p-5 rounded-2xl border border-[#DED6C6]">
             <div className="flex justify-between items-start gap-3 mb-4">
@@ -1361,8 +1366,8 @@ export default function MonopoliBoard() {
           {renderTileInfoPanel()}
 
           {/* Daftar Petak Interaktif (Non-Dropdown) */}
-          <div className="w-full bg-white p-4 rounded-2xl border border-[#DED6C6]">
-            <div className="flex items-center justify-between gap-2 mb-2.5">
+          <div className="w-full bg-white p-4 rounded-2xl border border-[#DED6C6] lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+            <div className="flex items-center justify-between gap-2 mb-2.5 shrink-0">
               <label htmlFor="tile-search-input" className="text-xs font-bold text-stone-800">
                 Daftar Petak Papan (40 Petak)
               </label>
@@ -1374,9 +1379,9 @@ export default function MonopoliBoard() {
               value={tileSearch}
               onChange={(e) => setTileSearch(e.target.value)}
               placeholder="Cari nama petak..."
-              className="w-full min-h-[40px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3 py-1.5 text-xs text-stone-900 placeholder:text-stone-400 focus:border-green-800 mb-2.5"
+              className="w-full min-h-[40px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3 py-1.5 text-xs text-stone-900 placeholder:text-stone-400 focus:border-green-800 mb-2.5 shrink-0"
             />
-            <div className="max-h-[240px] overflow-y-auto divide-y divide-[#EDE6D8] border border-[#DED6C6] rounded-xl bg-[#FAF6EE]">
+            <div className="max-h-[260px] lg:max-h-none lg:flex-1 overflow-y-auto divide-y divide-[#EDE6D8] border border-[#DED6C6] rounded-xl bg-[#FAF6EE]">
               {BOARD_DATA.filter((t) =>
                 t.name.toLowerCase().includes(tileSearch.trim().toLowerCase()) ||
                 t.id.toString() === tileSearch.trim()
@@ -1384,29 +1389,33 @@ export default function MonopoliBoard() {
                 const prop = properties.find((p) => p.tile_id === t.id);
                 const owner = players.find((pl) => pl.nim === prop?.owner_nim);
                 const isSelected = selectedInfo?.id === t.id;
+                const ownerText = owner ? getOwnerTextClass(owner.color) : '';
                 return (
                   <button
                     key={t.id}
                     type="button"
                     onClick={() => handleTileClick(t)}
                     className={`w-full min-h-[44px] px-3 py-2 flex items-center justify-between gap-2 text-left transition-colors ${
-                      isSelected ? 'bg-[#E7DFCE] font-bold' : 'bg-white hover:bg-[#FAF6EE]'
+                      owner
+                        ? `${owner.color || 'bg-blue-500'} ${ownerText} ${isSelected ? 'ring-2 ring-inset ring-stone-950' : ''}`
+                        : isSelected
+                        ? 'bg-[#E7DFCE] font-bold text-stone-900'
+                        : 'bg-white hover:bg-[#FAF6EE] text-stone-900'
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className={`w-2.5 h-2.5 rounded-sm shrink-0 ${getStripColor(t)}`} />
-                      <span className="font-mono text-[11px] text-stone-500 shrink-0">#{t.id}</span>
-                      <span className="text-xs text-stone-900 truncate">{t.name}</span>
+                      <span className={`w-1.5 h-5 rounded-sm shrink-0 ${getStripColor(t)}`} />
+                      <span className={`font-mono text-[11px] shrink-0 ${owner ? 'opacity-85' : 'text-stone-500'}`}>#{t.id}</span>
+                      <span className="text-xs font-semibold truncate">{t.name}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       {owner && (
-                        <span
-                          title={`Dimiliki ${owner.nama}`}
-                          className={`w-2.5 h-2.5 rounded-full border border-stone-900 ${owner.color || 'bg-blue-400'}`}
-                        />
+                        <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/15">
+                          {owner.nama.split(' ')[0]}
+                        </span>
                       )}
                       {t.price && (
-                        <span className="font-mono text-[11px] font-bold text-green-900">
+                        <span className={`font-mono text-[11px] font-bold ${owner ? '' : 'text-green-900'}`}>
                           {t.price}k
                         </span>
                       )}

@@ -1,5 +1,22 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-016',
+    date: '17 November 2026',
+    version: 'v2.4.7',
+    category: 'Desain & UI',
+    title: 'Penyelarasan Tinggi Papan Monopoli & Penanda Warna Blok Pemilik',
+    commit: 'latest',
+    summary: 'Menyamakan tinggi kolom kanan Daftar Petak dengan batas bawah papan Monopoli di laptop dan mengubah penanda pemilik dari titik kecil menjadi blok warna penuh.',
+    changes: [
+      'Menyamakan batas bawah kolom Daftar Petak Papan dengan batas bawah papan Monopoli pada tampilan laptop (lg:items-stretch + lg:flex-1).',
+      'Mengubah penanda petak yang sudah dimiliki pemain di Daftar Petak dari lingkaran kecil menjadi blok warna penuh sesuai warna bidak pemiliknya.'
+    ],
+    docs: {
+      files: ['src/components/MonopoliBoard.jsx'],
+      notes: 'Menggunakan teknik CSS Grid stretch (lg:h-0 lg:min-h-full pada kolom kanan) agar tinggi daftar petak otomatis mengikuti tinggi papan persegi.'
+    }
+  },
+  {
     id: 'upd-015',
     date: '17 November 2026',
     version: 'v2.4.6',
