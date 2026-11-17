@@ -138,6 +138,7 @@ export default function MonopoliBoard() {
   const [isBoardZoomed, setIsBoardZoomed] = useState(false);
   const [activeRooms, setActiveRooms] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
+  const [tileSearch, setTileSearch] = useState('');
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -1359,27 +1360,61 @@ export default function MonopoliBoard() {
           {/* Detail Petak */}
           {renderTileInfoPanel()}
 
-          {/* Pilih Petak Cepat */}
+          {/* Daftar Petak Interaktif (Non-Dropdown) */}
           <div className="w-full bg-white p-4 rounded-2xl border border-[#DED6C6]">
-            <label htmlFor="mobile-tile-select" className="block text-xs font-bold text-stone-800 mb-2">
-              Periksa Detail Petak
-            </label>
-            <select
-              id="mobile-tile-select"
-              value={selectedInfo?.id ?? ''}
-              onChange={(e) => {
-                const tile = BOARD_DATA.find(t => t.id === Number(e.target.value));
-                if (tile) handleTileClick(tile);
-              }}
-              className="w-full min-h-[44px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3 py-2 text-sm text-stone-900"
-            >
-              <option value="" disabled>Pilih petak untuk melihat detail...</option>
-              {BOARD_DATA.map((t) => (
-                <option key={t.id} value={t.id}>
-                  #{t.id} - {t.name} {t.price ? `(Rp ${t.price}k)` : ''}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <label htmlFor="tile-search-input" className="text-xs font-bold text-stone-800">
+                Daftar Petak Papan (40 Petak)
+              </label>
+              <span className="text-[11px] font-mono text-stone-500">Klik untuk detail</span>
+            </div>
+            <input
+              id="tile-search-input"
+              type="text"
+              value={tileSearch}
+              onChange={(e) => setTileSearch(e.target.value)}
+              placeholder="Cari nama petak..."
+              className="w-full min-h-[40px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3 py-1.5 text-xs text-stone-900 placeholder:text-stone-400 focus:border-green-800 mb-2.5"
+            />
+            <div className="max-h-[240px] overflow-y-auto divide-y divide-[#EDE6D8] border border-[#DED6C6] rounded-xl bg-[#FAF6EE]">
+              {BOARD_DATA.filter((t) =>
+                t.name.toLowerCase().includes(tileSearch.trim().toLowerCase()) ||
+                t.id.toString() === tileSearch.trim()
+              ).map((t) => {
+                const prop = properties.find((p) => p.tile_id === t.id);
+                const owner = players.find((pl) => pl.nim === prop?.owner_nim);
+                const isSelected = selectedInfo?.id === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => handleTileClick(t)}
+                    className={`w-full min-h-[44px] px-3 py-2 flex items-center justify-between gap-2 text-left transition-colors ${
+                      isSelected ? 'bg-[#E7DFCE] font-bold' : 'bg-white hover:bg-[#FAF6EE]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-2.5 h-2.5 rounded-sm shrink-0 ${getStripColor(t)}`} />
+                      <span className="font-mono text-[11px] text-stone-500 shrink-0">#{t.id}</span>
+                      <span className="text-xs text-stone-900 truncate">{t.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {owner && (
+                        <span
+                          title={`Dimiliki ${owner.nama}`}
+                          className={`w-2.5 h-2.5 rounded-full border border-stone-900 ${owner.color || 'bg-blue-400'}`}
+                        />
+                      )}
+                      {t.price && (
+                        <span className="font-mono text-[11px] font-bold text-green-900">
+                          {t.price}k
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

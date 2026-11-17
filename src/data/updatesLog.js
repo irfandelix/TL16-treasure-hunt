@@ -1,5 +1,22 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-015',
+    date: '17 November 2026',
+    version: 'v2.4.6',
+    category: 'Desain & UI',
+    title: 'Daftar Petak Interaktif Pengganti Dropdown di Monopoli TL16',
+    commit: 'latest',
+    summary: 'Mengganti dropdown Periksa Detail Petak dengan daftar petak interaktif yang dapat dicari dan diklik langsung.',
+    changes: [
+      'Menghapus elemen <select> dropdown dan menggantinya dengan daftar gulir 40 petak lengkap dengan strip warna, harga, dan indikator pemilik.',
+      'Menambahkan kotak pencarian cepat berdasarkan nama atau nomor petak.'
+    ],
+    docs: {
+      files: ['src/components/MonopoliBoard.jsx'],
+      notes: 'Daftar petak terhubung langsung ke handleTileClick sehingga detail harga, sewa, dan pemilik langsung tampil di panel atasnya.'
+    }
+  },
+  {
     id: 'upd-014',
     date: '17 November 2026',
     version: 'v2.4.5',
