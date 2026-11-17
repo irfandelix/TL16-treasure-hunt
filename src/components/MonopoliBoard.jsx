@@ -98,6 +98,8 @@ export default function MonopoliBoard() {
   const [showColorModal, setShowColorModal] = useState(false);
   const [selectedInfo, setSelectedInfo] = useState(null);
   const [isBoardZoomed, setIsBoardZoomed] = useState(false);
+  const [activeRooms, setActiveRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -149,6 +151,41 @@ export default function MonopoliBoard() {
     };
     initUser();
   }, []);
+
+  const fetchActiveRooms = useCallback(async () => {
+    setLoadingRooms(true);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data: roomsData } = await supabase
+      .from('monopoli_rooms')
+      .select('id, status, last_active')
+      .neq('status', 'finished')
+      .gte('last_active', oneHourAgo)
+      .order('last_active', { ascending: false });
+
+    if (roomsData && roomsData.length > 0) {
+      const roomIds = roomsData.map(r => r.id);
+      const { data: roomPlayers } = await supabase
+        .from('monopoli_players')
+        .select('room_id, nim, nama')
+        .in('room_id', roomIds);
+
+      const enriched = roomsData.map(r => ({
+        ...r,
+        players: (roomPlayers || []).filter(p => p.room_id === r.id)
+      }));
+      setActiveRooms(enriched);
+    } else {
+      setActiveRooms([]);
+    }
+    setLoadingRooms(false);
+  }, []);
+
+  useEffect(() => {
+    if (appState !== 'lobby') return;
+    fetchActiveRooms();
+    const iv = setInterval(fetchActiveRooms, 6000);
+    return () => clearInterval(iv);
+  }, [appState, fetchActiveRooms]);
 
   const createRoom = async () => {
     const newCode = Math.floor(1000 + Math.random() * 9000).toString();
@@ -683,48 +720,113 @@ export default function MonopoliBoard() {
   if (appState === 'lobby') {
     return (
       <div className="flex flex-col items-center justify-center w-full min-h-[75vh] p-4">
-        <div className="w-full max-w-md bg-white p-8 rounded-2xl border border-[#DED6C6] text-center shadow-md">
-          <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
-            Permainan Papan Nostalgia
-          </p>
-          <h1 className="text-3xl font-bold text-stone-900 mb-2">Monopoli UPN TL 2016</h1>
-          <p className="text-stone-800 mb-6 text-sm">
-            Halo, <span className="font-bold text-stone-900">{currentUser.nama}</span>!
-            <span className="block text-green-800 font-mono font-bold mt-1">
-              Total Poin Monopoli: {currentUser.points}
-            </span>
-          </p>
-          <button
-            type="button"
-            onClick={createRoom}
-            className="w-full min-h-[48px] py-3.5 px-6 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-base mb-5 shadow-md transition-colors"
-          >
-            Buat Ruangan Baru
-          </button>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex-1 h-px bg-[#E7DFCE]"></div>
-            <span className="text-stone-600 text-xs font-mono font-bold">ATAU GABUNG RUANGAN</span>
-            <div className="flex-1 h-px bg-[#E7DFCE]"></div>
+        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          <div className="w-full bg-white p-8 rounded-2xl border border-[#DED6C6] text-center">
+            <h1 className="text-3xl font-bold text-stone-900 mb-2">Monopoli UPN TL 2016</h1>
+            <p className="text-stone-800 mb-6 text-sm">
+              Halo, <span className="font-bold text-stone-900">{currentUser.nama}</span>!
+              <span className="block text-green-800 font-mono font-bold mt-1">
+                Total Poin Monopoli: {currentUser.points}
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={createRoom}
+              className="w-full min-h-[48px] py-3.5 px-6 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-base mb-5 transition-colors"
+            >
+              Buat Ruangan Baru
+            </button>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex-1 h-px bg-[#E7DFCE]"></div>
+              <span className="text-stone-600 text-xs font-mono font-bold">ATAU GABUNG KODE</span>
+              <div className="flex-1 h-px bg-[#E7DFCE]"></div>
+            </div>
+            <label htmlFor="monopoli-join-code" className="sr-only">
+              Kode Ruangan Monopoli
+            </label>
+            <input
+              id="monopoli-join-code"
+              type="text"
+              placeholder="KODE 4 ANGKA"
+              value={joinCode}
+              onChange={e => setJoinCode(e.target.value)}
+              className="w-full min-h-[48px] p-3.5 bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl text-center text-xl font-mono font-bold tracking-widest mb-4 focus:border-green-800 text-stone-900 placeholder:text-stone-500 placeholder:font-sans placeholder:text-sm placeholder:tracking-normal"
+              maxLength={4}
+            />
+            <button
+              type="button"
+              onClick={() => joinRoom()}
+              className="w-full min-h-[48px] py-3.5 px-6 bg-green-900 hover:bg-green-800 text-white font-bold rounded-xl text-base transition-colors"
+            >
+              Masuk ke Ruangan
+            </button>
           </div>
-          <label htmlFor="monopoli-join-code" className="sr-only">
-            Kode Ruangan Monopoli
-          </label>
-          <input
-            id="monopoli-join-code"
-            type="text"
-            placeholder="KODE 4 ANGKA"
-            value={joinCode}
-            onChange={e => setJoinCode(e.target.value)}
-            className="w-full min-h-[48px] p-3.5 bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl text-center text-xl font-mono font-bold tracking-widest mb-4 focus:border-amber-400 text-stone-900 placeholder:text-stone-500 placeholder:font-sans placeholder:text-sm placeholder:tracking-normal"
-            maxLength={4}
-          />
-          <button
-            type="button"
-            onClick={() => joinRoom()}
-            className="w-full min-h-[48px] py-3.5 px-6 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-xl text-base shadow-md transition-colors"
-          >
-            Masuk ke Ruangan
-          </button>
+
+          <div className="w-full bg-white p-6 sm:p-8 rounded-2xl border border-[#DED6C6]">
+            <div className="flex items-center justify-between gap-2 pb-4 mb-4 border-b border-[#DED6C6]">
+              <div>
+                <h2 className="text-xl font-bold text-stone-900">Ruangan Aktif</h2>
+                <p className="text-xs text-stone-600">Pilih ruangan yang sedang dibuka untuk langsung bergabung.</p>
+              </div>
+              <button
+                type="button"
+                onClick={fetchActiveRooms}
+                disabled={loadingRooms}
+                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#DED6C6] text-xs font-bold text-stone-800 transition-colors shrink-0"
+              >
+                {loadingRooms ? 'Memuat...' : 'Segarkan'}
+              </button>
+            </div>
+
+            {activeRooms.length === 0 ? (
+              <div className="bg-[#FAF6EE] border border-[#DED6C6] rounded-xl p-6 text-center">
+                <p className="text-sm font-semibold text-stone-800 mb-1">Belum ada ruangan aktif</p>
+                <p className="text-xs text-stone-600">
+                  Klik <strong>Buat Ruangan Baru</strong> di samping untuk membuka meja permainan.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
+                {activeRooms.map((room) => {
+                  const isFull = room.players.length >= 6 && !room.players.some(p => p.nim === currentUser.nim);
+                  const isJoined = room.players.some(p => p.nim === currentUser.nim);
+                  return (
+                    <div
+                      key={room.id}
+                      className="bg-[#FAF6EE] border border-[#DED6C6] rounded-xl p-4 flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono font-bold text-base text-stone-900">
+                            #{room.id}
+                          </span>
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${
+                            room.status === 'playing'
+                              ? 'bg-amber-100 text-amber-900'
+                              : 'bg-green-100 text-green-900'
+                          }`}>
+                            {room.status === 'playing' ? 'Sedang Bermain' : 'Menunggu'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-stone-600 font-mono">
+                          {room.players.length}/6 Pemain
+                          {room.players.length > 0 && ` • ${room.players.map(p => p.nama.split(' ')[0]).join(', ')}`}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={isFull}
+                        onClick={() => joinRoom(room.id)}
+                        className="min-h-[44px] px-4 py-2 rounded-xl bg-green-900 hover:bg-green-800 disabled:bg-stone-300 disabled:text-stone-600 text-white text-xs font-bold transition-colors shrink-0"
+                      >
+                        {isJoined ? 'Lanjutkan' : isFull ? 'Penuh' : 'Gabung'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );

@@ -1,5 +1,22 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-011',
+    date: '17 November 2026',
+    version: 'v2.4.2',
+    category: 'Fitur Baru',
+    title: 'Daftar Ruangan Aktif di Lobi Monopoli TL16',
+    commit: 'latest',
+    summary: 'Menambahkan daftar ruangan Monopoli yang sedang aktif langsung di halaman lobi agar pemain bisa bergabung dengan satu klik tanpa mengetik kode manual.',
+    changes: [
+      'Menampilkan daftar ruangan aktif (status Menunggu atau Sedang Bermain dalam 1 jam terakhir) beserta jumlah pemain (maks 6) dan nama peserta.',
+      'Menyediakan tombol Gabung/Lanjutkan langsung dan tombol Segarkan (serta pembaruan otomatis tiap 6 detik).'
+    ],
+    docs: {
+      files: ['src/components/MonopoliBoard.jsx'],
+      notes: 'Mengambil data dari tabel monopoli_rooms dengan filter last_active >= 1 jam terakhir dan menggabungkan jumlah peserta dari monopoli_players.'
+    }
+  },
+  {
     id: 'upd-010',
     date: '17 November 2026',
     version: 'v2.4.1',
