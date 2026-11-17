@@ -59,6 +59,43 @@ const PLAYER_COLOR_OPTIONS = [
   { id: 'bg-pink-500', label: 'Merah Muda', textClass: 'text-stone-900' },
 ];
 
+const MONO_DICE_PIPS = {
+  1: [4],
+  2: [0, 8],
+  3: [0, 4, 8],
+  4: [0, 2, 6, 8],
+  5: [0, 2, 4, 6, 8],
+  6: [0, 2, 3, 5, 6, 8]
+};
+
+function MonopoliDice({ value = 1, shaking = false, tiltRight = false }) {
+  const pips = MONO_DICE_PIPS[value] || MONO_DICE_PIPS[1];
+  return (
+    <div
+      className={`w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-white border-2 p-2 shadow-md transition-transform duration-75 select-none ${
+        shaking
+          ? tiltRight
+            ? 'border-amber-500 rotate-12 -translate-y-1 scale-110'
+            : 'border-amber-500 -rotate-12 translate-y-0.5 scale-105'
+          : 'border-[#C7BDA8]'
+      }`}
+    >
+      <div className="grid grid-cols-3 grid-rows-3 gap-0.5 sm:gap-1 w-full h-full">
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(idx =>
+          pips.includes(idx) ? (
+            <div
+              key={idx}
+              className={`w-full h-full rounded-full ${value === 1 && idx === 4 ? 'bg-rose-700' : 'bg-stone-900'}`}
+            />
+          ) : (
+            <div key={idx} className="w-full h-full" />
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function MonopoliBoard() {
   const [appState, setAppState] = useState('lobby');
   const [currentRoom, setCurrentRoom] = useState(null);
@@ -74,6 +111,7 @@ export default function MonopoliBoard() {
   const journeyTimer = useRef(null);
 
   const [isRolling, setIsRolling] = useState(false);
+  const [rollTick, setRollTick] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const isAnimatingRef = useRef(false);
   const [dice, setDice] = useState([1, 1]);
@@ -562,11 +600,14 @@ export default function MonopoliBoard() {
     }
 
     setIsRolling(true);
+    setRollTick(0);
     let counter = 0;
     const iv = setInterval(() => {
+      counter++;
+      setRollTick(counter);
       setDice([Math.floor(Math.random() * 6) + 1, Math.floor(Math.random() * 6) + 1]);
-      if (++counter > 10) { clearInterval(iv); finishRoll(); }
-    }, 80);
+      if (counter >= 12) { clearInterval(iv); finishRoll(); }
+    }, 75);
   };
 
   const evaluateNonEventTile = async (tile, currentCash, messages) => {
@@ -1148,7 +1189,20 @@ export default function MonopoliBoard() {
                 className="absolute z-20 bg-[#FAF6EE] rounded-xl border border-[#DED6C6] overflow-hidden flex flex-col"
                 style={{ inset: 'calc(100% / 11 + 3px)' }}
               >
-                {isAnimating && journeyTile ? (
+                {isRolling ? (
+                  <div className="flex-1 flex flex-col items-center justify-center gap-3 px-3 py-2">
+                    <span className="text-xs sm:text-sm font-mono font-bold text-amber-800 uppercase tracking-wider">
+                      Mengocok Dadu...
+                    </span>
+                    <div className="flex items-center justify-center gap-3 sm:gap-4 my-1">
+                      <MonopoliDice value={dice[0]} shaking={true} tiltRight={rollTick % 2 === 0} />
+                      <MonopoliDice value={dice[1]} shaking={true} tiltRight={rollTick % 2 !== 0} />
+                    </div>
+                    <span className="text-xs font-mono font-bold text-stone-600">
+                      Total sementara: {dice[0] + dice[1]}
+                    </span>
+                  </div>
+                ) : isAnimating && journeyTile ? (
                   <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-3 py-2">
                     <div className={`w-full h-2 rounded-sm ${getStripColor(journeyTile)} shrink-0`}/>
 
@@ -1164,10 +1218,9 @@ export default function MonopoliBoard() {
                       <span className="text-amber-800 font-mono font-bold text-xs sm:text-sm">Rp {journeyTile.price}k</span>
                     )}
 
-                    <div className="flex gap-2 mt-1">
-                      {dice.map((d,i)=>(
-                        <div key={i} className="bg-amber-400 border border-amber-500 rounded-lg flex items-center justify-center text-slate-950 font-mono font-bold w-7 h-7 sm:w-8 sm:h-8 text-xs sm:text-sm">{d}</div>
-                      ))}
+                    <div className="flex gap-2.5 mt-1">
+                      <MonopoliDice value={dice[0]} />
+                      <MonopoliDice value={dice[1]} />
                     </div>
 
                     <div className="w-full max-w-xs px-3 mt-1">
@@ -1260,7 +1313,11 @@ export default function MonopoliBoard() {
             disabled={isRolling||isAnimating||myState?.is_bankrupt}
             className="w-full min-h-[52px] bg-green-900 hover:bg-green-800 text-white font-bold py-4 rounded-xl transition-colors disabled:bg-[#E7DFCE] disabled:text-stone-500 disabled:cursor-not-allowed text-base"
           >
-            {isAnimating ? `Dadu: ${dice[0]} + ${dice[1]} = ${dice[0]+dice[1]} Langkah` : 'Lempar Dadu Sekarang'}
+            {isRolling
+              ? 'Mengocok Dadu...'
+              : isAnimating
+              ? `Dadu: ${dice[0]} + ${dice[1]} = ${dice[0]+dice[1]} Langkah`
+              : 'Lempar Dadu Sekarang'}
           </button>
 
           {/* Detail Petak */}

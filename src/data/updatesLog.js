@@ -1,5 +1,22 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-013',
+    date: '17 November 2026',
+    version: 'v2.4.4',
+    category: 'Desain & UI',
+    title: 'Animasi Kocokan 2 Dadu Bergoyang pada Monopoli TL16',
+    commit: 'latest',
+    summary: 'Menambahkan animasi kocokan dadu bergoyang dengan tampilan mata dadu (1-6 titik) di panel tengah papan saat pemain melempar dadu.',
+    changes: [
+      'Menampilkan 2 dadu bergoyang dan berputar cepat di panel tengah papan selama proses pengacakan (isRolling).',
+      'Mengganti kotak angka dadu saat melangkah dengan komponen dadu bertitik (MonopoliDice) yang lebih ekspresif.'
+    ],
+    docs: {
+      files: ['src/components/MonopoliBoard.jsx'],
+      notes: 'Menggunakan komponen MonopoliDice berbasis grid 3x3 pips dan state rollTick untuk animasi goyangan bolak-balik.'
+    }
+  },
+  {
     id: 'upd-012',
     date: '17 November 2026',
     version: 'v2.4.3',
