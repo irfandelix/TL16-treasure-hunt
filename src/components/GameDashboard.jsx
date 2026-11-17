@@ -15,13 +15,54 @@ const DosenKillerGame = lazy(() => import('./DosenKillerGame'));
 const UnoBrutalGame = lazy(() => import('./UnoBrutalGame'));
 
 const LoadingScreen = ({ label = 'Memuat halaman permainan...' }) => (
-  <div className="min-h-[60vh] bg-slate-900 flex flex-col justify-center items-center gap-3 text-slate-200 p-6">
+  <div className="min-h-[60vh] bg-[#FAF6EE] flex flex-col justify-center items-center gap-3 text-stone-700 p-6">
     <span
       aria-hidden="true"
-      className="w-9 h-9 border-3 border-slate-600 border-t-amber-400 rounded-full animate-spin"
+      className="w-9 h-9 border-3 border-[#DED6C6] border-t-green-900 rounded-full animate-spin"
     />
     <p className="text-sm font-semibold">{label}</p>
   </div>
+);
+
+const IconMap = () => (
+  <svg aria-hidden="true" className="w-5 h-5 text-green-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+    <line x1="9" y1="3" x2="9" y2="18" />
+    <line x1="15" y1="6" x2="15" y2="21" />
+  </svg>
+);
+
+const IconUsers = () => (
+  <svg aria-hidden="true" className="w-5 h-5 text-green-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+const IconBoard = () => (
+  <svg aria-hidden="true" className="w-5 h-5 text-amber-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="3" />
+    <circle cx="8.5" cy="8.5" r="1" fill="currentColor" />
+    <circle cx="15.5" cy="8.5" r="1" fill="currentColor" />
+    <circle cx="8.5" cy="15.5" r="1" fill="currentColor" />
+    <circle cx="15.5" cy="15.5" r="1" fill="currentColor" />
+  </svg>
+);
+
+const IconClass = () => (
+  <svg aria-hidden="true" className="w-5 h-5 text-amber-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+    <path d="M6 12v5c3 3 9 3 12 0v-5" />
+  </svg>
+);
+
+const IconCards = () => (
+  <svg aria-hidden="true" className="w-5 h-5 text-amber-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="5" y="4" width="12" height="16" rx="2" />
+    <path d="M9 2h10a2 2 0 0 1 2 2v14" />
+  </svg>
 );
 
 export default function GameDashboard() {
