@@ -41,9 +41,6 @@ export default function MagicalAthleteGame() {
   const [inputNim, setInputNim] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
-  const [pendingAdminData, setPendingAdminData] = useState(null);
-  const [adminPassInput, setAdminPassInput] = useState('');
-  const [adminPassError, setAdminPassError] = useState('');
 
   const [roomCode, setRoomCode] = useState('');
   const [inputRoomCode, setInputRoomCode] = useState('');
@@ -159,14 +156,6 @@ export default function MagicalAthleteGame() {
       return;
     }
 
-    if (data.nim === '114160066') {
-      setLoginLoading(false);
-      setPendingAdminData(data);
-      setAdminPassInput('');
-      setAdminPassError('');
-      return;
-    }
-
     finishManualLogin(data, data.is_admin || false);
   };
 
@@ -182,21 +171,6 @@ export default function MagicalAthleteGame() {
     });
     setIsLoggedIn(true);
     setLoginLoading(false);
-  };
-
-  const handleVerifyAdminPasskey = async (e) => {
-    e.preventDefault();
-    if (!pendingAdminData) return;
-    const { data: setts } = await supabase.from('app_settings').select('admin_passkey').eq('id', 1).single();
-    if (setts && adminPassInput === setts.admin_passkey) {
-      const data = pendingAdminData;
-      setPendingAdminData(null);
-      setAdminPassInput('');
-      setAdminPassError('');
-      finishManualLogin(data, true);
-    } else {
-      setAdminPassError('Passkey tidak sesuai.');
-    }
   };
 
   const handleCreateRoom = async () => {
@@ -926,60 +900,6 @@ export default function MagicalAthleteGame() {
             </button>
           </form>
         </div>
-
-        {pendingAdminData && (
-          <div
-            className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-[2px] flex items-center justify-center p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="athlete-passkey-title"
-          >
-            <div className="bg-white border border-amber-400/50 rounded-2xl w-full max-w-sm p-6 shadow-xl">
-              <h2 id="athlete-passkey-title" className="text-xl font-bold text-stone-900 mb-1">
-                Verifikasi Passkey Admin
-              </h2>
-              <p className="text-xs text-stone-600 mb-4">
-                Masukkan passkey panitia untuk mengelola ruang balapan.
-              </p>
-              {adminPassError && (
-                <div role="alert" className="mb-3 p-2.5 rounded-xl bg-rose-50 border border-rose-400 text-rose-200 text-xs">
-                  {adminPassError}
-                </div>
-              )}
-              <form onSubmit={handleVerifyAdminPasskey} className="space-y-4">
-                <label htmlFor="athlete-passkey-input" className="sr-only">Passkey Admin</label>
-                <input
-                  id="athlete-passkey-input"
-                  type="password"
-                  autoFocus
-                  value={adminPassInput}
-                  onChange={(e) => setAdminPassInput(e.target.value)}
-                  placeholder="Masukkan passkey..."
-                  className="w-full min-h-[48px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3.5 py-2.5 text-stone-900 text-sm focus:border-amber-400"
-                />
-                <div className="flex gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPendingAdminData(null);
-                      setAdminPassInput('');
-                      setAdminPassError('');
-                    }}
-                    className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#E7DFCE] hover:bg-[#E7DFCE] text-stone-900 text-sm font-bold"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-sm font-bold"
-                  >
-                    Masuk
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     );
   }

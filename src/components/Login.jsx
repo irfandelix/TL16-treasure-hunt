@@ -1,36 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Login({ onLoginSuccess }) {
   const [nim, setNim] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const [pendingAdminUser, setPendingAdminUser] = useState(null);
-  const [passkeyInput, setPasskeyInput] = useState('');
-  const [passkeyError, setPasskeyError] = useState('');
-  const [verifyingPasskey, setVerifyingPasskey] = useState(false);
-
-  useEffect(() => {
-    if (!pendingAdminUser) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        setPendingAdminUser(null);
-        setPasskeyInput('');
-        setPasskeyError('');
-        setError('Akses panitia dibatalkan.');
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pendingAdminUser]);
-
-  const completeLogin = (userData, adminFlag) => {
-    localStorage.setItem('user_nim', userData.nim);
-    localStorage.setItem('user_nama', userData.nama);
-    localStorage.setItem('is_admin', Boolean(adminFlag).toString());
-    onLoginSuccess({ ...userData, is_admin: adminFlag });
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -55,45 +29,12 @@ export default function Login({ onLoginSuccess }) {
       return;
     }
 
-    // NIM khusus komting memerlukan verifikasi passkey tambahan dari database
-    if (nim.trim() === '114160066') {
-      setLoading(false);
-      setPendingAdminUser(data);
-      setPasskeyInput('');
-      setPasskeyError('');
-      return;
-    }
+    localStorage.setItem('user_nim', data.nim);
+    localStorage.setItem('user_nama', data.nama);
+    localStorage.setItem('is_admin', Boolean(data.is_admin).toString());
 
     setLoading(false);
-    completeLogin(data, data.is_admin);
-  };
-
-  const handleVerifyPasskey = async (e) => {
-    e.preventDefault();
-    if (!passkeyInput.trim()) {
-      setPasskeyError('Masukkan passkey panitia terlebih dahulu.');
-      return;
-    }
-
-    setVerifyingPasskey(true);
-    setPasskeyError('');
-
-    const { data: settings } = await supabase
-      .from('app_settings')
-      .select('admin_passkey')
-      .eq('id', 1)
-      .single();
-
-    setVerifyingPasskey(false);
-
-    if (settings && passkeyInput === settings.admin_passkey) {
-      const adminData = pendingAdminUser;
-      setPendingAdminUser(null);
-      setPasskeyInput('');
-      completeLogin(adminData, true);
-    } else {
-      setPasskeyError('Passkey tidak sesuai. Akses panitia ditolak.');
-    }
+    onLoginSuccess({ ...data, is_admin: Boolean(data.is_admin) });
   };
 
   return (
@@ -165,68 +106,6 @@ export default function Login({ onLoginSuccess }) {
           <p>Gunakan NIM angkatan 2016 untuk membuka profil dan catatan skormu.</p>
         </footer>
       </div>
-
-      {pendingAdminUser && (
-        <div
-          className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-[2px] flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="passkey-modal-title"
-        >
-          <div className="bg-white border border-[#DED6C6] rounded-2xl w-full max-w-sm p-6 shadow-xl">
-            <h2 id="passkey-modal-title" className="text-xl font-bold text-stone-900 mb-1">
-              Verifikasi Akses Panitia
-            </h2>
-            <p className="text-xs text-stone-600 mb-4">
-              Masukkan passkey panitia untuk masuk sebagai pengelola acara.
-            </p>
-
-            {passkeyError && (
-              <div role="alert" className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-medium">
-                {passkeyError}
-              </div>
-            )}
-
-            <form onSubmit={handleVerifyPasskey} className="space-y-4">
-              <div>
-                <label htmlFor="admin-passkey-input" className="block text-xs font-semibold text-stone-800 mb-1.5">
-                  Passkey Panitia
-                </label>
-                <input
-                  id="admin-passkey-input"
-                  type="password"
-                  autoFocus
-                  value={passkeyInput}
-                  onChange={(e) => setPasskeyInput(e.target.value)}
-                  placeholder="Masukkan passkey..."
-                  className="w-full min-h-[48px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3.5 py-2.5 text-stone-900 text-sm placeholder:text-stone-400 focus:border-green-800 focus:bg-white"
-                />
-              </div>
-              <div className="flex gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPendingAdminUser(null);
-                    setPasskeyInput('');
-                    setPasskeyError('');
-                    setError('Akses panitia dibatalkan.');
-                  }}
-                  className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#F3EDE0] hover:bg-[#E7DFCE] text-stone-800 text-sm font-bold transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={verifyingPasskey}
-                  className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-green-900 hover:bg-green-800 disabled:bg-stone-300 disabled:text-stone-600 text-white text-sm font-bold transition-colors"
-                >
-                  {verifyingPasskey ? 'Memeriksa...' : 'Verifikasi'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
