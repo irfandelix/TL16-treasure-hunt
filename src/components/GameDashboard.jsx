@@ -348,17 +348,17 @@ export default function GameDashboard() {
       )}
 
       <div className="max-w-5xl mx-auto">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 border-b border-[#DED6C6] pb-6 gap-4">
-          <div className="flex items-center gap-4">
+        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 border-b border-[#DED6C6] pb-6 gap-4">
+          <div className="flex items-center gap-4 min-w-0">
             <img
               src="/Asset 2.webp"
               alt="Happy Anniversary TL 2016"
-              width="140"
-              height="54"
-              className="w-32 h-auto hidden sm:block"
+              width="120"
+              height="47"
+              className="w-28 h-auto hidden sm:block shrink-0"
             />
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-stone-900">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-stone-900 leading-snug">
                 Halo, {user.nama}!
               </h1>
               <p className="text-stone-600 text-sm">
@@ -367,12 +367,12 @@ export default function GameDashboard() {
             </div>
           </div>
 
-          <nav aria-label="Menu pengguna" className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <nav aria-label="Menu pengguna" className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full lg:w-auto shrink-0">
             <RoadmapModal />
             <button
               type="button"
               onClick={() => setActiveView('updates')}
-              className="min-h-[44px] text-sm bg-white px-4 py-2.5 rounded-xl border border-[#DED6C6] hover:bg-[#F3EDE0] text-stone-800 font-bold transition-colors"
+              className="min-h-[44px] text-xs sm:text-sm whitespace-nowrap bg-white px-3.5 py-2 rounded-xl border border-[#DED6C6] hover:bg-[#F3EDE0] text-stone-800 font-bold transition-colors"
             >
               Catatan Update
             </button>
@@ -380,7 +380,7 @@ export default function GameDashboard() {
               <button
                 type="button"
                 onClick={() => setActiveView('admin')}
-                className="min-h-[44px] text-sm bg-green-900 hover:bg-green-800 text-white px-4 py-2.5 rounded-xl font-bold transition-colors"
+                className="min-h-[44px] text-xs sm:text-sm whitespace-nowrap bg-green-900 hover:bg-green-800 text-white px-3.5 py-2 rounded-xl font-bold transition-colors"
               >
                 Ruang Panitia
               </button>
@@ -388,7 +388,7 @@ export default function GameDashboard() {
             <button
               type="button"
               onClick={handleLogout}
-              className="min-h-[44px] text-sm bg-white px-4 py-2.5 rounded-xl border border-[#DED6C6] hover:bg-rose-50 hover:border-rose-300 hover:text-rose-800 text-stone-700 font-semibold transition-colors ml-auto md:ml-0"
+              className="min-h-[44px] text-xs sm:text-sm whitespace-nowrap bg-white px-3.5 py-2 rounded-xl border border-[#DED6C6] hover:bg-rose-50 hover:border-rose-300 hover:text-rose-800 text-stone-700 font-semibold transition-colors ml-auto sm:ml-0"
             >
               Keluar
             </button>

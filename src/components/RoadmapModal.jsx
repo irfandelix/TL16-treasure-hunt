@@ -75,7 +75,7 @@ export default function RoadmapModal() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="min-h-[44px] text-sm bg-white px-4 py-2.5 rounded-xl border border-[#DED6C6] hover:bg-[#F3EDE0] text-stone-800 font-bold transition-colors flex items-center gap-2"
+        className="min-h-[44px] text-xs sm:text-sm whitespace-nowrap bg-white px-3.5 py-2 rounded-xl border border-[#DED6C6] hover:bg-[#F3EDE0] text-stone-800 font-bold transition-colors flex items-center gap-2"
       >
         <svg aria-hidden="true" className="w-4 h-4 text-green-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2" />
