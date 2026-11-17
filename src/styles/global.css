@@ -1,21 +1,61 @@
 @import "tailwindcss";
 
+@theme {
+  --color-canvas: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-deep: #020617;
+  --color-brand: #34d399;
+  --color-accent: #fbbf24;
+  --color-danger: #fb7185;
+  --color-ink: #f8fafc;
+  --color-ink-muted: #cbd5e1;
+}
+
 @layer base {
   :root {
     --font-display: 'Fredoka', system-ui, -apple-system, sans-serif;
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    color-scheme: dark;
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #0f172a;
-    color: #f8fafc;
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    caret-color: var(--color-accent);
     overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: rgba(251, 191, 36, 0.28);
+    color: var(--color-ink);
   }
 
   h1, h2, h3, .font-display {
     font-family: var(--font-display);
+  }
+
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-canvas);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
   }
 
   a[href],
@@ -47,18 +87,29 @@
   summary:focus-visible,
   [role="button"]:focus-visible,
   [tabindex]:focus-visible {
-    outline: 2px solid #fbbf24;
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   ::before,
   ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    transition-property: opacity, color, background-color, border-color;
+    transition-duration: 120ms;
+  }
+
+  .animate-pulse,
+  .animate-ping {
+    animation: none !important;
+  }
+
+  .animate-spin {
+    animation-duration: 2.4s;
   }
 }

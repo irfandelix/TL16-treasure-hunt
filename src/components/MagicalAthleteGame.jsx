@@ -41,6 +41,9 @@ export default function MagicalAthleteGame() {
   const [inputNim, setInputNim] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [pendingAdminData, setPendingAdminData] = useState(null);
+  const [adminPassInput, setAdminPassInput] = useState('');
+  const [adminPassError, setAdminPassError] = useState('');
 
   const [roomCode, setRoomCode] = useState('');
   const [inputRoomCode, setInputRoomCode] = useState('');
@@ -156,28 +159,44 @@ export default function MagicalAthleteGame() {
       return;
     }
 
-    let isAdminStatus = data.is_admin || false;
     if (data.nim === '114160066') {
-      const pass = window.prompt('Masukkan Passkey Admin:');
-      if (pass) {
-        const { data: setts } = await supabase.from('app_settings').select('admin_passkey').eq('id', 1).single();
-        if (setts && pass === setts.admin_passkey) {
-          isAdminStatus = true;
-        }
-      }
+      setLoginLoading(false);
+      setPendingAdminData(data);
+      setAdminPassInput('');
+      setAdminPassError('');
+      return;
     }
 
+    finishManualLogin(data, data.is_admin || false);
+  };
+
+  const finishManualLogin = (data, isAdminStatus) => {
     localStorage.setItem('user_nim', data.nim);
     localStorage.setItem('user_nama', data.nama);
-    localStorage.setItem('is_admin', isAdminStatus.toString());
+    localStorage.setItem('is_admin', Boolean(isAdminStatus).toString());
 
     setCurrentUser({
       nim: data.nim,
       nama: data.nama,
-      isAdmin: isAdminStatus
+      isAdmin: Boolean(isAdminStatus)
     });
     setIsLoggedIn(true);
     setLoginLoading(false);
+  };
+
+  const handleVerifyAdminPasskey = async (e) => {
+    e.preventDefault();
+    if (!pendingAdminData) return;
+    const { data: setts } = await supabase.from('app_settings').select('admin_passkey').eq('id', 1).single();
+    if (setts && adminPassInput === setts.admin_passkey) {
+      const data = pendingAdminData;
+      setPendingAdminData(null);
+      setAdminPassInput('');
+      setAdminPassError('');
+      finishManualLogin(data, true);
+    } else {
+      setAdminPassError('Passkey tidak sesuai.');
+    }
   };
 
   const handleCreateRoom = async () => {
@@ -907,6 +926,60 @@ export default function MagicalAthleteGame() {
             </button>
           </form>
         </div>
+
+        {pendingAdminData && (
+          <div
+            className="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="athlete-passkey-title"
+          >
+            <div className="bg-slate-800 border border-amber-400/50 rounded-2xl w-full max-w-sm p-6 shadow-xl">
+              <h2 id="athlete-passkey-title" className="text-xl font-bold text-white mb-1">
+                Verifikasi Passkey Admin
+              </h2>
+              <p className="text-xs text-slate-300 mb-4">
+                Masukkan passkey panitia untuk mengelola ruang balapan.
+              </p>
+              {adminPassError && (
+                <div role="alert" className="mb-3 p-2.5 rounded-xl bg-rose-950/90 border border-rose-400 text-rose-200 text-xs">
+                  {adminPassError}
+                </div>
+              )}
+              <form onSubmit={handleVerifyAdminPasskey} className="space-y-4">
+                <label htmlFor="athlete-passkey-input" className="sr-only">Passkey Admin</label>
+                <input
+                  id="athlete-passkey-input"
+                  type="password"
+                  autoFocus
+                  value={adminPassInput}
+                  onChange={(e) => setAdminPassInput(e.target.value)}
+                  placeholder="Masukkan passkey..."
+                  className="w-full min-h-[48px] bg-slate-900 border border-slate-500 rounded-xl px-3.5 py-2.5 text-slate-50 text-sm focus:border-amber-400"
+                />
+                <div className="flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPendingAdminData(null);
+                      setAdminPassInput('');
+                      setAdminPassError('');
+                    }}
+                    className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-sm font-bold"
+                  >
+                    Masuk
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

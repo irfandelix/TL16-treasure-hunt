@@ -1,10 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Login({ onLoginSuccess }) {
   const [nim, setNim] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const [pendingAdminUser, setPendingAdminUser] = useState(null);
+  const [passkeyInput, setPasskeyInput] = useState('');
+  const [passkeyError, setPasskeyError] = useState('');
+  const [verifyingPasskey, setVerifyingPasskey] = useState(false);
+
+  useEffect(() => {
+    if (!pendingAdminUser) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setPendingAdminUser(null);
+        setPasskeyInput('');
+        setPasskeyError('');
+        setError('Akses panitia dibatalkan.');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [pendingAdminUser]);
+
+  const completeLogin = (userData, adminFlag) => {
+    localStorage.setItem('user_nim', userData.nim);
+    localStorage.setItem('user_nama', userData.nama);
+    localStorage.setItem('is_admin', Boolean(adminFlag).toString());
+    onLoginSuccess({ ...userData, is_admin: adminFlag });
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -29,39 +55,45 @@ export default function Login({ onLoginSuccess }) {
       return;
     }
 
-    let isAdminStatus = data.is_admin;
-
     // NIM khusus komting memerlukan verifikasi passkey tambahan dari database
     if (nim.trim() === '114160066') {
-      const passkeyInput = window.prompt('Masukkan Passkey Panitia:');
-
-      if (!passkeyInput) {
-        setError('Akses panitia dibatalkan.');
-        setLoading(false);
-        return;
-      }
-
-      const { data: settings } = await supabase
-        .from('app_settings')
-        .select('admin_passkey')
-        .eq('id', 1)
-        .single();
-
-      if (settings && passkeyInput === settings.admin_passkey) {
-        isAdminStatus = true;
-      } else {
-        setError('Passkey tidak sesuai. Akses panitia ditolak.');
-        setLoading(false);
-        return;
-      }
+      setLoading(false);
+      setPendingAdminUser(data);
+      setPasskeyInput('');
+      setPasskeyError('');
+      return;
     }
 
-    localStorage.setItem('user_nim', data.nim);
-    localStorage.setItem('user_nama', data.nama);
-    localStorage.setItem('is_admin', Boolean(isAdminStatus).toString());
-
     setLoading(false);
-    onLoginSuccess({ ...data, is_admin: isAdminStatus });
+    completeLogin(data, data.is_admin);
+  };
+
+  const handleVerifyPasskey = async (e) => {
+    e.preventDefault();
+    if (!passkeyInput.trim()) {
+      setPasskeyError('Masukkan passkey panitia terlebih dahulu.');
+      return;
+    }
+
+    setVerifyingPasskey(true);
+    setPasskeyError('');
+
+    const { data: settings } = await supabase
+      .from('app_settings')
+      .select('admin_passkey')
+      .eq('id', 1)
+      .single();
+
+    setVerifyingPasskey(false);
+
+    if (settings && passkeyInput === settings.admin_passkey) {
+      const adminData = pendingAdminUser;
+      setPendingAdminUser(null);
+      setPasskeyInput('');
+      completeLogin(adminData, true);
+    } else {
+      setPasskeyError('Passkey tidak sesuai. Akses panitia ditolak.');
+    }
   };
 
   return (
@@ -133,6 +165,68 @@ export default function Login({ onLoginSuccess }) {
           <p>Gunakan NIM angkatan 2016 untuk membuka profil dan skor kamu.</p>
         </footer>
       </div>
+
+      {pendingAdminUser && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="passkey-modal-title"
+        >
+          <div className="bg-slate-800 border border-amber-400/50 rounded-2xl w-full max-w-sm p-6 shadow-xl">
+            <h2 id="passkey-modal-title" className="text-xl font-bold text-white mb-1">
+              Verifikasi Akses Panitia
+            </h2>
+            <p className="text-xs text-slate-300 mb-4">
+              Masukkan passkey panitia untuk masuk sebagai pengelola acara.
+            </p>
+
+            {passkeyError && (
+              <div role="alert" className="mb-4 p-3 rounded-xl bg-rose-950/90 border border-rose-400 text-rose-200 text-xs font-medium">
+                {passkeyError}
+              </div>
+            )}
+
+            <form onSubmit={handleVerifyPasskey} className="space-y-4">
+              <div>
+                <label htmlFor="admin-passkey-input" className="block text-xs font-semibold text-slate-200 mb-1.5">
+                  Passkey Panitia
+                </label>
+                <input
+                  id="admin-passkey-input"
+                  type="password"
+                  autoFocus
+                  value={passkeyInput}
+                  onChange={(e) => setPasskeyInput(e.target.value)}
+                  placeholder="Masukkan passkey..."
+                  className="w-full min-h-[48px] bg-slate-900 border border-slate-500 rounded-xl px-3.5 py-2.5 text-slate-50 text-sm placeholder:text-slate-400 focus:border-amber-400"
+                />
+              </div>
+              <div className="flex gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingAdminUser(null);
+                    setPasskeyInput('');
+                    setPasskeyError('');
+                    setError('Akses panitia dibatalkan.');
+                  }}
+                  className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={verifyingPasskey}
+                  className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:bg-slate-700 disabled:text-slate-300 text-slate-950 text-sm font-bold transition-colors"
+                >
+                  {verifyingPasskey ? 'Memeriksa...' : 'Verifikasi'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

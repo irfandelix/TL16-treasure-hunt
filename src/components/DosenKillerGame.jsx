@@ -23,6 +23,8 @@ export default function DosenKillerGame() {
 
   const [dkChat, setDkChat] = useState([]);
   const [chatInput, setChatInput] = useState('');
+  const [isDkChatCollapsed, setIsDkChatCollapsed] = useState(false);
+  const [isIntelCollapsed, setIsIntelCollapsed] = useState(false);
   const chatEndRef = useRef(null);
 
   const dbStateRef = useRef(null);
@@ -612,64 +614,88 @@ export default function DosenKillerGame() {
       
       {faseGame === 'MALAM' && peranKu === 'DOSEN_KILLER' && isHidup && (
         <div className="fixed bottom-4 left-4 w-72 md:w-80 bg-slate-800 border border-rose-500/60 rounded-2xl shadow-xl z-[9999] flex flex-col overflow-hidden">
-          <div className="bg-slate-900 p-3 border-b border-slate-700 flex justify-between items-center">
+          <div className="bg-slate-900 px-3 py-2 border-b border-slate-700 flex justify-between items-center gap-2">
             <span className="text-rose-400 font-bold text-xs font-mono">
               Diskusi Khusus Dosen Killer
             </span>
-          </div>
-          <div className="h-44 p-3 overflow-y-auto flex flex-col gap-3 bg-slate-900/90">
-            {dkChat.length === 0 && (
-              <p className="text-center text-xs text-slate-300 font-mono my-auto">
-                Diskusikan target malam ini bersama rekan Dosen Killer...
-              </p>
-            )}
-            {dkChat.map((c, i) => (
-              <div key={i} className={`flex flex-col max-w-[85%] ${c.sender === currentUser.nama ? 'self-end items-end' : 'self-start items-start'}`}>
-                <span className="text-rose-300 font-bold text-[10px] mb-0.5">{c.sender}</span>
-                <div className={`px-3 py-1.5 rounded-xl text-xs ${c.sender === currentUser.nama ? 'bg-rose-700 text-white' : 'bg-slate-800 border border-slate-700 text-slate-200'}`}>
-                  {c.text}
-                </div>
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-          <form onSubmit={kirimPesanDK} className="p-2 bg-slate-800 border-t border-slate-700 flex gap-2">
-            <label htmlFor="dk-secret-chat-input" className="sr-only">
-              Pesan Rahasia Dosen Killer
-            </label>
-            <input 
-              id="dk-secret-chat-input"
-              type="text" 
-              value={chatInput} 
-              onChange={e => setChatInput(e.target.value)} 
-              className="w-full min-h-[44px] bg-slate-900 text-white text-xs px-3 py-2 rounded-lg border border-slate-600 focus:border-amber-400 placeholder:text-slate-400" 
-              placeholder="Tulis rencana malam ini..." 
-            />
             <button
-              type="submit"
-              className="min-h-[44px] bg-rose-700 hover:bg-rose-600 text-white px-4 rounded-lg text-xs font-bold transition-colors"
+              type="button"
+              onClick={() => setIsDkChatCollapsed(prev => !prev)}
+              className="min-h-[36px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono border border-slate-700"
             >
-              Kirim
+              {isDkChatCollapsed ? 'Buka' : 'Tutup'}
             </button>
-          </form>
+          </div>
+          {!isDkChatCollapsed && (
+            <>
+              <div className="h-44 p-3 overflow-y-auto flex flex-col gap-3 bg-slate-900/90">
+                {dkChat.length === 0 && (
+                  <p className="text-center text-xs text-slate-300 font-mono my-auto">
+                    Diskusikan target malam ini bersama rekan Dosen Killer...
+                  </p>
+                )}
+                {dkChat.map((c, i) => (
+                  <div key={i} className={`flex flex-col max-w-[85%] ${c.sender === currentUser.nama ? 'self-end items-end' : 'self-start items-start'}`}>
+                    <span className="text-rose-300 font-bold text-[10px] mb-0.5">{c.sender}</span>
+                    <div className={`px-3 py-1.5 rounded-xl text-xs ${c.sender === currentUser.nama ? 'bg-rose-700 text-white' : 'bg-slate-800 border border-slate-700 text-slate-200'}`}>
+                      {c.text}
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+              <form onSubmit={kirimPesanDK} className="p-2 bg-slate-800 border-t border-slate-700 flex gap-2">
+                <label htmlFor="dk-secret-chat-input" className="sr-only">
+                  Pesan Rahasia Dosen Killer
+                </label>
+                <input 
+                  id="dk-secret-chat-input"
+                  type="text" 
+                  value={chatInput} 
+                  onChange={e => setChatInput(e.target.value)} 
+                  className="w-full min-h-[44px] bg-slate-900 text-white text-xs px-3 py-2 rounded-lg border border-slate-600 focus:border-amber-400 placeholder:text-slate-400" 
+                  placeholder="Tulis rencana malam ini..." 
+                />
+                <button
+                  type="submit"
+                  className="min-h-[44px] bg-rose-700 hover:bg-rose-600 text-white px-4 rounded-lg text-xs font-bold transition-colors"
+                >
+                  Kirim
+                </button>
+              </form>
+            </>
+          )}
         </div>
       )}
 
       {peranKu === 'INTEL' && isHidup && intelSuspects.length > 0 && (faseGame === 'DISKUSI' || faseGame === 'VOTING') && (
-        <div className="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-slate-800 border-2 border-sky-400 p-5 rounded-2xl shadow-xl z-[4000]">
-          <h3 className="text-sky-300 font-bold text-sm mb-2 border-b border-slate-700 pb-2">
-            Catatan Penyelidikan Intel
-          </h3>
-          <p className="text-slate-200 text-xs mb-3 leading-relaxed">
-            Berdasarkan pengamatan semalam, salah satu dari 3 nama berikut adalah Dosen Killer:
-          </p>
-          <div className="flex flex-col gap-2">
-            {intelSuspects.map((s, i) => (
-              <div key={i} className="bg-slate-900 border border-sky-500/40 text-white text-center py-2 rounded-lg text-xs font-bold">
-                {s.nama}
-              </div>
-            ))}
+        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-slate-800 border-2 border-sky-400 p-4 rounded-2xl shadow-xl z-[4000]">
+          <div className="flex items-center justify-between gap-2 border-b border-slate-700 pb-2 mb-2">
+            <h3 className="text-sky-300 font-bold text-sm">
+              Catatan Penyelidikan Intel
+            </h3>
+            <button
+              type="button"
+              onClick={() => setIsIntelCollapsed(prev => !prev)}
+              className="min-h-[36px] px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-200 text-xs font-mono border border-slate-700"
+            >
+              {isIntelCollapsed ? 'Lihat' : 'Sembunyikan'}
+            </button>
           </div>
+          {!isIntelCollapsed && (
+            <>
+              <p className="text-slate-200 text-xs mb-3 leading-relaxed">
+                Berdasarkan pengamatan semalam, salah satu dari kandidat berikut adalah Dosen Killer:
+              </p>
+              <div className="flex flex-col gap-2">
+                {intelSuspects.map((s, i) => (
+                  <div key={i} className="bg-slate-900 border border-sky-500/40 text-white text-center py-2 rounded-lg text-xs font-bold">
+                    {s.nama}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 

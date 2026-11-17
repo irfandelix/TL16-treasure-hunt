@@ -42,7 +42,9 @@ export default function ScoreBoard() {
         setIsWerewolfUnlocked(werewolfBuka);
       }
 
-      const { data: alumniData, error: alumniError } = await supabase.from('alumni').select('*');
+      const { data: alumniData, error: alumniError } = await supabase
+        .from('alumni')
+        .select('nim, nama, skor_peta, skor_muka, skor_monopoli, skor_werewolf');
       if (alumniError) throw alumniError;
 
       if (alumniData) {

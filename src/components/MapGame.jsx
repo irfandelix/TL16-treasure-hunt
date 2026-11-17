@@ -25,6 +25,7 @@ export default function MapGame() {
   const [score, setScore] = useState(0);
   const [solvedLocations, setSolvedLocations] = useState([]);
   const [guess, setGuess] = useState("");
+  const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
     const userNim = localStorage.getItem('user_nim');
@@ -54,9 +55,9 @@ export default function MapGame() {
 
       await supabase.from('alumni').update({ skor_peta: newScore }).eq('nim', userNim);
       
-      alert("Benar! Memori lokasi berhasil dibuka.");
+      setFeedback({ type: 'success', text: `Benar! Memori lokasi "${location.nama_tempat}" berhasil dibuka.` });
     } else {
-      alert("Belum tepat! Coba ingat-ingat lagi nama tempatnya.");
+      setFeedback({ type: 'error', text: 'Belum tepat! Coba ingat-ingat lagi nama tempatnya.' });
     }
   };
 
@@ -64,7 +65,7 @@ export default function MapGame() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 bg-slate-800 rounded-2xl shadow-md border border-slate-700">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-2xl font-bold text-amber-400">Napak Tilas TL 2016</h2>
           <p className="text-slate-300 text-sm">Klik pin di peta dan tebak nama lokasinya!</p>
@@ -74,6 +75,27 @@ export default function MapGame() {
           <span className="text-2xl font-mono font-bold text-emerald-400">{score} / {locationsData.length}</span>
         </div>
       </div>
+
+      {feedback && (
+        <div
+          role={feedback.type === 'error' ? 'alert' : 'status'}
+          className={`mb-4 p-3.5 rounded-xl border text-sm font-medium flex items-center justify-between gap-3 ${
+            feedback.type === 'success'
+              ? 'bg-emerald-950/70 border-emerald-500/50 text-emerald-200'
+              : 'bg-rose-950/70 border-rose-500/50 text-rose-200'
+          }`}
+        >
+          <span>{feedback.text}</span>
+          <button
+            type="button"
+            onClick={() => setFeedback(null)}
+            aria-label="Tutup notifikasi"
+            className="min-w-[36px] min-h-[36px] rounded-lg bg-slate-900/70 hover:bg-slate-900 text-slate-200 text-xs font-bold px-2"
+          >
+            Tutup
+          </button>
+        </div>
+      )}
 
       <div className="h-[500px] w-full rounded-xl overflow-hidden border-2 border-slate-700 relative z-0">
         <MapContainer center={centerMap} zoom={16} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>

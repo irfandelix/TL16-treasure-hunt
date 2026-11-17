@@ -70,7 +70,9 @@ export default function FaceGame() {
         setCurrentIndex(sessionData.currentIndex);
         setScore(sessionData.score);
       } else {
-        const { data, error } = await supabase.from('alumni').select('*');
+        const { data, error } = await supabase
+          .from('alumni')
+          .select('nim, nama, gender, hint');
         if (error) throw error;
 
         if (data && data.length > 0) {
