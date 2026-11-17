@@ -811,271 +811,341 @@ export default function MonopoliBoard() {
   }
 
   const journeyTile = journeyLog.length > 0 ? BOARD_DATA[journeyLog[Math.min(journeyIdx, journeyLog.length - 1)]] : null;
+  const currentPosTile = BOARD_DATA[myState?.pos ?? 0];
 
-  return (
-    <div className="flex flex-col items-center bg-[#FAF6EE] min-h-screen text-stone-900 p-2 md:p-4 w-full overflow-x-hidden">
-
-      <div className="w-full max-w-[600px] flex flex-wrap justify-between items-center gap-3 mb-3 bg-white p-4 rounded-2xl border border-[#DED6C6] shadow-md">
-        <div>
-          <h2 className="text-green-800 font-bold text-lg">
-            {currentUser.nama} {myState?.is_bankrupt && <span className="text-rose-700">(Bangkrut)</span>}
-          </h2>
-          <div className="flex flex-wrap gap-2 mt-2">
+  const renderTileInfoPanel = () => (
+    <div className="w-full bg-white p-4 rounded-2xl border border-[#DED6C6]">
+      {selectedInfo ? (
+        <div className="text-stone-900">
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`w-3.5 h-3.5 rounded-sm shrink-0 ${getStripColor(selectedInfo)}`}/>
+            <h3 className="font-bold text-stone-900 text-base leading-tight">
+              Petak #{selectedInfo.id}: {selectedInfo.name}
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 text-xs">
+            {selectedInfo.price && <p className="text-stone-600">Harga: <span className="font-mono font-bold text-stone-900">Rp {selectedInfo.price}k</span></p>}
+            {selectedInfo.rent  && <p className="text-stone-600">Sewa: <span className="font-mono font-bold text-stone-900">Rp {selectedInfo.rent}k</span></p>}
+            {selectedInfo.prop && <>
+              <p className="text-stone-600">Pemilik: <span className="font-bold text-stone-900">{selectedInfo.owner?.nama||'...'}</span></p>
+              <p className="text-stone-600">Bangunan: <span className="font-bold text-green-800">{selectedInfo.prop.upgrade_level>=5?'Apartemen':'Rumah Lvl '+(selectedInfo.prop.upgrade_level||0)}</span></p>
+            </>}
+          </div>
+          {!selectedInfo.prop && selectedInfo.type==='property' && myState?.pos === selectedInfo.id && (
             <button
               type="button"
-              onClick={() => setShowAssetsModal(true)}
-              className="text-xs bg-amber-400 hover:bg-amber-300 px-4 py-2 min-h-[44px] rounded-xl text-slate-950 font-bold transition-colors"
+              onClick={()=>{setActiveTile(selectedInfo);setShowBuyModal(true);}}
+              className="mt-3 w-full min-h-[44px] py-2.5 bg-green-900 hover:bg-green-800 text-white rounded-xl font-bold text-xs transition-colors"
             >
-              Aset Propertiku ({properties.filter(p => p.owner_nim === currentUser.nim).length})
+              Beli Properti Ini
             </button>
-            {!myState?.is_bankrupt && (
-              <button
-                type="button"
-                onClick={declareBankrupt}
-                className="text-xs bg-rose-700 hover:bg-rose-600 px-4 py-2 min-h-[44px] rounded-xl text-white font-bold transition-colors"
-              >
-                Menyerah
-              </button>
-            )}
-          </div>
+          )}
         </div>
-        <div className="text-right">
-          <p className="text-xs text-stone-600 uppercase font-mono font-bold">Saldo Kas</p>
-          <p className={`text-2xl font-mono font-bold ${(myState?.cash ?? 0) < 0 ? 'text-rose-700' : 'text-green-800'}`}>
-            Rp {myState?.cash ?? 0}k
-          </p>
-        </div>
-      </div>
+      ) : (
+        <p className="text-stone-600 text-center py-3 font-medium text-xs leading-relaxed">
+          Klik petak di papan atau pilih lewat daftar di bawah untuk melihat harga, sewa, dan pemilik properti.
+        </p>
+      )}
+    </div>
+  );
 
-      <div className="w-full max-w-[600px] mx-auto pb-3">
-        <div className="flex justify-end mb-2 md:hidden">
-          <button
-            type="button"
-            onClick={() => setIsBoardZoomed(prev => !prev)}
-            className="min-h-[44px] px-3.5 py-2 rounded-xl bg-white hover:bg-[#F3EDE0] border border-[#C7BDA8] text-xs font-mono font-bold text-amber-800 transition-colors"
-          >
-            {isBoardZoomed ? 'Ukuran Papan Normal' : 'Perbesar Papan (Sentuh Mudah)'}
-          </button>
-        </div>
-        <div className={isBoardZoomed ? 'overflow-x-auto pb-2 rounded-2xl' : ''}>
-          <div className={`relative aspect-square bg-[#F3EDE0] p-1 rounded-2xl border border-[#DED6C6] shadow-inner ${isBoardZoomed ? 'min-w-[540px] w-[540px]' : 'w-full'}`}>
+  return (
+    <div className="w-full max-w-6xl mx-auto bg-[#FAF6EE] text-stone-900 pb-16">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
-            <div className="grid grid-cols-11 grid-rows-11 h-full w-full gap-[1px]">
-            {BOARD_DATA.map((tile) => {
-              let area;
-              if (tile.id===0)        area='11/11';
-              else if(tile.id<=9)    area=`11/${11-tile.id}`;
-              else if(tile.id===10)  area='11/1';
-              else if(tile.id<=19)   area=`${21-tile.id}/1`;
-              else if(tile.id===20)  area='1/1';
-              else if(tile.id<=29)   area=`1/${tile.id-19}`;
-              else if(tile.id===30)  area='1/11';
-              else                   area=`${tile.id-29}/11`;
-
-              const prop = properties.find(p=>p.tile_id===tile.id);
-              const owner = players.find(pl=>pl.nim===prop?.owner_nim);
-              const playersOnTile = players.filter(pl=>getDisplayPos(pl)===tile.id);
-              const isCorner = tile.type==='corner';
-              const stripColor = getStripColor(tile);
-              const bgClass = owner ? `${owner.color} bg-opacity-25` : isCorner ? 'bg-[#E7DFCE]' : 'bg-white';
-
-              const stripPos =
-                tile.side===1 ? 'top-0 left-0 right-0 h-[4px]' :
-                tile.side===2 ? 'top-0 right-0 bottom-0 w-[4px]' :
-                tile.side===3 ? 'bottom-0 left-0 right-0 h-[4px]' :
-                tile.side===4 ? 'top-0 left-0 bottom-0 w-[4px]' : '';
-
-              const textStyle = getTextStyle(tile);
-              const typeLabel = TILE_TYPE_LABEL[tile.type];
-              const isVertical = tile.side===2 || tile.side===4;
-
-              return (
+        {/* KOLOM KIRI (DESKTOP): PAPAN MONOPOLI BESAR */}
+        <div className="lg:col-span-8 w-full">
+          {/* Header ringkas khusus HP (< lg) */}
+          <div className="lg:hidden w-full flex flex-wrap justify-between items-center gap-3 mb-3 bg-white p-4 rounded-2xl border border-[#DED6C6]">
+            <div>
+              <h2 className="text-green-900 font-bold text-base">
+                {currentUser.nama} {myState?.is_bankrupt && <span className="text-rose-700">(Bangkrut)</span>}
+              </h2>
+              <div className="flex flex-wrap gap-2 mt-2">
                 <button
-                  key={tile.id}
                   type="button"
-                  aria-label={`Petak ${tile.id}: ${tile.name}${tile.price ? `, Harga Rp ${tile.price}k` : ''}`}
-                  onClick={() => handleTileClick(tile)}
-                  style={{gridArea:area}}
-                  className={`relative flex flex-col items-center justify-center cursor-pointer overflow-hidden border border-[#DED6C6] ${bgClass} hover:brightness-125 transition-all p-0`}
+                  onClick={() => setShowAssetsModal(true)}
+                  className="text-xs bg-amber-400 hover:bg-amber-300 px-3.5 py-2 min-h-[44px] rounded-xl text-slate-950 font-bold transition-colors"
                 >
-                  {!isCorner && <div className={`absolute ${stripPos} ${stripColor} pointer-events-none`}/>}
+                  Aset Propertiku ({properties.filter(p => p.owner_nim === currentUser.nim).length})
+                </button>
+                {!myState?.is_bankrupt && (
+                  <button
+                    type="button"
+                    onClick={declareBankrupt}
+                    className="text-xs bg-rose-700 hover:bg-rose-600 px-3.5 py-2 min-h-[44px] rounded-xl text-white font-bold transition-colors"
+                  >
+                    Menyerah
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-stone-600 uppercase font-mono font-bold">Saldo Kas</p>
+              <p className={`text-xl font-mono font-bold ${(myState?.cash ?? 0) < 0 ? 'text-rose-700' : 'text-green-900'}`}>
+                Rp {myState?.cash ?? 0}k
+              </p>
+            </div>
+          </div>
 
-                  {/* Teks petak */}
-                  <div style={textStyle} className="flex-1 w-full h-full flex items-center justify-center overflow-hidden p-[1px]">
-                    <div
-                      className="text-stone-900 font-semibold text-center leading-tight overflow-hidden"
-                      style={{
-                        fontSize: isBoardZoomed ? (isCorner ? '9px' : '8px') : (isCorner ? '6.5px' : '5.5px'),
-                        lineHeight: 1.1,
-                        wordBreak: 'break-word',
-                        hyphens: 'auto',
-                        display: '-webkit-box',
-                        WebkitLineClamp: isVertical ? 999 : 5,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                      }}
-                    >
-                      {typeLabel && <span style={{display:'block',fontSize:'4.5px',letterSpacing:'0.04em',color:'#fde68a'}}>{typeLabel}</span>}
-                      {tile.name}
+          <div className="flex justify-between items-center mb-2 lg:hidden">
+            <span className="text-xs font-mono text-stone-600">
+              Posisi: <strong className="text-stone-900">#{currentPosTile?.id} {currentPosTile?.name}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsBoardZoomed(prev => !prev)}
+              className="min-h-[44px] px-3.5 py-2 rounded-xl bg-white hover:bg-[#F3EDE0] border border-[#C7BDA8] text-xs font-mono font-bold text-green-900 transition-colors"
+            >
+              {isBoardZoomed ? 'Ukuran Normal' : 'Perbesar Papan'}
+            </button>
+          </div>
+
+          <div className={isBoardZoomed ? 'overflow-x-auto pb-2 rounded-2xl' : ''}>
+            <div className={`relative aspect-square bg-[#E7DFCE] p-1.5 rounded-2xl border border-[#C7BDA8] ${isBoardZoomed ? 'min-w-[700px] w-[700px]' : 'w-full'}`}>
+
+              <div className="grid grid-cols-11 grid-rows-11 h-full w-full gap-[2px]">
+              {BOARD_DATA.map((tile) => {
+                let area;
+                if (tile.id===0)        area='11/11';
+                else if(tile.id<=9)    area=`11/${11-tile.id}`;
+                else if(tile.id===10)  area='11/1';
+                else if(tile.id<=19)   area=`${21-tile.id}/1`;
+                else if(tile.id===20)  area='1/1';
+                else if(tile.id<=29)   area=`1/${tile.id-19}`;
+                else if(tile.id===30)  area='1/11';
+                else                   area=`${tile.id-29}/11`;
+
+                const prop = properties.find(p=>p.tile_id===tile.id);
+                const owner = players.find(pl=>pl.nim===prop?.owner_nim);
+                const playersOnTile = players.filter(pl=>getDisplayPos(pl)===tile.id);
+                const isCorner = tile.type==='corner';
+                const stripColor = getStripColor(tile);
+                const bgClass = owner ? `${owner.color} bg-opacity-25` : isCorner ? 'bg-[#F3EDE0]' : 'bg-white';
+
+                const stripPos =
+                  tile.side===1 ? 'top-0 left-0 right-0 h-[5px]' :
+                  tile.side===2 ? 'top-0 right-0 bottom-0 w-[5px]' :
+                  tile.side===3 ? 'bottom-0 left-0 right-0 h-[5px]' :
+                  tile.side===4 ? 'top-0 left-0 bottom-0 w-[5px]' : '';
+
+                const textStyle = getTextStyle(tile);
+                const typeLabel = TILE_TYPE_LABEL[tile.type];
+                const isVertical = tile.side===2 || tile.side===4;
+
+                return (
+                  <button
+                    key={tile.id}
+                    type="button"
+                    aria-label={`Petak ${tile.id}: ${tile.name}${tile.price ? `, Harga Rp ${tile.price}k` : ''}`}
+                    onClick={() => handleTileClick(tile)}
+                    style={{gridArea:area}}
+                    className={`relative flex flex-col items-center justify-center cursor-pointer overflow-hidden border border-[#DED6C6] ${bgClass} hover:bg-[#FAF6EE] transition-colors p-0.5 ${selectedInfo?.id === tile.id ? 'ring-2 ring-green-900 z-10' : ''}`}
+                  >
+                    {!isCorner && <div className={`absolute ${stripPos} ${stripColor} pointer-events-none`}/>}
+
+                    {/* Teks petak */}
+                    <div style={textStyle} className="flex-1 w-full h-full flex items-center justify-center overflow-hidden p-[2px]">
+                      <div
+                        className={`text-stone-900 font-bold text-center leading-tight overflow-hidden ${
+                          isBoardZoomed
+                            ? (isCorner ? 'text-[10px]' : 'text-[9px]')
+                            : (isCorner ? 'text-[6.5px] sm:text-[8.5px] lg:text-[9.5px]' : 'text-[5.5px] sm:text-[7.5px] lg:text-[8.5px]')
+                        }`}
+                        style={{
+                          lineHeight: 1.12,
+                          wordBreak: 'break-word',
+                          hyphens: 'auto',
+                          display: '-webkit-box',
+                          WebkitLineClamp: isVertical ? 999 : 4,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                        }}
+                      >
+                        {typeLabel && (
+                          <span className="block text-[4.5px] sm:text-[6.5px] lg:text-[7px] tracking-wide font-extrabold text-amber-800">
+                            {typeLabel}
+                          </span>
+                        )}
+                        {tile.name}
+                        {tile.price && (
+                          <span className="hidden lg:block text-[7px] font-mono font-semibold text-stone-500 mt-0.5">
+                            {tile.price}k
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {prop && (
-                    <span className="absolute bottom-0 right-[1px] text-amber-800 font-bold" style={{fontSize:'5px'}}>
-                      {prop.upgrade_level>=5?'APT':`L${prop.upgrade_level||0}`}
+                    {prop && (
+                      <span className="absolute bottom-0.5 right-0.5 text-amber-900 bg-amber-200/90 px-0.5 rounded font-bold text-[6px] sm:text-[7px]">
+                        {prop.upgrade_level>=5?'APT':`L${prop.upgrade_level||0}`}
+                      </span>
+                    )}
+
+                    {playersOnTile.length>0 && (
+                      <div className="absolute bottom-[2px] left-0 right-0 flex flex-wrap gap-[2px] justify-center">
+                        {playersOnTile.map(p=>(
+                          <div
+                            key={p.nim}
+                            className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border border-stone-900 ${p.color||'bg-blue-400'} ${p.nim===currentUser.nim&&isAnimating?'ring-2 ring-amber-500 scale-125':''} transition-all duration-150 shrink-0`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+              </div>
+
+              {/* PANEL TENGAH */}
+              <div
+                className="absolute z-20 bg-[#FAF6EE] rounded-xl border border-[#DED6C6] overflow-hidden flex flex-col"
+                style={{ inset: 'calc(100% / 11 + 3px)' }}
+              >
+                {isAnimating && journeyTile ? (
+                  <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-3 py-2">
+                    <div className={`w-full h-2 rounded-sm ${getStripColor(journeyTile)} shrink-0`}/>
+
+                    <span className="text-stone-600 font-mono font-bold text-xs">
+                      Langkah {journeyIdx+1}/{journeyLog.length}
                     </span>
-                  )}
 
-                  {playersOnTile.length>0 && (
-                    <div className="absolute bottom-[2px] left-0 right-0 flex flex-wrap gap-[1px] justify-center">
-                      {playersOnTile.map(p=>(
-                        <div
-                          key={p.nim}
-                          style={{width:7,height:7,flexShrink:0}}
-                          className={`rounded-full border border-white/80 ${p.color||'bg-blue-400'} ${p.nim===currentUser.nim&&isAnimating?'ring-1 ring-white scale-125':''} transition-all duration-150`}
-                        />
+                    <span className="font-bold text-stone-900 text-center leading-tight px-1 text-sm sm:text-base">
+                      {journeyTile.name}
+                    </span>
+
+                    {journeyTile.price && (
+                      <span className="text-amber-800 font-mono font-bold text-xs sm:text-sm">Rp {journeyTile.price}k</span>
+                    )}
+
+                    <div className="flex gap-2 mt-1">
+                      {dice.map((d,i)=>(
+                        <div key={i} className="bg-amber-400 border border-amber-500 rounded-lg flex items-center justify-center text-slate-950 font-mono font-bold w-7 h-7 sm:w-8 sm:h-8 text-xs sm:text-sm">{d}</div>
                       ))}
                     </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
 
-          {/* PANEL TENGAH */}
-          <div
-            className="absolute z-20 bg-[#FAF6EE] rounded-xl border border-[#DED6C6] overflow-hidden flex flex-col"
-            style={{ inset: 'calc(100% / 11 + 2px)' }}
-          >
-            {isAnimating && journeyTile ? (
-              <div className="flex-1 flex flex-col items-center justify-center gap-1 px-2 py-1">
-                <div className={`w-full h-1.5 rounded-sm ${getStripColor(journeyTile)} shrink-0`}/>
-
-                <span className="text-stone-600 font-mono font-bold text-[10px]">
-                  Langkah {journeyIdx+1}/{journeyLog.length}
-                </span>
-
-                <span className="font-bold text-stone-900 text-center leading-tight px-1 text-xs md:text-sm">
-                  {journeyTile.name}
-                </span>
-
-                {journeyTile.price && (
-                  <span className="text-amber-700 font-mono font-bold text-xs">Rp {journeyTile.price}k</span>
-                )}
-
-                <div className="flex gap-1.5 mt-1">
-                  {dice.map((d,i)=>(
-                    <div key={i} className="bg-amber-400 rounded flex items-center justify-center text-slate-950 font-mono font-bold w-6 h-6 text-xs">{d}</div>
-                  ))}
-                </div>
-
-                <div className="w-full px-3 mt-1">
-                  <div className="h-1.5 bg-[#E7DFCE] rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-200"
-                      style={{width:`${((journeyIdx+1)/journeyLog.length)*100}%`}}/>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center gap-2 p-3">
-                <p className="text-[10px] md:text-xs font-mono font-bold text-amber-700 uppercase tracking-wider">
-                  Monopoli TL 2016
-                </p>
-                {myState?.last_message ? (
-                  <p className="text-stone-900 font-bold text-center px-2 text-xs md:text-sm leading-snug">
-                    {myState.last_message}
-                  </p>
-                ) : (
-                  <p className="text-stone-600 font-bold text-center text-xs">
-                    Lempar dadu di bawah untuk melangkah
-                  </p>
-                )}
-
-                <div className="flex flex-wrap gap-2 justify-center mt-2">
-                  {players.filter(p=>!p.is_bankrupt).map(p=>(
-                    <div key={p.nim} className="flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-[#DED6C6]">
-                      <div className={`rounded-full w-2.5 h-2.5 ${p.color||'bg-slate-400'}`} />
-                      <span className="text-stone-800 text-[10px] font-medium">{p.nama.split(' ')[0]}</span>
+                    <div className="w-full max-w-xs px-3 mt-1">
+                      <div className="h-2 bg-[#E7DFCE] rounded-full overflow-hidden">
+                        <div className="h-full bg-green-800 rounded-full transition-all duration-200"
+                          style={{width:`${((journeyIdx+1)/journeyLog.length)*100}%`}}/>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center gap-2.5 p-3 sm:p-6">
+                    <h2 className="text-sm sm:text-lg font-bold text-stone-900 text-center">
+                      Monopoli Kampus TL 2016
+                    </h2>
+                    {currentPosTile && (
+                      <div className="bg-white border border-[#DED6C6] px-3 py-1.5 rounded-lg text-center">
+                        <span className="text-[11px] sm:text-xs text-stone-600">Posisi Kamu: </span>
+                        <strong className="text-[11px] sm:text-xs text-green-900">#{currentPosTile.id} {currentPosTile.name}</strong>
+                      </div>
+                    )}
+                    {myState?.last_message ? (
+                      <p className="text-stone-800 font-semibold text-center px-2 text-xs sm:text-sm leading-snug max-w-sm">
+                        {myState.last_message}
+                      </p>
+                    ) : (
+                      <p className="text-stone-600 text-center text-xs sm:text-sm">
+                        Tekan tombol Lempar Dadu untuk mulai melangkah.
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center mt-1">
+                      {players.filter(p=>!p.is_bankrupt).map(p=>(
+                        <div key={p.nim} className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-[#DED6C6]">
+                          <div className={`rounded-full w-2.5 h-2.5 border border-stone-900 ${p.color||'bg-slate-400'}`} />
+                          <span className="text-stone-900 text-[10px] sm:text-xs font-semibold">{p.nama.split(' ')[0]}</span>
+                          <span className="text-green-900 font-mono text-[10px] sm:text-xs font-bold">{p.cash}k</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+
+            </div>
           </div>
-
         </div>
-        </div>
-      </div>
 
-      <div className="w-full max-w-[600px] mx-auto mb-3">
-        <button
-          type="button"
-          onClick={rollDice}
-          disabled={isRolling||isAnimating||myState?.is_bankrupt}
-          className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-4 rounded-xl shadow-md transition-colors disabled:bg-[#E7DFCE] disabled:text-stone-500 disabled:cursor-not-allowed text-base"
-        >
-          {isAnimating ? `Dadu: ${dice[0]} + ${dice[1]} = ${dice[0]+dice[1]} Langkah` : 'Lempar Dadu Sekarang'}
-        </button>
-      </div>
-
-      {/* PANEL INFO PETAK */}
-      <div className="w-full max-w-[600px] bg-white p-4 rounded-2xl border border-[#DED6C6] min-h-[100px] mb-4 shadow-md">
-        {selectedInfo ? (
-          <div className="text-stone-900">
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`w-3.5 h-3.5 rounded-sm shrink-0 ${getStripColor(selectedInfo)}`}/>
-              <h3 className="font-bold text-amber-700 text-base leading-tight">
-                Petak #{selectedInfo.id}: {selectedInfo.name}
-              </h3>
+        {/* KOLOM KANAN (DESKTOP) / BAWAH (HP): KONTROL & DETAIL PETAK */}
+        <div className="lg:col-span-4 w-full space-y-4 lg:sticky lg:top-6">
+          {/* Kartu Pemain & Saldo Desktop */}
+          <div className="hidden lg:block bg-white p-5 rounded-2xl border border-[#DED6C6]">
+            <div className="flex justify-between items-start gap-3 mb-4">
+              <div>
+                <h2 className="text-stone-900 font-bold text-lg leading-tight">
+                  {currentUser.nama}
+                </h2>
+                {myState?.is_bankrupt && <span className="text-xs font-bold text-rose-700">Status: Bangkrut</span>}
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-xs text-stone-500 uppercase font-mono font-bold">Saldo Kas</p>
+                <p className={`text-2xl font-mono font-bold ${(myState?.cash ?? 0) < 0 ? 'text-rose-700' : 'text-green-900'}`}>
+                  Rp {myState?.cash ?? 0}k
+                </p>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-1.5 text-xs">
-              {selectedInfo.price && <p className="text-stone-600">Harga: <span className="font-mono font-bold text-stone-900">Rp {selectedInfo.price}k</span></p>}
-              {selectedInfo.rent  && <p className="text-stone-600">Sewa: <span className="font-mono font-bold text-stone-900">Rp {selectedInfo.rent}k</span></p>}
-              {selectedInfo.prop && <>
-                <p className="text-stone-600">Pemilik: <span className="font-bold text-stone-900">{selectedInfo.owner?.nama||'...'}</span></p>
-                <p className="text-stone-600">Bangunan: <span className="font-bold text-green-800">{selectedInfo.prop.upgrade_level>=5?'Apartemen':'Rumah Lvl '+(selectedInfo.prop.upgrade_level||0)}</span></p>
-              </>}
-            </div>
-            {!selectedInfo.prop && selectedInfo.type==='property' && myState?.pos === selectedInfo.id && (
+            <div className="flex gap-2">
               <button
                 type="button"
-                onClick={()=>{setActiveTile(selectedInfo);setShowBuyModal(true);}}
-                className="mt-3 w-full min-h-[44px] py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs transition-colors"
+                onClick={() => setShowAssetsModal(true)}
+                className="flex-1 text-xs bg-amber-400 hover:bg-amber-300 px-3 py-2.5 min-h-[44px] rounded-xl text-slate-950 font-bold transition-colors"
               >
-                Beli Properti Ini
+                Aset Properti ({properties.filter(p => p.owner_nim === currentUser.nim).length})
               </button>
-            )}
+              {!myState?.is_bankrupt && (
+                <button
+                  type="button"
+                  onClick={declareBankrupt}
+                  className="text-xs bg-rose-700 hover:bg-rose-600 px-4 py-2.5 min-h-[44px] rounded-xl text-white font-bold transition-colors"
+                >
+                  Menyerah
+                </button>
+              )}
+            </div>
           </div>
-        ) : (
-          <p className="text-stone-600 text-center py-4 font-medium text-xs">
-            Pilih salah satu petak di papan atau daftar di bawah untuk melihat detail harga dan pemilik properti.
-          </p>
-        )}
-      </div>
 
-      {/* DAFTAR PETAK CEPAT UNTUK LAYAR HP */}
-      <div className="w-full max-w-[600px] bg-white p-4 rounded-2xl border border-[#DED6C6] mb-20">
-        <label htmlFor="mobile-tile-select" className="block text-xs font-mono font-bold text-amber-700 uppercase mb-2">
-          Periksa Detail Petak (Mudah Diakses di HP)
-        </label>
-        <select
-          id="mobile-tile-select"
-          value={selectedInfo?.id ?? ''}
-          onChange={(e) => {
-            const tile = BOARD_DATA.find(t => t.id === Number(e.target.value));
-            if (tile) handleTileClick(tile);
-          }}
-          className="w-full min-h-[44px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3 py-2 text-sm text-stone-900"
-        >
-          <option value="" disabled>Pilih petak untuk melihat detail...</option>
-          {BOARD_DATA.map((t) => (
-            <option key={t.id} value={t.id}>
-              #{t.id} - {t.name} {t.price ? `(Rp ${t.price}k)` : ''}
-            </option>
-          ))}
-        </select>
+          {/* Tombol Lempar Dadu */}
+          <button
+            type="button"
+            onClick={rollDice}
+            disabled={isRolling||isAnimating||myState?.is_bankrupt}
+            className="w-full min-h-[52px] bg-green-900 hover:bg-green-800 text-white font-bold py-4 rounded-xl transition-colors disabled:bg-[#E7DFCE] disabled:text-stone-500 disabled:cursor-not-allowed text-base"
+          >
+            {isAnimating ? `Dadu: ${dice[0]} + ${dice[1]} = ${dice[0]+dice[1]} Langkah` : 'Lempar Dadu Sekarang'}
+          </button>
+
+          {/* Detail Petak */}
+          {renderTileInfoPanel()}
+
+          {/* Pilih Petak Cepat */}
+          <div className="w-full bg-white p-4 rounded-2xl border border-[#DED6C6]">
+            <label htmlFor="mobile-tile-select" className="block text-xs font-bold text-stone-800 mb-2">
+              Periksa Detail Petak
+            </label>
+            <select
+              id="mobile-tile-select"
+              value={selectedInfo?.id ?? ''}
+              onChange={(e) => {
+                const tile = BOARD_DATA.find(t => t.id === Number(e.target.value));
+                if (tile) handleTileClick(tile);
+              }}
+              className="w-full min-h-[44px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3 py-2 text-sm text-stone-900"
+            >
+              <option value="" disabled>Pilih petak untuk melihat detail...</option>
+              {BOARD_DATA.map((t) => (
+                <option key={t.id} value={t.id}>
+                  #{t.id} - {t.name} {t.price ? `(Rp ${t.price}k)` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
       </div>
 
       {/* MODAL: PILIH WARNA */}

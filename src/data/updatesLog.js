@@ -1,5 +1,24 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-010',
+    date: '17 November 2026',
+    version: 'v2.4.1',
+    category: 'Desain & UI',
+    title: 'Tata Letak Responsif Papan Monopoli (HP & Laptop) serta Kerapian Header',
+    commit: 'latest',
+    summary: 'Memperbesar papan Monopoli agar jelas terbaca di laptop (2 kolom dengan panel kontrol di kanan), meningkatkan zoom papan di HP, dan merapikan tombol navigasi header.',
+    changes: [
+      'Mengubah tampilan Monopoli di layar laptop/desktop menjadi 2 kolom: papan besar di kiri (~720px) dengan teks & harga petak jelas, dan panel saldo/dadu/detail petak di kanan.',
+      'Menampilkan indikator posisi pemain saat ini dan saldo seluruh pemain langsung di panel tengah papan.',
+      'Menambah kontras label EVENT, PAJAK, dan ToD pada petak serta fitur Perbesar Papan (700px) di layar HP.',
+      'Merapikan bar navigasi header Beranda agar tombol Jadwal Acara, Catatan Update, Ruang Panitia, dan Keluar sejajar rapi dalam satu baris.'
+    ],
+    docs: {
+      files: ['src/components/MonopoliBoard.jsx', 'src/components/GameDashboard.jsx', 'src/components/RoadmapModal.jsx'],
+      notes: 'Menggunakan CSS Grid 12-kolom (8 kolom papan + 4 kolom kontrol sticky) pada breakpoint lg: serta overflow-x-auto saat mode perbesar diaktifkan di ponsel.'
+    }
+  },
+  {
     id: 'upd-009',
     date: '17 November 2026',
     version: 'v2.4.0',
