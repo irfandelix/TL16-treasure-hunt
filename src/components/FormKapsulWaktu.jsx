@@ -150,36 +150,33 @@ export default function FormKapsulWaktu({ userLocal }) {
   const isSaved = savedData !== null;
 
   return (
-    <div className="flex flex-col items-center w-full text-white font-sans">
-      <div className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-md">
+    <div className="flex flex-col items-center w-full text-stone-900 font-sans">
+      <div className="w-full bg-white border border-[#DED6C6] rounded-2xl p-6 md:p-8">
         
-        <div className="mb-6">
-          <p className="text-xs font-mono font-bold text-amber-400 tracking-wider uppercase mb-1">
-            Buku Kenangan 1 Dekade
-          </p>
-          <h3 className="text-2xl md:text-3xl font-bold text-white">Kapsul Waktu TL 2016</h3>
-          <p className="text-slate-300 mt-1 text-sm">
+        <div className="mb-6 pb-4 border-b border-[#DED6C6]">
+          <h3 className="text-2xl md:text-3xl font-bold text-stone-900">Kapsul Waktu TL 2016</h3>
+          <p className="text-stone-600 mt-1 text-sm">
             Unggah foto terbarumu di tahun 2026 beserta doa atau pesan hangat untuk Sedulur 16.
           </p>
         </div>
 
         {errorMsg && (
-          <div role="alert" className="mb-5 p-4 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div role="alert" className="mb-5 p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span>{errorMsg}</span>
             <button
               type="button"
               onClick={fetchSavedData}
-              className="px-3 py-2 min-h-[44px] rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold border border-slate-700 shrink-0"
+              className="px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-100 text-rose-900 text-xs font-bold border border-rose-300 shrink-0"
             >
               Muat Ulang
             </button>
           </div>
         )}
 
-        <div className={`p-5 rounded-xl border transition-colors ${isSaved ? 'bg-slate-900 border-emerald-500/40' : 'bg-slate-900 border-slate-700'}`}>
+        <div className={`p-5 rounded-xl border transition-colors ${isSaved ? 'bg-[#FAF6EE] border-green-700/40' : 'bg-[#FAF6EE] border-[#DED6C6]'}`}>
           
-          <div className="flex flex-wrap justify-between items-center gap-3 mb-4 border-b border-slate-800 pb-3">
-            <h4 className={`font-bold text-base ${isSaved ? 'text-emerald-400' : 'text-amber-400'}`}>
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-4 border-b border-[#DED6C6] pb-3">
+            <h4 className={`font-bold text-base ${isSaved ? 'text-green-900' : 'text-stone-900'}`}>
               {isSaved ? "Kapsul Waktu Kamu (Tersimpan)" : "Isi Kapsul Waktu Kamu"}
             </h4>
             
@@ -190,18 +187,18 @@ export default function FormKapsulWaktu({ userLocal }) {
                 disabled={isUploading}
                 className="text-xs bg-rose-700 hover:bg-rose-600 text-white px-4 py-2 min-h-[44px] rounded-lg font-bold transition-colors disabled:opacity-50"
               >
-                Hapus & Ganti Isi
+                Hapus &amp; Ganti Isi
               </button>
             )}
           </div>
 
           {isLoading ? (
-            <div className="py-10 text-center text-slate-300 text-sm font-mono">
+            <div className="py-10 text-center text-stone-600 text-sm font-mono">
               Memeriksa Kapsul Waktu kamu...
             </div>
           ) : isSaved ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-              <div className="h-52 w-full rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+              <div className="h-52 w-full rounded-xl overflow-hidden border border-[#DED6C6] bg-white">
                 <img
                   src={savedData.foto}
                   alt={`Foto terbaru ${userLocal?.nama || 'Alumni TL 2016'}`}
@@ -211,9 +208,9 @@ export default function FormKapsulWaktu({ userLocal }) {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 h-52 overflow-y-auto flex flex-col justify-center">
-                <p className="text-xs text-amber-400 mb-2 font-bold font-mono uppercase">Pesan Untuk Angkatan:</p>
-                <p className="text-sm text-slate-100 leading-relaxed">{savedData.pesan}</p>
+              <div className="bg-white p-5 rounded-xl border border-[#DED6C6] h-52 overflow-y-auto flex flex-col justify-center">
+                <p className="text-xs text-green-900 mb-2 font-bold uppercase tracking-wide">Pesan Untuk Angkatan</p>
+                <p className="text-sm text-stone-800 leading-relaxed">{savedData.pesan}</p>
               </div>
             </div>
           ) : (
@@ -221,12 +218,12 @@ export default function FormKapsulWaktu({ userLocal }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 
                 <div>
-                  <label htmlFor="upload-foto-kapsul" className="block text-xs font-bold mb-2 text-slate-200">
+                  <label htmlFor="upload-foto-kapsul" className="block text-xs font-bold mb-2 text-stone-800">
                     Unggah Foto Terbaru (2026)
                   </label>
                   <label
                     htmlFor="upload-foto-kapsul"
-                    className="flex flex-col items-center justify-center w-full h-44 border-2 border-slate-600 border-dashed rounded-xl cursor-pointer hover:border-amber-400 transition-colors overflow-hidden relative bg-slate-800"
+                    className="flex flex-col items-center justify-center w-full h-44 border-2 border-[#C7BDA8] border-dashed rounded-xl cursor-pointer hover:border-green-800 transition-colors overflow-hidden relative bg-white"
                   >
                     {previewUrl ? (
                       <img
@@ -238,8 +235,8 @@ export default function FormKapsulWaktu({ userLocal }) {
                       />
                     ) : (
                       <div className="text-center p-4">
-                        <p className="text-sm font-bold text-amber-400">Pilih Foto Terbaru</p>
-                        <p className="text-xs text-slate-300 mt-1">Format JPG/PNG/WebP, otomatis dikompresi</p>
+                        <p className="text-sm font-bold text-green-900">Pilih Foto Terbaru</p>
+                        <p className="text-xs text-stone-500 mt-1">Format JPG/PNG/WebP, otomatis dikompresi</p>
                       </div>
                     )}
                     <input 
@@ -254,8 +251,8 @@ export default function FormKapsulWaktu({ userLocal }) {
                 </div>
 
                 <div className="flex flex-col">
-                  <label htmlFor="pesan-kapsul" className="block text-xs font-bold mb-2 text-slate-200">
-                    Pesan & Doa untuk Sedulur 16
+                  <label htmlFor="pesan-kapsul" className="block text-xs font-bold mb-2 text-stone-800">
+                    Pesan &amp; Doa untuk Sedulur 16
                   </label>
                   <textarea
                     id="pesan-kapsul"
@@ -264,11 +261,11 @@ export default function FormKapsulWaktu({ userLocal }) {
                     value={pesan}
                     onChange={(e) => setPesan(e.target.value)}
                     placeholder="Tulis pesan hangat, doa, atau kenangan seru waktu kuliah..."
-                    className="flex-1 w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-sm text-white placeholder-slate-400 focus:border-amber-400 resize-none"
+                    className="flex-1 w-full bg-white border border-[#C7BDA8] rounded-xl p-3 text-sm text-stone-900 placeholder-stone-400 focus:border-green-800 resize-none"
                     disabled={isUploading}
                   />
                   <div className="text-right mt-1.5">
-                    <span className={`text-xs font-mono ${pesan.length >= 200 ? 'text-rose-400 font-bold' : 'text-slate-300'}`}>
+                    <span className={`text-xs font-mono ${pesan.length >= 200 ? 'text-rose-700 font-bold' : 'text-stone-600'}`}>
                       {pesan.length}/200 karakter
                     </span>
                   </div>
@@ -280,7 +277,7 @@ export default function FormKapsulWaktu({ userLocal }) {
                 <button
                   type="submit"
                   disabled={isUploading}
-                  className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-base py-3.5 px-6 rounded-xl shadow-md transition-colors disabled:bg-slate-700 disabled:text-slate-300"
+                  className="w-full min-h-[48px] bg-green-900 hover:bg-green-800 text-white font-bold text-base py-3.5 px-6 rounded-xl transition-colors disabled:bg-stone-300 disabled:text-stone-600"
                 >
                   {isUploading ? (uploadStatus || "Memproses...") : "Simpan ke Kapsul Waktu"}
                 </button>

@@ -75,9 +75,14 @@ export default function RoadmapModal() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="min-h-[44px] text-sm bg-slate-800 px-4 py-2.5 rounded-xl border border-amber-400/50 hover:bg-slate-700 hover:border-amber-400 text-amber-300 font-bold transition-colors flex items-center gap-2"
+        className="min-h-[44px] text-sm bg-white px-4 py-2.5 rounded-xl border border-[#DED6C6] hover:bg-[#F3EDE0] text-stone-800 font-bold transition-colors flex items-center gap-2"
       >
-        <span aria-hidden="true">🎂</span>
+        <svg aria-hidden="true" className="w-4 h-4 text-green-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
         <span>Jadwal Acara</span>
       </button>
 
@@ -86,90 +91,90 @@ export default function RoadmapModal() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="roadmap-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-[2px] p-4"
         >
-          <div className="bg-slate-800 p-6 md:p-8 rounded-2xl w-full max-w-2xl border-2 border-amber-400/40 shadow-lg relative flex flex-col max-h-[90vh]">
+          <div className="bg-white p-6 md:p-8 rounded-2xl w-full max-w-2xl border border-[#DED6C6] shadow-xl relative flex flex-col max-h-[90vh]">
             <div className="flex items-start justify-between gap-4 mb-6">
               <div>
-                <h2 id="roadmap-modal-title" className="text-2xl font-bold text-amber-300">
+                <h2 id="roadmap-modal-title" className="text-2xl font-bold text-stone-900">
                   Rangkaian Perayaan 1 Dekade Sedulur 16
                 </h2>
-                <p className="text-sm text-slate-200 mt-1">
-                  Jadwal pembukaan kado permainan dan puncak reuni angkatan 2016.
+                <p className="text-sm text-stone-600 mt-1">
+                  Jadwal pembukaan permainan dan puncak reuni angkatan 2016.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
                 aria-label="Tutup dialog jadwal acara"
-                className="min-w-[44px] min-h-[44px] rounded-xl bg-slate-900 border border-slate-600 text-slate-200 hover:bg-slate-700 font-bold text-lg flex items-center justify-center"
+                className="min-w-[44px] min-h-[44px] rounded-xl bg-[#FAF6EE] border border-[#DED6C6] text-stone-700 hover:bg-[#F3EDE0] font-bold text-lg flex items-center justify-center"
               >
                 <span aria-hidden="true">✕</span>
               </button>
             </div>
 
-            <div className="overflow-y-auto rounded-xl border border-slate-600 bg-slate-900 flex-1">
+            <div className="overflow-y-auto rounded-xl border border-[#DED6C6] bg-white flex-1">
               {isLoading ? (
-                <div className="p-10 text-center text-slate-200 text-sm flex flex-col items-center gap-3">
+                <div className="p-10 text-center text-stone-700 text-sm flex flex-col items-center gap-3">
                   <span
                     aria-hidden="true"
-                    className="w-7 h-7 border-2 border-slate-500 border-t-amber-400 rounded-full animate-spin"
+                    className="w-7 h-7 border-2 border-[#C7BDA8] border-t-green-900 rounded-full animate-spin"
                   />
                   <span>Memuat jadwal perayaan ulang tahun...</span>
                 </div>
               ) : errorMsg ? (
                 <div role="alert" className="p-8 text-center space-y-4">
-                  <p className="text-rose-300 text-sm font-medium">{errorMsg}</p>
+                  <p className="text-rose-800 text-sm font-medium">{errorMsg}</p>
                   <button
                     type="button"
                     onClick={fetchRoadmap}
-                    className="min-h-[44px] px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-sm"
+                    className="min-h-[44px] px-5 py-2.5 bg-green-900 hover:bg-green-800 text-white font-bold rounded-xl text-sm"
                   >
                     Coba Muat Ulang
                   </button>
                 </div>
               ) : scheduleData.length === 0 ? (
-                <div className="p-8 text-center text-slate-300 text-sm">
+                <div className="p-8 text-center text-stone-600 text-sm">
                   Belum ada jadwal permainan yang terdaftar.
                 </div>
               ) : (
-                <table className="w-full text-left text-sm text-slate-200">
-                  <thead className="bg-slate-950 text-xs font-bold text-slate-300 border-b border-slate-700 sticky top-0 z-10">
+                <table className="w-full text-left text-sm text-stone-700">
+                  <thead className="bg-[#F3EDE0] text-xs font-bold text-stone-800 border-b border-[#DED6C6] sticky top-0 z-10">
                     <tr>
                       <th scope="col" className="px-4 py-3.5 whitespace-nowrap">Agenda Permainan</th>
                       <th scope="col" className="px-4 py-3.5 whitespace-nowrap">Bulan</th>
                       <th scope="col" className="px-4 py-3.5 whitespace-nowrap">Pekan</th>
-                      <th scope="col" className="px-4 py-3.5 text-center">Status Kado</th>
+                      <th scope="col" className="px-4 py-3.5 text-center">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800">
+                  <tbody className="divide-y divide-[#EDE6D8]">
                     {scheduleData.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-800/60 transition-colors">
+                      <tr key={item.id} className="hover:bg-[#FAF6EE] transition-colors">
                         <td className="px-4 py-3.5 font-bold">
                           {item.status === 'secret' ? (
-                            <span className="text-slate-300">
-                              Kado Kejutan ({item.game})
+                            <span className="text-stone-500">
+                              Kejutan ({item.game})
                             </span>
                           ) : (
-                            <span className="text-amber-300">{item.game}</span>
+                            <span className="text-stone-900">{item.game}</span>
                           )}
                         </td>
-                        <td className="px-4 py-3.5 font-medium text-slate-200 whitespace-nowrap">{item.month}</td>
-                        <td className="px-4 py-3.5 text-slate-300 whitespace-nowrap">{item.week}</td>
+                        <td className="px-4 py-3.5 font-medium text-stone-800 whitespace-nowrap">{item.month}</td>
+                        <td className="px-4 py-3.5 text-stone-600 whitespace-nowrap">{item.week}</td>
                         <td className="px-4 py-3.5 text-center">
                           {item.status === 'released' && (
-                            <span className="inline-block bg-emerald-950 text-emerald-300 text-xs font-bold px-3 py-1 rounded-md border border-emerald-500/50">
+                            <span className="inline-block bg-green-100 text-green-900 text-xs font-bold px-3 py-1 rounded-md">
                               Sudah Dibuka
                             </span>
                           )}
                           {item.status === 'upcoming' && (
-                            <span className="inline-block bg-amber-950 text-amber-300 text-xs font-bold px-3 py-1 rounded-md border border-amber-400/50">
+                            <span className="inline-block bg-amber-100 text-amber-900 text-xs font-bold px-3 py-1 rounded-md">
                               Segera Hadir
                             </span>
                           )}
                           {item.status === 'secret' && (
-                            <span className="inline-block bg-slate-800 text-slate-300 text-xs font-bold px-3 py-1 rounded-md border border-slate-600">
-                              Masih Dibungkus
+                            <span className="inline-block bg-stone-100 text-stone-600 text-xs font-bold px-3 py-1 rounded-md">
+                              Menunggu Jadwal
                             </span>
                           )}
                         </td>
@@ -183,7 +188,7 @@ export default function RoadmapModal() {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="mt-6 w-full min-h-[48px] py-3 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 rounded-xl text-sm font-bold text-slate-950 transition-colors"
+              className="mt-6 w-full min-h-[48px] py-3 bg-green-900 hover:bg-green-800 rounded-xl text-sm font-bold text-white transition-colors"
             >
               Tutup Jadwal Acara
             </button>

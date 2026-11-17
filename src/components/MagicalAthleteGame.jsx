@@ -885,27 +885,27 @@ export default function MagicalAthleteGame() {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4">
-        <div className="bg-slate-800 border border-slate-700 p-8 rounded-2xl max-w-md w-full shadow-md text-center">
-          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+      <div className="min-h-screen bg-[#FAF6EE] text-stone-900 flex items-center justify-center p-4">
+        <div className="bg-white border border-[#DED6C6] p-8 rounded-2xl max-w-md w-full shadow-md text-center">
+          <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
             Olimpiade Sains Teknik Lingkungan
           </p>
-          <h1 className="text-2xl font-bold text-white mb-2">
+          <h1 className="text-2xl font-bold text-stone-900 mb-2">
             Magical Athlete TL 2016
           </h1>
-          <p className="text-xs text-slate-300 mb-6">
+          <p className="text-xs text-stone-600 mb-6">
             Masukkan NIM untuk bergabung ke lintasan balap spesial 1 Dekade.
           </p>
 
           {loginError && (
-            <div role="alert" className="p-3 mb-4 bg-rose-950/60 border border-rose-500/40 rounded-xl text-rose-300 text-sm">
+            <div role="alert" className="p-3 mb-4 bg-rose-50 border border-rose-500/40 rounded-xl text-rose-700 text-sm">
               {loginError}
             </div>
           )}
 
           <form onSubmit={handleManualLogin} className="space-y-4">
             <div className="text-left">
-              <label htmlFor="athlete-login-nim" className="text-xs font-mono uppercase tracking-wider text-slate-200 block mb-1.5 font-bold">
+              <label htmlFor="athlete-login-nim" className="text-xs font-mono uppercase tracking-wider text-stone-800 block mb-1.5 font-bold">
                 Nomor Induk Mahasiswa (NIM)
               </label>
               <input
@@ -914,7 +914,7 @@ export default function MagicalAthleteGame() {
                 value={inputNim}
                 onChange={(e) => setInputNim(e.target.value)}
                 placeholder="Contoh: 114160001"
-                className="w-full min-h-[48px] bg-slate-900 border border-slate-600 focus:border-amber-400 rounded-xl px-4 py-3 text-slate-100 font-mono text-center tracking-wider transition-colors"
+                className="w-full min-h-[48px] bg-[#FAF6EE] border border-[#C7BDA8] focus:border-amber-400 rounded-xl px-4 py-3 text-stone-900 font-mono text-center tracking-wider transition-colors"
               />
             </div>
             <button
@@ -929,20 +929,20 @@ export default function MagicalAthleteGame() {
 
         {pendingAdminData && (
           <div
-            className="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-[2px] flex items-center justify-center p-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="athlete-passkey-title"
           >
-            <div className="bg-slate-800 border border-amber-400/50 rounded-2xl w-full max-w-sm p-6 shadow-xl">
-              <h2 id="athlete-passkey-title" className="text-xl font-bold text-white mb-1">
+            <div className="bg-white border border-amber-400/50 rounded-2xl w-full max-w-sm p-6 shadow-xl">
+              <h2 id="athlete-passkey-title" className="text-xl font-bold text-stone-900 mb-1">
                 Verifikasi Passkey Admin
               </h2>
-              <p className="text-xs text-slate-300 mb-4">
+              <p className="text-xs text-stone-600 mb-4">
                 Masukkan passkey panitia untuk mengelola ruang balapan.
               </p>
               {adminPassError && (
-                <div role="alert" className="mb-3 p-2.5 rounded-xl bg-rose-950/90 border border-rose-400 text-rose-200 text-xs">
+                <div role="alert" className="mb-3 p-2.5 rounded-xl bg-rose-50 border border-rose-400 text-rose-200 text-xs">
                   {adminPassError}
                 </div>
               )}
@@ -955,7 +955,7 @@ export default function MagicalAthleteGame() {
                   value={adminPassInput}
                   onChange={(e) => setAdminPassInput(e.target.value)}
                   placeholder="Masukkan passkey..."
-                  className="w-full min-h-[48px] bg-slate-900 border border-slate-500 rounded-xl px-3.5 py-2.5 text-slate-50 text-sm focus:border-amber-400"
+                  className="w-full min-h-[48px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3.5 py-2.5 text-stone-900 text-sm focus:border-amber-400"
                 />
                 <div className="flex gap-2.5">
                   <button
@@ -965,7 +965,7 @@ export default function MagicalAthleteGame() {
                       setAdminPassInput('');
                       setAdminPassError('');
                     }}
-                    className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold"
+                    className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#E7DFCE] hover:bg-[#E7DFCE] text-stone-900 text-sm font-bold"
                   >
                     Batal
                   </button>
@@ -986,23 +986,23 @@ export default function MagicalAthleteGame() {
 
   if (!isInRoom) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col items-center justify-center p-4">
-        <div className="bg-slate-800 border border-slate-700 p-8 rounded-2xl max-w-lg w-full shadow-md text-center">
-          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+      <div className="min-h-screen bg-[#FAF6EE] text-stone-900 flex flex-col items-center justify-center p-4">
+        <div className="bg-white border border-[#DED6C6] p-8 rounded-2xl max-w-lg w-full shadow-md text-center">
+          <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
             Edisi Reuni 1 Dekade TL 2016
           </p>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
+          <h1 className="text-3xl font-bold tracking-tight text-stone-900 mb-2">
             Magical Athlete TL 2016
           </h1>
-          <p className="text-sm text-slate-300 mb-6">
+          <p className="text-sm text-stone-600 mb-6">
             Balap Karakter Sains Lingkungan dan Geologi FTM bersama Sedulur 16.
           </p>
 
-          <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 mb-6 text-left flex items-center justify-between">
+          <div className="bg-[#FAF6EE] border border-[#DED6C6] rounded-xl p-4 mb-6 text-left flex items-center justify-between">
             <div>
-              <div className="text-xs text-slate-300 font-mono">Pemain Aktif</div>
-              <div className="font-bold text-white">{currentUser.nama}</div>
-              <div className="text-xs text-emerald-400 font-mono">NIM: {currentUser.nim}</div>
+              <div className="text-xs text-stone-600 font-mono">Pemain Aktif</div>
+              <div className="font-bold text-stone-900">{currentUser.nama}</div>
+              <div className="text-xs text-green-800 font-mono">NIM: {currentUser.nim}</div>
             </div>
             {currentUser.isAdmin && (
               <span className="px-2.5 py-1 bg-amber-400 text-slate-950 text-xs font-bold rounded-lg uppercase tracking-wider">
@@ -1020,7 +1020,7 @@ export default function MagicalAthleteGame() {
               >
                 Buat Ruang Balapan Baru
               </button>
-              <div className="text-xs text-slate-300 font-mono">
+              <div className="text-xs text-stone-600 font-mono">
                 Sebagai Admin, Anda bisa memilih 2 sampai 4 alumni berdasarkan NIM atau menguji coba dengan Bot.
               </div>
             </div>
@@ -1035,7 +1035,7 @@ export default function MagicalAthleteGame() {
                 value={inputRoomCode}
                 onChange={(e) => setInputRoomCode(e.target.value)}
                 placeholder="Masukkan Kode Ruangan (misal: ENV123)"
-                className="w-full min-h-[48px] bg-slate-900 border border-slate-600 focus:border-amber-400 rounded-xl px-4 py-3 text-slate-100 font-mono text-center uppercase tracking-widest"
+                className="w-full min-h-[48px] bg-[#FAF6EE] border border-[#C7BDA8] focus:border-amber-400 rounded-xl px-4 py-3 text-stone-900 font-mono text-center uppercase tracking-widest"
               />
               <button
                 type="submit"
@@ -1046,9 +1046,9 @@ export default function MagicalAthleteGame() {
             </form>
           )}
 
-          <div className="mt-8 pt-4 border-t border-slate-700 flex items-center justify-center gap-2 text-xs text-slate-300">
+          <div className="mt-8 pt-4 border-t border-[#DED6C6] flex items-center justify-center gap-2 text-xs text-stone-600">
             <span>Kembali ke</span>
-            <a href="/" className="text-amber-400 font-bold hover:underline">Beranda Utama</a>
+            <a href="/" className="text-amber-700 font-bold hover:underline">Beranda Utama</a>
           </div>
         </div>
       </div>
@@ -1056,18 +1056,18 @@ export default function MagicalAthleteGame() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 pb-16">
-      <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700 px-4 py-3">
+    <div className="min-h-screen bg-[#FAF6EE] text-stone-900 pb-16">
+      <header className="sticky top-0 z-40 bg-[#FAF6EE] border-b border-[#DED6C6] px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold tracking-wide text-white text-base">Magical Athlete TL16</span>
-                <span className="px-2.5 py-0.5 bg-slate-800 border border-amber-400/50 text-amber-400 font-mono text-xs font-bold rounded-md">
+                <span className="font-bold tracking-wide text-stone-900 text-base">Magical Athlete TL16</span>
+                <span className="px-2.5 py-0.5 bg-white border border-amber-400/50 text-amber-700 font-mono text-xs font-bold rounded-md">
                   {roomCode}
                 </span>
               </div>
-              <div className="text-xs text-slate-300 font-mono">
+              <div className="text-xs text-stone-600 font-mono">
                 {roomData?.status === 'LOBBY' && 'Lobi Penataan Pemain'}
                 {roomData?.status === 'DRAFT' && `Bursa Draft Atlet (${roomData.draft_turn_index + 1}/16)`}
                 {roomData?.status === 'RACE_SELECT' && `Pilihan Atlet Ronde ${roomData.current_round}/4`}
@@ -1089,8 +1089,8 @@ export default function MagicalAthleteGame() {
               </button>
             )}
             <div className="text-right hidden sm:block">
-              <div className="text-xs font-bold text-slate-200">{currentUser.nama}</div>
-              <div className="text-xs font-mono text-emerald-400">{currentUser.nim}</div>
+              <div className="text-xs font-bold text-stone-800">{currentUser.nama}</div>
+              <div className="text-xs font-mono text-green-800">{currentUser.nim}</div>
             </div>
           </div>
         </div>
@@ -1098,7 +1098,7 @@ export default function MagicalAthleteGame() {
 
       {toastMessage && (
         <div className="max-w-4xl mx-auto mt-4 px-4">
-          <div className="p-3.5 bg-slate-800 border border-amber-400/40 rounded-xl text-amber-300 text-xs sm:text-sm font-mono flex items-center justify-between">
+          <div className="p-3.5 bg-white border border-amber-400/40 rounded-xl text-amber-800 text-xs sm:text-sm font-mono flex items-center justify-between">
             <span>{toastMessage}</span>
           </div>
         </div>
@@ -1106,11 +1106,11 @@ export default function MagicalAthleteGame() {
 
       {roomData?.status === 'LOBBY' && (
         <main className="max-w-5xl mx-auto mt-6 px-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 mb-6">
+          <div className="bg-white border border-[#DED6C6] rounded-2xl p-6 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-xl font-bold text-white">Susunan Pemain Balapan</h2>
-                <p className="text-xs text-slate-300 font-mono mt-0.5">
+                <h2 className="text-xl font-bold text-stone-900">Susunan Pemain Balapan</h2>
+                <p className="text-xs text-stone-600 font-mono mt-0.5">
                   {currentUser.isAdmin
                     ? 'Pilih 2 sampai 4 alumni berdasarkan NIM untuk mengisi slot, atau gunakan Bot untuk simulasi.'
                     : 'Menunggu Admin menyelesaikan susunan pemain...'}
@@ -1124,7 +1124,7 @@ export default function MagicalAthleteGame() {
                   className={`px-6 py-3 min-h-[48px] rounded-xl font-bold text-sm transition-colors shadow-md ${
                     players.length >= 2
                       ? 'bg-amber-400 hover:bg-amber-300 text-slate-950'
-                      : 'bg-slate-700 text-slate-300 cursor-not-allowed border border-slate-600'
+                      : 'bg-[#E7DFCE] text-stone-600 cursor-not-allowed border border-[#C7BDA8]'
                   }`}
                 >
                   Mulai Bursa Draft ({players.length}/4 Siap)
@@ -1142,8 +1142,8 @@ export default function MagicalAthleteGame() {
                     key={slotNum}
                     className={`rounded-2xl border p-4 transition-colors relative overflow-hidden flex flex-col justify-between min-h-[175px] ${
                       player
-                        ? `bg-slate-900 ${colorConfig.border}`
-                        : 'bg-slate-900/60 border-slate-700 border-dashed'
+                        ? `bg-[#FAF6EE] ${colorConfig.border}`
+                        : 'bg-[#FAF6EE] border-[#DED6C6] border-dashed'
                     }`}
                   >
                     <div>
@@ -1152,7 +1152,7 @@ export default function MagicalAthleteGame() {
                           Slot {slotNum}
                         </span>
                         {player?.is_bot && (
-                          <span className="text-xs font-mono bg-slate-800 border border-slate-600 text-amber-300 px-2 py-0.5 rounded">
+                          <span className="text-xs font-mono bg-white border border-[#C7BDA8] text-amber-800 px-2 py-0.5 rounded">
                             Bot AI
                           </span>
                         )}
@@ -1160,18 +1160,18 @@ export default function MagicalAthleteGame() {
 
                       {player ? (
                         <div className="mt-2">
-                          <div className="font-bold text-base text-white truncate">{player.nama}</div>
-                          <div className="text-xs font-mono text-slate-300">NIM: {player.nim}</div>
+                          <div className="font-bold text-base text-stone-900 truncate">{player.nama}</div>
+                          <div className="text-xs font-mono text-stone-600">NIM: {player.nim}</div>
                         </div>
                       ) : (
-                        <div className="text-center py-4 text-slate-300 font-mono text-xs">
+                        <div className="text-center py-4 text-stone-600 font-mono text-xs">
                           Slot Kosong
                         </div>
                       )}
                     </div>
 
                     {currentUser.isAdmin && (
-                      <div className="mt-3 pt-3 border-t border-slate-800 flex flex-col gap-2">
+                      <div className="mt-3 pt-3 border-t border-[#DED6C6] flex flex-col gap-2">
                         {player ? (
                           slotNum !== 1 && (
                             <button
@@ -1193,14 +1193,14 @@ export default function MagicalAthleteGame() {
                                 setTargetSlot(slotNum);
                                 setShowAlumniModal(true);
                               }}
-                              className="min-h-[44px] py-2 px-2 bg-slate-800 hover:bg-slate-700 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-mono font-bold transition-colors"
+                              className="min-h-[44px] py-2 px-2 bg-white hover:bg-[#F3EDE0] border border-emerald-500/40 text-green-900 rounded-xl text-xs font-mono font-bold transition-colors"
                             >
                               Pilih NIM
                             </button>
                             <button
                               type="button"
                               onClick={() => handleAddBot(slotNum)}
-                              className="min-h-[44px] py-2 px-2 bg-slate-800 hover:bg-slate-700 border border-amber-400/40 text-amber-300 rounded-xl text-xs font-mono font-bold transition-colors"
+                              className="min-h-[44px] py-2 px-2 bg-white hover:bg-[#F3EDE0] border border-amber-400/40 text-amber-800 rounded-xl text-xs font-mono font-bold transition-colors"
                             >
                               + Bot AI
                             </button>
@@ -1218,12 +1218,12 @@ export default function MagicalAthleteGame() {
 
       {roomData?.status === 'DRAFT' && (
         <main className="max-w-6xl mx-auto mt-6 px-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="bg-white border border-[#DED6C6] rounded-2xl p-5 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
+              <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider">
                 Fase Pemilihan Tim (Snake Draft)
               </p>
-              <h2 className="text-xl font-bold text-white mt-0.5">
+              <h2 className="text-xl font-bold text-stone-900 mt-0.5">
                 Pilih 4 Atlet Sains Terbaik Untuk Tim Kamu
               </h2>
             </div>
@@ -1236,10 +1236,10 @@ export default function MagicalAthleteGame() {
               return (
                 <div className={`px-5 py-3 rounded-xl border text-center font-mono ${
                   isMyTurn
-                    ? 'bg-slate-900 border-amber-400 text-amber-300'
-                    : 'bg-slate-900 border-slate-700 text-slate-200'
+                    ? 'bg-[#FAF6EE] border-amber-400 text-amber-800'
+                    : 'bg-[#FAF6EE] border-[#DED6C6] text-stone-800'
                 }`}>
-                  <div className="text-xs uppercase tracking-wider text-slate-300">Giliran Memilih</div>
+                  <div className="text-xs uppercase tracking-wider text-stone-600">Giliran Memilih</div>
                   <div className="font-bold text-sm mt-0.5">
                     {isMyTurn ? 'Giliran Kamu Sekarang!' : `${currentDraftPlayer?.nama} (Slot ${currentDraftSlot})`}
                   </div>
@@ -1277,34 +1277,34 @@ export default function MagicalAthleteGame() {
                   className={`rounded-2xl border p-4 transition-colors relative flex flex-col justify-between min-h-[220px] ${
                     isAvailable
                       ? isMyTurn
-                        ? 'bg-slate-800 border-slate-600 hover:border-amber-400'
-                        : 'bg-slate-800 border-slate-700'
-                      : 'bg-slate-900/60 border-slate-800 opacity-50'
+                        ? 'bg-white border-[#C7BDA8] hover:border-amber-400'
+                        : 'bg-white border-[#DED6C6]'
+                      : 'bg-[#FAF6EE] border-[#DED6C6] opacity-50'
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-2xl p-1.5 bg-slate-900 rounded-xl">{char.emoji}</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-300 uppercase">
+                      <span className="text-2xl p-1.5 bg-[#FAF6EE] rounded-xl">{char.emoji}</span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#FAF6EE] text-stone-600 uppercase">
                         {char.division}
                       </span>
                     </div>
 
-                    <h3 className="font-bold text-white text-base leading-tight">{char.name}</h3>
-                    <p className="text-xs font-mono text-emerald-400 mb-2">{char.subname}</p>
+                    <h3 className="font-bold text-stone-900 text-base leading-tight">{char.name}</h3>
+                    <p className="text-xs font-mono text-green-800 mb-2">{char.subname}</p>
 
-                    <div className="p-2.5 bg-slate-900 rounded-xl border border-slate-700 mb-2">
-                      <div className="text-xs font-mono font-bold text-amber-400">
+                    <div className="p-2.5 bg-[#FAF6EE] rounded-xl border border-[#DED6C6] mb-2">
+                      <div className="text-xs font-mono font-bold text-amber-700">
                         {char.skillName}
                       </div>
-                      <p className="text-xs text-slate-200 leading-snug mt-1">
+                      <p className="text-xs text-stone-800 leading-snug mt-1">
                         {char.skillDesc}
                       </p>
                     </div>
                   </div>
 
                   {!isAvailable && ownerPlayer && (
-                    <div className="mt-2 text-center py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-300 uppercase">
+                    <div className="mt-2 text-center py-2 bg-[#FAF6EE] border border-[#DED6C6] rounded-xl text-xs font-mono text-stone-600 uppercase">
                       Diambil {ownerPlayer.nama}
                     </div>
                   )}
@@ -1323,24 +1323,24 @@ export default function MagicalAthleteGame() {
             })}
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5">
-            <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-slate-200 mb-4">
+          <div className="bg-white border border-[#DED6C6] rounded-2xl p-5">
+            <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-stone-800 mb-4">
               Atlet Terpilih Tiap Pemain ({players.length} Pemain)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {players.map(p => {
                 const colorConfig = PLAYER_COLORS[p.slot_number - 1];
                 return (
-                  <div key={p.id} className={`p-4 rounded-xl border bg-slate-900 ${colorConfig.border}`}>
-                    <div className="font-bold text-sm text-white flex items-center justify-between mb-2">
+                  <div key={p.id} className={`p-4 rounded-xl border bg-[#FAF6EE] ${colorConfig.border}`}>
+                    <div className="font-bold text-sm text-stone-900 flex items-center justify-between mb-2">
                       <span>{p.nama}</span>
-                      <span className="text-xs font-mono text-slate-300">({(p.drafted_characters || []).length}/4)</span>
+                      <span className="text-xs font-mono text-stone-600">({(p.drafted_characters || []).length}/4)</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {(p.drafted_characters || []).map(cid => {
                         const c = ATHLETE_CHARACTERS.find(x => x.id === cid);
                         return (
-                          <span key={cid} className="px-2 py-1 bg-slate-800 border border-slate-700 rounded-lg text-xs font-mono flex items-center gap-1 text-slate-200">
+                          <span key={cid} className="px-2 py-1 bg-white border border-[#DED6C6] rounded-lg text-xs font-mono flex items-center gap-1 text-stone-800">
                             <span>{c?.emoji}</span>
                             <span className="truncate max-w-[90px]">{c?.name}</span>
                           </span>
@@ -1357,28 +1357,28 @@ export default function MagicalAthleteGame() {
 
       {roomData?.status === 'RACE_SELECT' && (
         <main className="max-w-4xl mx-auto mt-6 px-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 text-center mb-6">
-            <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+          <div className="bg-white border border-[#DED6C6] rounded-2xl p-6 text-center mb-6">
+            <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
               {roomData.current_round === 4 ? 'Ronde 4 - Poin Ganda (2x Lipat)' : `Ronde ${roomData.current_round} dari 4`}
             </p>
-            <h2 className="text-2xl font-bold text-white mb-2">
+            <h2 className="text-2xl font-bold text-stone-900 mb-2">
               Kunci Atlet Jagoanmu Untuk Balapan Ini
             </h2>
-            <p className="text-xs text-slate-300 max-w-lg mx-auto mb-6">
+            <p className="text-xs text-stone-600 max-w-lg mx-auto mb-6">
               Pilihan bersifat rahasia. Begitu semua pemain selesai memilih, seluruh atlet akan tampil serentak di garis Start.
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
               {players.map(p => (
-                <div key={p.id} className="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center">
-                  <div className="font-bold text-xs text-white truncate">{p.nama}</div>
+                <div key={p.id} className="p-3 bg-[#FAF6EE] border border-[#DED6C6] rounded-xl text-center">
+                  <div className="font-bold text-xs text-stone-900 truncate">{p.nama}</div>
                   <div className="mt-1.5">
                     {p.active_character_id ? (
-                      <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">
+                      <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-green-100 text-green-900 border border-emerald-500/40">
                         Terkunci
                       </span>
                     ) : (
-                      <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                      <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-white text-stone-600">
                         Memilih...
                       </span>
                     )}
@@ -1389,7 +1389,7 @@ export default function MagicalAthleteGame() {
 
             {myPlayer && (
               <div className="text-left">
-                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200 mb-3">
+                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-stone-800 mb-3">
                   Pilih 1 dari 4 Atlet Milikmu:
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
@@ -1410,21 +1410,21 @@ export default function MagicalAthleteGame() {
                         }}
                         className={`p-4 rounded-2xl border transition-colors relative text-left flex flex-col justify-between ${
                           isUsed
-                            ? 'bg-slate-900 border-slate-800 opacity-50 cursor-not-allowed'
+                            ? 'bg-[#FAF6EE] border-[#DED6C6] opacity-50 cursor-not-allowed'
                             : isSelected
-                            ? 'bg-slate-900 border-2 border-amber-400'
-                            : 'bg-slate-900 border-slate-700 hover:border-amber-400/60'
+                            ? 'bg-[#FAF6EE] border-2 border-amber-400'
+                            : 'bg-[#FAF6EE] border-[#DED6C6] hover:border-amber-400/60'
                         }`}
                       >
                         <div>
                           <div className="text-3xl mb-2">{c?.emoji}</div>
-                          <div className="font-bold text-sm text-white">{c?.name}</div>
-                          <div className="text-xs font-mono text-emerald-400 mb-2">{c?.subname}</div>
-                          <div className="text-xs text-slate-300 leading-snug">{c?.skillDesc}</div>
+                          <div className="font-bold text-sm text-stone-900">{c?.name}</div>
+                          <div className="text-xs font-mono text-green-800 mb-2">{c?.subname}</div>
+                          <div className="text-xs text-stone-600 leading-snug">{c?.skillDesc}</div>
                         </div>
 
                         {isUsed && (
-                          <div className="mt-3 py-1 px-2 bg-rose-950/90 border border-rose-500/40 rounded-lg text-center font-mono text-xs font-bold text-rose-300">
+                          <div className="mt-3 py-1 px-2 bg-rose-50 border border-rose-500/40 rounded-lg text-center font-mono text-xs font-bold text-rose-700">
                             Sudah Terpakai
                           </div>
                         )}
@@ -1441,7 +1441,7 @@ export default function MagicalAthleteGame() {
                     className={`mt-6 w-full min-h-[48px] py-3.5 rounded-xl font-bold text-sm transition-colors ${
                       secretSelectedChar
                         ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md'
-                        : 'bg-slate-700 text-slate-300 cursor-not-allowed'
+                        : 'bg-[#E7DFCE] text-stone-600 cursor-not-allowed'
                     }`}
                   >
                     Kunci Pilihan Atlet Untuk Ronde {roomData.current_round}
@@ -1455,13 +1455,13 @@ export default function MagicalAthleteGame() {
 
       {(roomData?.status === 'RACING' || roomData?.status === 'ROUND_OVER' || roomData?.status === 'GAME_OVER') && (
         <main className="max-w-6xl mx-auto mt-6 px-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 mb-6">
+          <div className="bg-white border border-[#DED6C6] rounded-2xl p-4 sm:p-5 mb-6">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
               <div>
-                <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
+                <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider">
                   Sirkuit Stadion 24 Petak
                 </p>
-                <h2 className="text-xl font-bold text-white">
+                <h2 className="text-xl font-bold text-stone-900">
                   Ronde {roomData.current_round} dari 4
                 </h2>
               </div>
@@ -1478,17 +1478,17 @@ export default function MagicalAthleteGame() {
             </div>
 
             {/* PANEL KONTROL DADU & GILIRAN UNTUK LAYAR HP (< MD) */}
-            <div className="md:hidden mb-4 rounded-2xl border border-slate-700 bg-slate-900 p-4 text-center">
+            <div className="md:hidden mb-4 rounded-2xl border border-[#DED6C6] bg-[#FAF6EE] p-4 text-center">
               {renderInfieldControl()}
             </div>
 
             {/* LINTASAN RESPONSIF LAYAR HP (< MD): 4 KOLOM TANPA SCROLL HORIZONTAL */}
-            <div className="md:hidden grid grid-cols-4 gap-2 bg-slate-950 p-3 rounded-2xl border border-slate-700">
+            <div className="md:hidden grid grid-cols-4 gap-2 bg-[#F3EDE0] p-3 rounded-2xl border border-[#DED6C6]">
               {TRACK_TILES.slice(0, 24).map(tile => renderTile(tile, true))}
             </div>
 
             {/* LINTASAN OVAL STADION DESKTOP (MD KE ATAS): 8 KOLOM X 6 BARIS */}
-            <div className="hidden md:block p-4 bg-slate-950 rounded-2xl border border-slate-700 shadow-md">
+            <div className="hidden md:block p-4 bg-[#F3EDE0] rounded-2xl border border-[#DED6C6] shadow-md">
               <div
                 style={{
                   display: 'grid',
@@ -1505,7 +1505,7 @@ export default function MagicalAthleteGame() {
                     gridColumn: '2 / 8',
                     gridRow: '2 / 6'
                   }}
-                  className="rounded-2xl border border-slate-700 bg-slate-900 p-5 flex flex-col justify-between items-center text-center relative overflow-hidden my-0.5"
+                  className="rounded-2xl border border-[#DED6C6] bg-[#FAF6EE] p-5 flex flex-col justify-between items-center text-center relative overflow-hidden my-0.5"
                 >
                   {renderInfieldControl()}
                 </div>
@@ -1524,32 +1524,32 @@ export default function MagicalAthleteGame() {
                   key={p.id}
                   className={`p-4 rounded-2xl border transition-colors ${
                     isCurrentTurn
-                      ? `${colorConfig.border} bg-slate-800 ring-2 ring-amber-400`
-                      : 'bg-slate-800 border-slate-700'
+                      ? `${colorConfig.border} bg-white ring-2 ring-amber-400`
+                      : 'bg-white border-[#DED6C6]'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className={`text-xs font-mono px-2.5 py-0.5 rounded font-bold ${colorConfig.badge}`}>
                       P{p.slot_number}
                     </span>
-                    <span className="text-xs font-mono font-bold text-amber-400">
+                    <span className="text-xs font-mono font-bold text-amber-700">
                       {p.score || 0} Poin
                     </span>
                   </div>
 
-                  <div className="font-bold text-base text-white">{p.nama}</div>
-                  <div className="text-xs font-mono text-slate-300 mb-3">Posisi: Petak {p.position} / 24</div>
+                  <div className="font-bold text-base text-stone-900">{p.nama}</div>
+                  <div className="text-xs font-mono text-stone-600 mb-3">Posisi: Petak {p.position} / 24</div>
 
                   {char && (
-                    <div className="p-3 bg-slate-900 border border-slate-700 rounded-xl">
+                    <div className="p-3 bg-[#FAF6EE] border border-[#DED6C6] rounded-xl">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xl">{char.emoji}</span>
                         <div>
-                          <div className="text-xs font-bold text-slate-100">{char.name}</div>
-                          <div className="text-xs font-mono text-emerald-400">{char.skillName}</div>
+                          <div className="text-xs font-bold text-stone-900">{char.name}</div>
+                          <div className="text-xs font-mono text-green-800">{char.skillName}</div>
                         </div>
                       </div>
-                      <div className="text-xs text-slate-300 leading-snug mt-1">
+                      <div className="text-xs text-stone-600 leading-snug mt-1">
                         {char.skillDesc}
                       </div>
                     </div>
@@ -1561,16 +1561,16 @@ export default function MagicalAthleteGame() {
 
           {roomData.status === 'GAME_OVER' && (
             <div
-              className="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4"
+              className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-[2px] flex items-center justify-center p-4"
               role="dialog"
               aria-modal="true"
               aria-labelledby="gameover-modal-title"
             >
-              <div className="bg-slate-800 border border-amber-400/60 p-8 rounded-2xl max-w-lg w-full text-center shadow-xl">
-                <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+              <div className="bg-white border border-amber-400/60 p-8 rounded-2xl max-w-lg w-full text-center shadow-xl">
+                <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
                   Turnamen 4 Ronde Selesai
                 </p>
-                <h2 id="gameover-modal-title" className="text-3xl font-bold text-white mb-6">
+                <h2 id="gameover-modal-title" className="text-3xl font-bold text-stone-900 mb-6">
                   Juara Olimpiade TL 2016
                 </h2>
 
@@ -1582,20 +1582,20 @@ export default function MagicalAthleteGame() {
                         key={p.id}
                         className={`p-4 rounded-xl border flex items-center justify-between ${
                           idx === 0
-                            ? 'bg-slate-900 border-amber-400 text-amber-300 font-bold'
-                            : 'bg-slate-900 border-slate-700 text-slate-200'
+                            ? 'bg-[#FAF6EE] border-amber-400 text-amber-800 font-bold'
+                            : 'bg-[#FAF6EE] border-[#DED6C6] text-stone-800'
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-mono font-bold text-amber-400">
+                          <span className="text-sm font-mono font-bold text-amber-700">
                             #{idx + 1}
                           </span>
                           <div className="text-left">
-                            <div className="text-sm font-bold text-white">{p.nama}</div>
-                            <div className="text-xs font-mono text-slate-300">NIM: {p.nim}</div>
+                            <div className="text-sm font-bold text-stone-900">{p.nama}</div>
+                            <div className="text-xs font-mono text-stone-600">NIM: {p.nim}</div>
                           </div>
                         </div>
-                        <div className="text-base font-bold font-mono text-emerald-400">
+                        <div className="text-base font-bold font-mono text-green-800">
                           {p.score || 0} Poin
                         </div>
                       </div>
@@ -1619,7 +1619,7 @@ export default function MagicalAthleteGame() {
 
       {showAlumniModal && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-[2px] flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="alumni-modal-title"
@@ -1629,15 +1629,15 @@ export default function MagicalAthleteGame() {
           }}
         >
           <div
-            className="bg-slate-800 border border-slate-700 p-6 rounded-2xl max-w-md w-full shadow-xl flex flex-col max-h-[85vh]"
+            className="bg-white border border-[#DED6C6] p-6 rounded-2xl max-w-md w-full shadow-xl flex flex-col max-h-[85vh]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 id="alumni-modal-title" className="font-bold text-base text-white">
+                <h3 id="alumni-modal-title" className="font-bold text-base text-stone-900">
                   Pilih Alumni Untuk Slot {targetSlot}
                 </h3>
-                <p className="text-xs text-slate-300 font-mono">Cari berdasarkan Nama atau NIM</p>
+                <p className="text-xs text-stone-600 font-mono">Cari berdasarkan Nama atau NIM</p>
               </div>
               <button
                 type="button"
@@ -1646,7 +1646,7 @@ export default function MagicalAthleteGame() {
                   setShowAlumniModal(false);
                   setTargetSlot(null);
                 }}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-700 text-slate-200 border border-slate-700 font-mono"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-[#FAF6EE] hover:bg-[#F3EDE0] text-stone-800 border border-[#DED6C6] font-mono"
               >
                 &times;
               </button>
@@ -1661,7 +1661,7 @@ export default function MagicalAthleteGame() {
               value={searchAlumni}
               onChange={(e) => setSearchAlumni(e.target.value)}
               placeholder="Ketik Nama atau NIM..."
-              className="w-full min-h-[44px] bg-slate-900 border border-slate-600 focus:border-amber-400 rounded-xl px-4 py-2.5 text-sm font-mono text-white mb-4"
+              className="w-full min-h-[44px] bg-[#FAF6EE] border border-[#C7BDA8] focus:border-amber-400 rounded-xl px-4 py-2.5 text-sm font-mono text-stone-900 mb-4"
             />
 
             <div className="overflow-y-auto space-y-2 flex-1 pr-1">
@@ -1676,13 +1676,13 @@ export default function MagicalAthleteGame() {
                     key={alumnus.nim}
                     type="button"
                     onClick={() => handleAssignPlayer(alumnus)}
-                    className="w-full min-h-[48px] p-3 bg-slate-900 hover:bg-slate-700 border border-slate-700 hover:border-amber-400 rounded-xl transition-colors flex items-center justify-between text-left"
+                    className="w-full min-h-[48px] p-3 bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#DED6C6] hover:border-amber-400 rounded-xl transition-colors flex items-center justify-between text-left"
                   >
                     <div>
-                      <div className="text-sm font-bold text-white">{alumnus.nama}</div>
-                      <div className="text-xs font-mono text-emerald-400">{alumnus.nim}</div>
+                      <div className="text-sm font-bold text-stone-900">{alumnus.nama}</div>
+                      <div className="text-xs font-mono text-green-800">{alumnus.nim}</div>
                     </div>
-                    <span className="text-xs font-mono font-bold text-amber-400">Pilih</span>
+                    <span className="text-xs font-mono font-bold text-amber-700">Pilih</span>
                   </button>
                 ))}
             </div>
@@ -1696,7 +1696,7 @@ export default function MagicalAthleteGame() {
     return (
       <>
         <div className="mb-2">
-          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
+          <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider">
             Sirkuit Atletik TL 2016 (1 Putaran Penuh)
           </p>
         </div>
@@ -1709,32 +1709,32 @@ export default function MagicalAthleteGame() {
 
             return (
               <div className="flex flex-col items-center gap-3 w-full">
-                <div className="text-xs sm:text-sm font-mono text-slate-200 flex flex-wrap items-center justify-center gap-2">
+                <div className="text-xs sm:text-sm font-mono text-stone-800 flex flex-wrap items-center justify-center gap-2">
                   <span>Giliran:</span>
-                  <strong className="text-white bg-slate-800 px-3 py-1 rounded-xl border border-slate-700 flex items-center gap-1.5">
+                  <strong className="text-stone-900 bg-white px-3 py-1 rounded-xl border border-[#DED6C6] flex items-center gap-1.5">
                     <span>{activeChar?.emoji || '🏃'}</span>
                     <span>{activePlayer?.nama}</span>
-                    <span className="text-xs text-slate-300 font-normal">({activeChar?.name || `Slot ${activePlayer?.slot_number}`})</span>
+                    <span className="text-xs text-stone-600 font-normal">({activeChar?.name || `Slot ${activePlayer?.slot_number}`})</span>
                   </strong>
                 </div>
 
-                <div className="flex items-center justify-center gap-4 sm:gap-6 p-3 sm:p-4 rounded-2xl bg-slate-950 border border-slate-800 w-full max-w-md my-0.5">
+                <div className="flex items-center justify-center gap-4 sm:gap-6 p-3 sm:p-4 rounded-2xl bg-[#F3EDE0] border border-[#DED6C6] w-full max-w-md my-0.5">
                   <div className="flex flex-col items-center gap-1">
                     <DiceCube value={displayDice || 1} isRolling={diceRolling} />
-                    <span className="text-[10px] font-mono text-slate-300 font-bold uppercase tracking-wider">
+                    <span className="text-[10px] font-mono text-stone-600 font-bold uppercase tracking-wider">
                       {diceRolling ? 'Mengocok...' : 'Dadu'}
                     </span>
                   </div>
 
                   <div className="flex flex-col items-start justify-center flex-1">
-                    <div className="text-xs font-mono uppercase tracking-wider text-slate-300">
+                    <div className="text-xs font-mono uppercase tracking-wider text-stone-600">
                       {diceRolling ? 'Mengacak Angka...' : diceRollDetails?.rollerName ? `Lemparan ${diceRollDetails.rollerName}:` : 'Angka Dadu:'}
                     </div>
 
                     <div className="flex items-center gap-3 mt-1">
                       <div className={`text-2xl sm:text-3xl font-mono font-bold px-4 py-1.5 rounded-xl flex items-center gap-2 border ${
                         diceRolling
-                          ? 'bg-slate-800 text-amber-300 border-amber-400/50'
+                          ? 'bg-white text-amber-800 border-amber-400/50'
                           : 'bg-amber-400 text-slate-950 border-amber-300'
                       }`}>
                         <span>{diceRolling ? '...' : (displayDice || '-')}</span>
@@ -1742,11 +1742,11 @@ export default function MagicalAthleteGame() {
 
                       {!diceRolling && diceRollDetails && (
                         <div className="flex flex-col text-left">
-                          <span className="text-xs sm:text-sm font-bold text-white font-mono">
+                          <span className="text-xs sm:text-sm font-bold text-stone-900 font-mono">
                             = {diceRollDetails.totalSteps} Petak
                           </span>
                           {diceRollDetails.bonus !== 0 && (
-                            <span className={`text-xs font-mono font-bold ${diceRollDetails.bonus > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <span className={`text-xs font-mono font-bold ${diceRollDetails.bonus > 0 ? 'text-green-800' : 'text-rose-700'}`}>
                               {diceRollDetails.bonus > 0 ? `(+${diceRollDetails.bonus} Bonus Skill)` : `(${diceRollDetails.bonus} Penalti)`}
                             </span>
                           )}
@@ -1755,7 +1755,7 @@ export default function MagicalAthleteGame() {
                     </div>
 
                     {!diceRolling && diceRollDetails?.skillNote && (
-                      <div className="text-xs font-mono text-emerald-300 mt-1.5 line-clamp-2 text-left bg-slate-900 px-2.5 py-1 rounded-lg border border-emerald-500/30">
+                      <div className="text-xs font-mono text-green-900 mt-1.5 line-clamp-2 text-left bg-[#FAF6EE] px-2.5 py-1 rounded-lg border border-emerald-500/30">
                         {diceRollDetails.skillNote.trim()}
                       </div>
                     )}
@@ -1781,7 +1781,7 @@ export default function MagicalAthleteGame() {
                       disabled={diceRolling || isProcessingMove}
                       className={`min-h-[48px] px-8 py-3 rounded-xl uppercase tracking-wider font-mono text-sm font-bold transition-colors shadow-md ${
                         diceRolling || isProcessingMove
-                          ? 'bg-slate-700 text-slate-300 border border-slate-600 cursor-not-allowed'
+                          ? 'bg-[#E7DFCE] text-stone-600 border border-[#C7BDA8] cursor-not-allowed'
                           : 'bg-amber-400 hover:bg-amber-300 text-slate-950'
                       }`}
                     >
@@ -1790,8 +1790,8 @@ export default function MagicalAthleteGame() {
                   </div>
                 ) : (
                   <div className="flex flex-wrap items-center justify-center gap-2">
-                    <div className="px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-300">
-                      Menunggu <strong className="text-white">{activePlayer?.nama}</strong> melangkah di lintasan...
+                    <div className="px-4 py-2.5 bg-[#F3EDE0] border border-[#DED6C6] rounded-xl text-xs font-mono text-stone-600">
+                      Menunggu <strong className="text-stone-900">{activePlayer?.nama}</strong> melangkah di lintasan...
                     </div>
                     {activePlayer?.is_bot && isHost && (
                       <button
@@ -1810,17 +1810,17 @@ export default function MagicalAthleteGame() {
           })()}
         </div>
 
-        <div className="w-full max-w-xl grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-800 mx-auto">
+        <div className="w-full max-w-xl grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-[#DED6C6] mx-auto">
           {players.map(p => {
             const colorConfig = PLAYER_COLORS[p.slot_number - 1];
             const pct = Math.min(100, Math.round((p.position / 24) * 100));
             return (
-              <div key={p.id} className="p-2 bg-slate-950 rounded-xl border border-slate-800 text-left">
+              <div key={p.id} className="p-2 bg-[#F3EDE0] rounded-xl border border-[#DED6C6] text-left">
                 <div className="flex items-center justify-between text-xs font-mono mb-1">
-                  <span className="font-bold text-white truncate max-w-[75px]">{p.nama}</span>
+                  <span className="font-bold text-stone-900 truncate max-w-[75px]">{p.nama}</span>
                   <span className={colorConfig.text}>{pct}%</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-white h-1.5 rounded-full overflow-hidden">
                   <div
                     style={{ width: `${pct}%` }}
                     className={`h-full rounded-full transition-all duration-500 ${colorConfig.badge.split(' ')[0]}`}
@@ -1857,23 +1857,23 @@ export default function MagicalAthleteGame() {
         }
         className={`h-20 sm:h-24 rounded-xl border p-1.5 sm:p-2 flex flex-col justify-between relative transition-colors ${
           isStartFinish
-            ? 'bg-slate-900 border-2 border-amber-400'
+            ? 'bg-[#FAF6EE] border-2 border-amber-400'
             : tile.type === 'boost'
-            ? 'bg-emerald-950/50 border-emerald-400/70'
+            ? 'bg-green-50 border-emerald-400/70'
             : tile.type === 'trap'
-            ? 'bg-rose-950/50 border-rose-400/70'
+            ? 'bg-rose-50 border-rose-400/70'
             : tile.type === 'halfway'
-            ? 'bg-slate-800 border-amber-400/60'
-            : 'bg-slate-900 border-slate-800'
+            ? 'bg-white border-amber-400/60'
+            : 'bg-[#FAF6EE] border-[#DED6C6]'
         }`}
       >
         <div className="flex items-center justify-between">
-          <span className={`text-[10px] sm:text-xs font-mono font-bold ${isStartFinish ? 'text-amber-300' : 'text-slate-200'}`}>
+          <span className={`text-[10px] sm:text-xs font-mono font-bold ${isStartFinish ? 'text-amber-800' : 'text-stone-800'}`}>
             {isStartFinish ? '0/24' : `#${tile.label}`}
           </span>
-          {tile.type === 'boost' && <span className="text-[10px] font-mono font-bold text-emerald-300">+2</span>}
-          {tile.type === 'trap' && <span className="text-[10px] font-mono font-bold text-rose-300">-2</span>}
-          {tile.type === 'halfway' && <span className="text-[10px] font-mono font-bold text-amber-300">Tengah</span>}
+          {tile.type === 'boost' && <span className="text-[10px] font-mono font-bold text-green-900">+2</span>}
+          {tile.type === 'trap' && <span className="text-[10px] font-mono font-bold text-rose-700">-2</span>}
+          {tile.type === 'halfway' && <span className="text-[10px] font-mono font-bold text-amber-800">Tengah</span>}
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-1 my-auto">
@@ -1897,8 +1897,8 @@ export default function MagicalAthleteGame() {
           })}
         </div>
 
-        <div className="text-[9px] font-mono text-slate-300 truncate text-center">
-          {isStartFinish && <span className="text-amber-300 font-bold">START/FINISH</span>}
+        <div className="text-[9px] font-mono text-stone-600 truncate text-center">
+          {isStartFinish && <span className="text-amber-800 font-bold">START/FINISH</span>}
           {tile.type === 'boost' && 'Maju +2'}
           {tile.type === 'trap' && 'Mundur -2'}
           {tile.type === 'halfway' && 'Petak 12'}
@@ -1923,7 +1923,7 @@ function DiceCube({ value = 1, isRolling = false }) {
 
   return (
     <div
-      className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 p-2 sm:p-2.5 border-2 border-slate-300 flex items-center justify-center transition-transform duration-200 select-none shadow-md ${
+      className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 p-2 sm:p-2.5 border-2 border-[#C7BDA8] flex items-center justify-center transition-transform duration-200 select-none shadow-md ${
         isRolling
           ? 'ring-2 ring-amber-400 rotate-6 scale-105'
           : 'ring-2 ring-amber-400/80'
@@ -1941,7 +1941,7 @@ function DiceCube({ value = 1, isRolling = false }) {
               className={`w-full h-full rounded-full ${
                 isOne && idx === 4
                   ? 'bg-rose-600 scale-110'
-                  : 'bg-slate-900'
+                  : 'bg-[#FAF6EE]'
               }`}
             />
           );

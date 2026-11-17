@@ -177,10 +177,10 @@ export default function TreasureHunt() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-        <div className="w-12 h-12 border-4 border-slate-700 border-t-emerald-400 rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#DED6C6] border-t-green-900 rounded-full animate-spin"></div>
         <div className="text-center">
-          <h3 className="text-emerald-400 font-bold text-lg mb-1">Menyiapkan Peta Napak Tilas...</h3>
-          <p className="text-slate-300 text-sm">Memuat 20 titik kenangan kampus dan tongkrongan TL 2016</p>
+          <h3 className="text-stone-900 font-bold text-lg mb-1">Menyiapkan Peta Napak Tilas...</h3>
+          <p className="text-stone-600 text-sm">Memuat 20 titik kenangan kampus dan tongkrongan TL 2016</p>
         </div>
       </div>
     );
@@ -188,13 +188,13 @@ export default function TreasureHunt() {
 
   if (errorMsg) {
     return (
-      <div role="alert" className="max-w-xl mx-auto p-8 bg-slate-800 rounded-2xl border border-rose-500/40 text-center shadow-md">
-        <h2 className="text-xl font-bold text-rose-400 mb-2">Gagal Memuat Peta</h2>
-        <p className="text-slate-300 text-sm mb-6">{errorMsg}</p>
+      <div role="alert" className="max-w-xl mx-auto p-8 bg-white rounded-2xl border border-rose-300 text-center">
+        <h2 className="text-xl font-bold text-rose-800 mb-2">Gagal Memuat Peta</h2>
+        <p className="text-stone-600 text-sm mb-6">{errorMsg}</p>
         <button
           type="button"
           onClick={initGame}
-          className="px-6 py-3 min-h-[44px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl transition-colors"
+          className="px-6 py-3 min-h-[44px] bg-green-900 hover:bg-green-800 text-white font-bold rounded-xl transition-colors"
         >
           Coba Lagi
         </button>
@@ -204,15 +204,12 @@ export default function TreasureHunt() {
   
   if (currentIdx >= 20) {
     return (
-      <div className="max-w-xl mx-auto p-8 md:p-10 bg-slate-800 rounded-2xl border border-emerald-500/50 text-center shadow-md">
-        <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
-          Napak Tilas Selesai
-        </p>
-        <h2 className="text-3xl font-bold text-white mb-3">Petualangan Peta Selesai!</h2>
-        <p className="text-slate-300 mb-4">Kamu sudah menelusuri kembali 20 lokasi kenangan Sedulur 16.</p>
-        <p className="text-slate-300 mb-8">
+      <div className="max-w-xl mx-auto p-8 md:p-10 bg-white rounded-2xl border border-[#DED6C6] text-center">
+        <h2 className="text-3xl font-bold text-stone-900 mb-3">Petualangan Peta Selesai!</h2>
+        <p className="text-stone-600 mb-4">Kamu sudah menelusuri kembali 20 lokasi kenangan Sedulur 16.</p>
+        <p className="text-stone-600 mb-8">
           Skor Akhir Kamu:<br />
-          <span className="text-emerald-400 font-mono font-bold text-5xl">{totalScore}</span>
+          <span className="text-green-900 font-mono font-bold text-5xl">{totalScore}</span>
         </p>
         
         <div className="flex flex-col sm:flex-row justify-center gap-3">
@@ -225,11 +222,11 @@ export default function TreasureHunt() {
               localStorage.removeItem(`session_hunt_${userNim}`);
               initGame();
             }}
-            className="inline-flex items-center justify-center bg-amber-400 hover:bg-amber-300 px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-slate-950 transition-colors"
+            className="inline-flex items-center justify-center bg-green-900 hover:bg-green-800 px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-white transition-colors"
           >
             Main Ulang Napak Tilas
           </button>
-          <a href="/" className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-700 border border-slate-600 px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-white transition-colors">
+          <a href="/" className="inline-flex items-center justify-center bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#DED6C6] px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-stone-800 transition-colors">
             Kembali ke Beranda
           </a>
         </div>
@@ -241,27 +238,27 @@ export default function TreasureHunt() {
   const centerMap = [-7.762171406006976, 110.40926671296263]; 
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 md:p-8 bg-slate-800 rounded-2xl shadow-md border border-slate-700">
+    <div className="w-full max-w-4xl mx-auto p-4 md:p-8 bg-white rounded-2xl border border-[#DED6C6]">
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
-            Titik Kenangan {currentIdx + 1} dari 20
-          </p>
-          <h2 className="text-2xl md:text-3xl font-bold text-white">Napak Tilas Kampus & Jogja</h2>
+          <span className="text-xs font-mono font-bold text-green-900 bg-green-100 px-2.5 py-1 rounded-md inline-block mb-1.5">
+            Titik {currentIdx + 1} dari 20
+          </span>
+          <h2 className="text-2xl md:text-3xl font-bold text-stone-900">Napak Tilas Kampus &amp; Jogja</h2>
         </div>
-        <div className="bg-slate-900 px-5 py-3 rounded-xl border border-emerald-500/30 text-center md:text-right w-full md:w-auto flex flex-row md:flex-col justify-between md:justify-center items-center md:items-end">
-          <span className="text-slate-300 text-xs font-mono font-bold tracking-wider block">SKOR SAAT INI</span>
-          <span className="text-2xl md:text-3xl font-mono font-bold text-emerald-400">{totalScore}</span>
+        <div className="bg-[#FAF6EE] px-5 py-3 rounded-xl border border-[#DED6C6] text-center md:text-right w-full md:w-auto flex flex-row md:flex-col justify-between md:justify-center items-center md:items-end">
+          <span className="text-stone-600 text-xs font-mono font-bold tracking-wider block">SKOR SAAT INI</span>
+          <span className="text-2xl md:text-3xl font-mono font-bold text-green-900">{totalScore}</span>
         </div>
       </div>
 
-      <div className="bg-slate-900 p-5 rounded-xl border border-slate-700 mb-6">
-        <p className="text-xs font-mono font-bold text-amber-400 uppercase mb-1">Petunjuk Lokasi:</p>
-        <p className="text-slate-100 text-base md:text-lg leading-relaxed">{mission?.clue}</p>
+      <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6] mb-6">
+        <p className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-1">Petunjuk Lokasi</p>
+        <p className="text-stone-900 text-base md:text-lg leading-relaxed">{mission?.clue}</p>
       </div>
 
-      <div className="h-[380px] md:h-[500px] w-full rounded-xl overflow-hidden border-2 border-slate-700 relative z-0 mb-6 shadow-md">
+      <div className="h-[380px] md:h-[500px] w-full rounded-xl overflow-hidden border border-[#DED6C6] relative z-0 mb-6">
         <MapContainer 
           center={centerMap} 
           zoom={17} 
@@ -287,29 +284,29 @@ export default function TreasureHunt() {
           disabled={!userGuess}
           className={`w-full py-4 min-h-[48px] rounded-xl font-bold transition-colors text-base md:text-lg ${
             userGuess 
-              ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md' 
-              : 'bg-slate-700 text-slate-300 cursor-not-allowed'
+              ? 'bg-green-900 hover:bg-green-800 text-white' 
+              : 'bg-stone-200 text-stone-500 cursor-not-allowed'
           }`}
         >
           {userGuess ? 'Kunci Titik Lokasi Ini' : 'Klik pada Peta untuk Menaruh Pin Tebakan'}
         </button>
       ) : (
         <div className={`p-6 rounded-xl border text-center ${
-          result.points > 0 ? 'bg-emerald-950/50 border-emerald-500/50' : 'bg-rose-950/50 border-rose-500/50'
+          result.points > 0 ? 'bg-green-50 border-green-300' : 'bg-rose-50 border-rose-300'
         }`}>
-          <h3 className="text-white font-bold text-2xl mb-2">
+          <h3 className="text-stone-900 font-bold text-2xl mb-2">
             {result.points === 100 ? 'Tepat Sasaran!' : result.points > 0 ? 'Cukup Dekat!' : 'Masih Meleset Jauh'}
           </h3>
-          <p className="text-slate-200 text-base mb-1">
-            Lokasi sebenarnya: <span className="text-white font-bold">{mission?.nama_tempat}</span>
+          <p className="text-stone-700 text-base mb-1">
+            Lokasi sebenarnya: <span className="text-stone-900 font-bold">{mission?.nama_tempat}</span>
           </p>
-          <p className="text-slate-300 text-sm mb-3">Selisih jarak: {Math.round(result.distance)} meter</p>
-          <p className="text-3xl font-mono font-bold text-amber-400 mb-6">+{result.points} Poin</p>
+          <p className="text-stone-600 text-sm mb-3">Selisih jarak: {Math.round(result.distance)} meter</p>
+          <p className="text-3xl font-mono font-bold text-amber-700 mb-6">+{result.points} Poin</p>
           
           <button 
             type="button"
             onClick={handleNextMission}
-            className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 py-3.5 px-6 rounded-xl font-bold transition-colors shadow-md text-base"
+            className="w-full min-h-[48px] bg-green-900 hover:bg-green-800 text-white py-3.5 px-6 rounded-xl font-bold transition-colors text-base"
           >
             Lanjut ke Titik {currentIdx + 2 > 20 ? 'Terakhir' : currentIdx + 2}
           </button>

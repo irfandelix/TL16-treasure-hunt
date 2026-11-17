@@ -51,12 +51,12 @@ const TILE_TYPE_LABEL = { corner: '', tax: 'PAJAK', event: 'EVENT', tod: 'ToD', 
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const PLAYER_COLOR_OPTIONS = [
-  { id: 'bg-red-500', label: 'Merah', textClass: 'text-white' },
-  { id: 'bg-blue-500', label: 'Biru', textClass: 'text-white' },
+  { id: 'bg-red-500', label: 'Merah', textClass: 'text-stone-900' },
+  { id: 'bg-blue-500', label: 'Biru', textClass: 'text-stone-900' },
   { id: 'bg-green-500', label: 'Hijau', textClass: 'text-slate-950' },
   { id: 'bg-yellow-400', label: 'Kuning', textClass: 'text-slate-950' },
-  { id: 'bg-purple-500', label: 'Ungu', textClass: 'text-white' },
-  { id: 'bg-pink-500', label: 'Merah Muda', textClass: 'text-white' },
+  { id: 'bg-purple-500', label: 'Ungu', textClass: 'text-stone-900' },
+  { id: 'bg-pink-500', label: 'Merah Muda', textClass: 'text-stone-900' },
 ];
 
 export default function MonopoliBoard() {
@@ -671,7 +671,7 @@ export default function MonopoliBoard() {
     return player.pos;
   };
 
-  const getStripColor = (tile) => tile.type === 'property' ? tile.color : (TILE_STRIP_COLOR[tile.type] || 'bg-slate-700');
+  const getStripColor = (tile) => tile.type === 'property' ? tile.color : (TILE_STRIP_COLOR[tile.type] || 'bg-[#E7DFCE]');
 
   const getTextStyle = (tile) => {
     if (tile.type === 'corner') return {};
@@ -683,14 +683,14 @@ export default function MonopoliBoard() {
   if (appState === 'lobby') {
     return (
       <div className="flex flex-col items-center justify-center w-full min-h-[75vh] p-4">
-        <div className="w-full max-w-md bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center shadow-md">
-          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+        <div className="w-full max-w-md bg-white p-8 rounded-2xl border border-[#DED6C6] text-center shadow-md">
+          <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
             Permainan Papan Nostalgia
           </p>
-          <h1 className="text-3xl font-bold text-white mb-2">Monopoli UPN TL 2016</h1>
-          <p className="text-slate-200 mb-6 text-sm">
-            Halo, <span className="font-bold text-white">{currentUser.nama}</span>!
-            <span className="block text-emerald-400 font-mono font-bold mt-1">
+          <h1 className="text-3xl font-bold text-stone-900 mb-2">Monopoli UPN TL 2016</h1>
+          <p className="text-stone-800 mb-6 text-sm">
+            Halo, <span className="font-bold text-stone-900">{currentUser.nama}</span>!
+            <span className="block text-green-800 font-mono font-bold mt-1">
               Total Poin Monopoli: {currentUser.points}
             </span>
           </p>
@@ -702,9 +702,9 @@ export default function MonopoliBoard() {
             Buat Ruangan Baru
           </button>
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex-1 h-px bg-slate-700"></div>
-            <span className="text-slate-300 text-xs font-mono font-bold">ATAU GABUNG RUANGAN</span>
-            <div className="flex-1 h-px bg-slate-700"></div>
+            <div className="flex-1 h-px bg-[#E7DFCE]"></div>
+            <span className="text-stone-600 text-xs font-mono font-bold">ATAU GABUNG RUANGAN</span>
+            <div className="flex-1 h-px bg-[#E7DFCE]"></div>
           </div>
           <label htmlFor="monopoli-join-code" className="sr-only">
             Kode Ruangan Monopoli
@@ -715,7 +715,7 @@ export default function MonopoliBoard() {
             placeholder="KODE 4 ANGKA"
             value={joinCode}
             onChange={e => setJoinCode(e.target.value)}
-            className="w-full min-h-[48px] p-3.5 bg-slate-900 border border-slate-600 rounded-xl text-center text-xl font-mono font-bold tracking-widest mb-4 focus:border-amber-400 text-white placeholder:text-slate-400 placeholder:font-sans placeholder:text-sm placeholder:tracking-normal"
+            className="w-full min-h-[48px] p-3.5 bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl text-center text-xl font-mono font-bold tracking-widest mb-4 focus:border-amber-400 text-stone-900 placeholder:text-stone-500 placeholder:font-sans placeholder:text-sm placeholder:tracking-normal"
             maxLength={4}
           />
           <button
@@ -733,21 +733,21 @@ export default function MonopoliBoard() {
   if (appState === 'room') {
     return (
       <div className="flex flex-col items-center justify-center w-full min-h-[75vh] p-4">
-        <div className="w-full max-w-md bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center shadow-md">
-          <p className="text-amber-400 font-mono font-bold mb-2 uppercase text-xs tracking-wider">
+        <div className="w-full max-w-md bg-white p-8 rounded-2xl border border-[#DED6C6] text-center shadow-md">
+          <p className="text-amber-700 font-mono font-bold mb-2 uppercase text-xs tracking-wider">
             Kode Ruangan Monopoli
           </p>
-          <h1 className="text-5xl font-mono font-bold text-white tracking-widest mb-6 bg-slate-900 py-4 rounded-xl border border-slate-700">
+          <h1 className="text-5xl font-mono font-bold text-stone-900 tracking-widest mb-6 bg-[#FAF6EE] py-4 rounded-xl border border-[#DED6C6]">
             {currentRoom.id}
           </h1>
-          <h2 className="text-left font-bold text-emerald-400 text-sm mb-3">
+          <h2 className="text-left font-bold text-green-800 text-sm mb-3">
             Pemain Bergabung ({players.length}/6):
           </h2>
           <div className="flex flex-col gap-2 mb-6 max-h-48 overflow-y-auto pr-1">
             {players.map(p => (
-              <div key={p.nim} className="bg-slate-900 p-3 rounded-xl flex items-center justify-between border border-slate-700">
-                <span className="font-semibold text-sm text-white">
-                  {p.nama} {p.nim === currentUser.nim ? <span className="text-amber-400">(Kamu)</span> : ''}
+              <div key={p.nim} className="bg-[#FAF6EE] p-3 rounded-xl flex items-center justify-between border border-[#DED6C6]">
+                <span className="font-semibold text-sm text-stone-900">
+                  {p.nama} {p.nim === currentUser.nim ? <span className="text-amber-700">(Kamu)</span> : ''}
                 </span>
               </div>
             ))}
@@ -770,28 +770,28 @@ export default function MonopoliBoard() {
 
     return (
       <div className="flex flex-col items-center justify-center w-full min-h-[75vh] p-4">
-        <div className={`w-full max-w-md bg-slate-800 p-8 rounded-2xl border ${isWinner ? 'border-emerald-500/60' : 'border-amber-400/60'} text-center shadow-md`}>
+        <div className={`w-full max-w-md bg-white p-8 rounded-2xl border ${isWinner ? 'border-emerald-500/60' : 'border-amber-400/60'} text-center shadow-md`}>
           
-          <h1 className={`text-3xl font-bold mb-2 ${isWinner ? 'text-emerald-400' : 'text-amber-400'}`}>
+          <h1 className={`text-3xl font-bold mb-2 ${isWinner ? 'text-green-800' : 'text-amber-700'}`}>
             {isWinner ? 'Selamat, Kamu Juara!' : 'Permainan Selesai'}
           </h1>
           
           {isWinner ? (
-            <p className="text-slate-200 mb-6 text-sm leading-relaxed">
-              Kamu bertahan sebagai penguasa properti kampus dan mendapatkan <span className="font-mono font-bold text-emerald-400">+3000 Poin</span>!
+            <p className="text-stone-800 mb-6 text-sm leading-relaxed">
+              Kamu bertahan sebagai penguasa properti kampus dan mendapatkan <span className="font-mono font-bold text-green-800">+3000 Poin</span>!
             </p>
           ) : (
-            <p className="text-slate-300 mb-6 text-sm">Hasil Peringkat & Poin Pertandingan</p>
+            <p className="text-stone-600 mb-6 text-sm">Hasil Peringkat & Poin Pertandingan</p>
           )}
 
           <div className="flex flex-col gap-3 mb-6 text-left">
             {[...players].sort((a,b) => (a.rank || 99) - (b.rank || 99)).map(p => (
-              <div key={p.nim} className={`p-4 rounded-xl flex justify-between items-center border ${p.rank === 1 ? 'bg-slate-900 border-amber-400' : 'bg-slate-900 border-slate-700'}`}>
-                <span className="font-bold text-base text-white">
+              <div key={p.nim} className={`p-4 rounded-xl flex justify-between items-center border ${p.rank === 1 ? 'bg-[#FAF6EE] border-amber-400' : 'bg-[#FAF6EE] border-[#DED6C6]'}`}>
+                <span className="font-bold text-base text-stone-900">
                   #{p.rank || '-'} {p.nama}
-                  {p.nim === currentUser.nim && <span className="text-slate-300 text-xs ml-1.5">(Kamu)</span>}
+                  {p.nim === currentUser.nim && <span className="text-stone-600 text-xs ml-1.5">(Kamu)</span>}
                 </span>
-                <span className={`font-mono font-bold text-base ${p.rank === 1 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                <span className={`font-mono font-bold text-base ${p.rank === 1 ? 'text-amber-700' : 'text-green-800'}`}>
                   +{p.rank === 1 ? 3000 : p.rank === 2 ? 1500 : p.rank === 3 ? 750 : 0} Poin
                 </span>
               </div>
@@ -813,12 +813,12 @@ export default function MonopoliBoard() {
   const journeyTile = journeyLog.length > 0 ? BOARD_DATA[journeyLog[Math.min(journeyIdx, journeyLog.length - 1)]] : null;
 
   return (
-    <div className="flex flex-col items-center bg-slate-900 min-h-screen text-white p-2 md:p-4 w-full overflow-x-hidden">
+    <div className="flex flex-col items-center bg-[#FAF6EE] min-h-screen text-stone-900 p-2 md:p-4 w-full overflow-x-hidden">
 
-      <div className="w-full max-w-[600px] flex flex-wrap justify-between items-center gap-3 mb-3 bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-md">
+      <div className="w-full max-w-[600px] flex flex-wrap justify-between items-center gap-3 mb-3 bg-white p-4 rounded-2xl border border-[#DED6C6] shadow-md">
         <div>
-          <h2 className="text-emerald-400 font-bold text-lg">
-            {currentUser.nama} {myState?.is_bankrupt && <span className="text-rose-400">(Bangkrut)</span>}
+          <h2 className="text-green-800 font-bold text-lg">
+            {currentUser.nama} {myState?.is_bankrupt && <span className="text-rose-700">(Bangkrut)</span>}
           </h2>
           <div className="flex flex-wrap gap-2 mt-2">
             <button
@@ -840,8 +840,8 @@ export default function MonopoliBoard() {
           </div>
         </div>
         <div className="text-right">
-          <p className="text-xs text-slate-300 uppercase font-mono font-bold">Saldo Kas</p>
-          <p className={`text-2xl font-mono font-bold ${(myState?.cash ?? 0) < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+          <p className="text-xs text-stone-600 uppercase font-mono font-bold">Saldo Kas</p>
+          <p className={`text-2xl font-mono font-bold ${(myState?.cash ?? 0) < 0 ? 'text-rose-700' : 'text-green-800'}`}>
             Rp {myState?.cash ?? 0}k
           </p>
         </div>
@@ -852,13 +852,13 @@ export default function MonopoliBoard() {
           <button
             type="button"
             onClick={() => setIsBoardZoomed(prev => !prev)}
-            className="min-h-[44px] px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-mono font-bold text-amber-300 transition-colors"
+            className="min-h-[44px] px-3.5 py-2 rounded-xl bg-white hover:bg-[#F3EDE0] border border-[#C7BDA8] text-xs font-mono font-bold text-amber-800 transition-colors"
           >
             {isBoardZoomed ? 'Ukuran Papan Normal' : 'Perbesar Papan (Sentuh Mudah)'}
           </button>
         </div>
         <div className={isBoardZoomed ? 'overflow-x-auto pb-2 rounded-2xl' : ''}>
-          <div className={`relative aspect-square bg-slate-950 p-1 rounded-2xl border border-slate-700 shadow-inner ${isBoardZoomed ? 'min-w-[540px] w-[540px]' : 'w-full'}`}>
+          <div className={`relative aspect-square bg-[#F3EDE0] p-1 rounded-2xl border border-[#DED6C6] shadow-inner ${isBoardZoomed ? 'min-w-[540px] w-[540px]' : 'w-full'}`}>
 
             <div className="grid grid-cols-11 grid-rows-11 h-full w-full gap-[1px]">
             {BOARD_DATA.map((tile) => {
@@ -877,7 +877,7 @@ export default function MonopoliBoard() {
               const playersOnTile = players.filter(pl=>getDisplayPos(pl)===tile.id);
               const isCorner = tile.type==='corner';
               const stripColor = getStripColor(tile);
-              const bgClass = owner ? `${owner.color} bg-opacity-25` : isCorner ? 'bg-slate-700' : 'bg-slate-800/70';
+              const bgClass = owner ? `${owner.color} bg-opacity-25` : isCorner ? 'bg-[#E7DFCE]' : 'bg-white';
 
               const stripPos =
                 tile.side===1 ? 'top-0 left-0 right-0 h-[4px]' :
@@ -896,14 +896,14 @@ export default function MonopoliBoard() {
                   aria-label={`Petak ${tile.id}: ${tile.name}${tile.price ? `, Harga Rp ${tile.price}k` : ''}`}
                   onClick={() => handleTileClick(tile)}
                   style={{gridArea:area}}
-                  className={`relative flex flex-col items-center justify-center cursor-pointer overflow-hidden border border-slate-700/60 ${bgClass} hover:brightness-125 transition-all p-0`}
+                  className={`relative flex flex-col items-center justify-center cursor-pointer overflow-hidden border border-[#DED6C6] ${bgClass} hover:brightness-125 transition-all p-0`}
                 >
                   {!isCorner && <div className={`absolute ${stripPos} ${stripColor} pointer-events-none`}/>}
 
                   {/* Teks petak */}
                   <div style={textStyle} className="flex-1 w-full h-full flex items-center justify-center overflow-hidden p-[1px]">
                     <div
-                      className="text-white font-semibold text-center leading-tight overflow-hidden"
+                      className="text-stone-900 font-semibold text-center leading-tight overflow-hidden"
                       style={{
                         fontSize: isBoardZoomed ? (isCorner ? '9px' : '8px') : (isCorner ? '6.5px' : '5.5px'),
                         lineHeight: 1.1,
@@ -923,7 +923,7 @@ export default function MonopoliBoard() {
                   </div>
 
                   {prop && (
-                    <span className="absolute bottom-0 right-[1px] text-amber-300 font-bold" style={{fontSize:'5px'}}>
+                    <span className="absolute bottom-0 right-[1px] text-amber-800 font-bold" style={{fontSize:'5px'}}>
                       {prop.upgrade_level>=5?'APT':`L${prop.upgrade_level||0}`}
                     </span>
                   )}
@@ -946,23 +946,23 @@ export default function MonopoliBoard() {
 
           {/* PANEL TENGAH */}
           <div
-            className="absolute z-20 bg-slate-900 rounded-xl border border-slate-700 overflow-hidden flex flex-col"
+            className="absolute z-20 bg-[#FAF6EE] rounded-xl border border-[#DED6C6] overflow-hidden flex flex-col"
             style={{ inset: 'calc(100% / 11 + 2px)' }}
           >
             {isAnimating && journeyTile ? (
               <div className="flex-1 flex flex-col items-center justify-center gap-1 px-2 py-1">
                 <div className={`w-full h-1.5 rounded-sm ${getStripColor(journeyTile)} shrink-0`}/>
 
-                <span className="text-slate-300 font-mono font-bold text-[10px]">
+                <span className="text-stone-600 font-mono font-bold text-[10px]">
                   Langkah {journeyIdx+1}/{journeyLog.length}
                 </span>
 
-                <span className="font-bold text-white text-center leading-tight px-1 text-xs md:text-sm">
+                <span className="font-bold text-stone-900 text-center leading-tight px-1 text-xs md:text-sm">
                   {journeyTile.name}
                 </span>
 
                 {journeyTile.price && (
-                  <span className="text-amber-400 font-mono font-bold text-xs">Rp {journeyTile.price}k</span>
+                  <span className="text-amber-700 font-mono font-bold text-xs">Rp {journeyTile.price}k</span>
                 )}
 
                 <div className="flex gap-1.5 mt-1">
@@ -972,7 +972,7 @@ export default function MonopoliBoard() {
                 </div>
 
                 <div className="w-full px-3 mt-1">
-                  <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-[#E7DFCE] rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-500 rounded-full transition-all duration-200"
                       style={{width:`${((journeyIdx+1)/journeyLog.length)*100}%`}}/>
                   </div>
@@ -980,24 +980,24 @@ export default function MonopoliBoard() {
               </div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center gap-2 p-3">
-                <p className="text-[10px] md:text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
+                <p className="text-[10px] md:text-xs font-mono font-bold text-amber-700 uppercase tracking-wider">
                   Monopoli TL 2016
                 </p>
                 {myState?.last_message ? (
-                  <p className="text-white font-bold text-center px-2 text-xs md:text-sm leading-snug">
+                  <p className="text-stone-900 font-bold text-center px-2 text-xs md:text-sm leading-snug">
                     {myState.last_message}
                   </p>
                 ) : (
-                  <p className="text-slate-300 font-bold text-center text-xs">
+                  <p className="text-stone-600 font-bold text-center text-xs">
                     Lempar dadu di bawah untuk melangkah
                   </p>
                 )}
 
                 <div className="flex flex-wrap gap-2 justify-center mt-2">
                   {players.filter(p=>!p.is_bankrupt).map(p=>(
-                    <div key={p.nim} className="flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                    <div key={p.nim} className="flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-[#DED6C6]">
                       <div className={`rounded-full w-2.5 h-2.5 ${p.color||'bg-slate-400'}`} />
-                      <span className="text-slate-200 text-[10px] font-medium">{p.nama.split(' ')[0]}</span>
+                      <span className="text-stone-800 text-[10px] font-medium">{p.nama.split(' ')[0]}</span>
                     </div>
                   ))}
                 </div>
@@ -1014,28 +1014,28 @@ export default function MonopoliBoard() {
           type="button"
           onClick={rollDice}
           disabled={isRolling||isAnimating||myState?.is_bankrupt}
-          className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-4 rounded-xl shadow-md transition-colors disabled:bg-slate-700 disabled:text-slate-300 disabled:cursor-not-allowed text-base"
+          className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-4 rounded-xl shadow-md transition-colors disabled:bg-[#E7DFCE] disabled:text-stone-500 disabled:cursor-not-allowed text-base"
         >
           {isAnimating ? `Dadu: ${dice[0]} + ${dice[1]} = ${dice[0]+dice[1]} Langkah` : 'Lempar Dadu Sekarang'}
         </button>
       </div>
 
       {/* PANEL INFO PETAK */}
-      <div className="w-full max-w-[600px] bg-slate-800 p-4 rounded-2xl border border-slate-700 min-h-[100px] mb-4 shadow-md">
+      <div className="w-full max-w-[600px] bg-white p-4 rounded-2xl border border-[#DED6C6] min-h-[100px] mb-4 shadow-md">
         {selectedInfo ? (
-          <div className="text-white">
+          <div className="text-stone-900">
             <div className="flex items-center gap-2 mb-2">
               <div className={`w-3.5 h-3.5 rounded-sm shrink-0 ${getStripColor(selectedInfo)}`}/>
-              <h3 className="font-bold text-amber-400 text-base leading-tight">
+              <h3 className="font-bold text-amber-700 text-base leading-tight">
                 Petak #{selectedInfo.id}: {selectedInfo.name}
               </h3>
             </div>
             <div className="grid grid-cols-2 gap-1.5 text-xs">
-              {selectedInfo.price && <p className="text-slate-300">Harga: <span className="font-mono font-bold text-white">Rp {selectedInfo.price}k</span></p>}
-              {selectedInfo.rent  && <p className="text-slate-300">Sewa: <span className="font-mono font-bold text-white">Rp {selectedInfo.rent}k</span></p>}
+              {selectedInfo.price && <p className="text-stone-600">Harga: <span className="font-mono font-bold text-stone-900">Rp {selectedInfo.price}k</span></p>}
+              {selectedInfo.rent  && <p className="text-stone-600">Sewa: <span className="font-mono font-bold text-stone-900">Rp {selectedInfo.rent}k</span></p>}
               {selectedInfo.prop && <>
-                <p className="text-slate-300">Pemilik: <span className="font-bold text-white">{selectedInfo.owner?.nama||'...'}</span></p>
-                <p className="text-slate-300">Bangunan: <span className="font-bold text-emerald-400">{selectedInfo.prop.upgrade_level>=5?'Apartemen':'Rumah Lvl '+(selectedInfo.prop.upgrade_level||0)}</span></p>
+                <p className="text-stone-600">Pemilik: <span className="font-bold text-stone-900">{selectedInfo.owner?.nama||'...'}</span></p>
+                <p className="text-stone-600">Bangunan: <span className="font-bold text-green-800">{selectedInfo.prop.upgrade_level>=5?'Apartemen':'Rumah Lvl '+(selectedInfo.prop.upgrade_level||0)}</span></p>
               </>}
             </div>
             {!selectedInfo.prop && selectedInfo.type==='property' && myState?.pos === selectedInfo.id && (
@@ -1049,15 +1049,15 @@ export default function MonopoliBoard() {
             )}
           </div>
         ) : (
-          <p className="text-slate-300 text-center py-4 font-medium text-xs">
+          <p className="text-stone-600 text-center py-4 font-medium text-xs">
             Pilih salah satu petak di papan atau daftar di bawah untuk melihat detail harga dan pemilik properti.
           </p>
         )}
       </div>
 
       {/* DAFTAR PETAK CEPAT UNTUK LAYAR HP */}
-      <div className="w-full max-w-[600px] bg-slate-800 p-4 rounded-2xl border border-slate-700 mb-20">
-        <label htmlFor="mobile-tile-select" className="block text-xs font-mono font-bold text-amber-400 uppercase mb-2">
+      <div className="w-full max-w-[600px] bg-white p-4 rounded-2xl border border-[#DED6C6] mb-20">
+        <label htmlFor="mobile-tile-select" className="block text-xs font-mono font-bold text-amber-700 uppercase mb-2">
           Periksa Detail Petak (Mudah Diakses di HP)
         </label>
         <select
@@ -1067,7 +1067,7 @@ export default function MonopoliBoard() {
             const tile = BOARD_DATA.find(t => t.id === Number(e.target.value));
             if (tile) handleTileClick(tile);
           }}
-          className="w-full min-h-[44px] bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white"
+          className="w-full min-h-[44px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3 py-2 text-sm text-stone-900"
         >
           <option value="" disabled>Pilih petak untuk melihat detail...</option>
           {BOARD_DATA.map((t) => (
@@ -1081,14 +1081,14 @@ export default function MonopoliBoard() {
       {/* MODAL: PILIH WARNA */}
       {showColorModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-[2px] p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="color-modal-title"
         >
-          <div className="bg-slate-800 p-6 md:p-8 rounded-2xl w-full max-w-sm text-center border border-slate-700 shadow-xl">
-            <h2 id="color-modal-title" className="text-2xl font-bold mb-2 text-white">Pilih Warna Bidak</h2>
-            <p className="text-slate-300 text-xs mb-6">Pilih warna penanda bidakmu di papan permainan:</p>
+          <div className="bg-white p-6 md:p-8 rounded-2xl w-full max-w-sm text-center border border-[#DED6C6] shadow-xl">
+            <h2 id="color-modal-title" className="text-2xl font-bold mb-2 text-stone-900">Pilih Warna Bidak</h2>
+            <p className="text-stone-600 text-xs mb-6">Pilih warna penanda bidakmu di papan permainan:</p>
             <div className="grid grid-cols-2 gap-3">
               {PLAYER_COLOR_OPTIONS.map(c => {
                 const takenBy = players.find(p => p.nim !== currentUser.nim && p.color === c.id);
@@ -1113,26 +1113,26 @@ export default function MonopoliBoard() {
       {/* MODAL: ASET */}
       {showAssetsModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-[2px] p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="assets-modal-title"
           onClick={() => setShowAssetsModal(false)}
         >
           <div
-            className="bg-slate-800 p-6 rounded-2xl w-full max-w-sm text-center border border-slate-700 shadow-xl"
+            className="bg-white p-6 rounded-2xl w-full max-w-sm text-center border border-[#DED6C6] shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="assets-modal-title" className="text-xl font-bold mb-4 text-white">Aset Properti Kamu</h2>
+            <h2 id="assets-modal-title" className="text-xl font-bold mb-4 text-stone-900">Aset Properti Kamu</h2>
             <div className="max-h-60 overflow-y-auto mb-5 pr-1 flex flex-col gap-2.5">
               {properties.filter(p=>p.owner_nim===currentUser.nim).map(prop=>{
                 const tile=BOARD_DATA.find(t=>t.id===prop.tile_id);
                 const sp=Math.floor(tile.price*0.75);
                 return (
-                  <div key={prop.id||prop.tile_id} className="flex justify-between items-center bg-slate-900 p-3 rounded-xl text-left border border-slate-700">
+                  <div key={prop.id||prop.tile_id} className="flex justify-between items-center bg-[#FAF6EE] p-3 rounded-xl text-left border border-[#DED6C6]">
                     <div className="flex flex-col flex-1 pr-2">
-                      <span className="text-sm font-bold text-white leading-tight">{tile.name}</span>
-                      <span className="text-xs font-mono text-slate-300">
+                      <span className="text-sm font-bold text-stone-900 leading-tight">{tile.name}</span>
+                      <span className="text-xs font-mono text-stone-600">
                         {prop.upgrade_level>=5?'Apartemen':'Rumah Lvl '+(prop.upgrade_level||0)}
                       </span>
                     </div>
@@ -1149,7 +1149,7 @@ export default function MonopoliBoard() {
                 );
               })}
               {properties.filter(p=>p.owner_nim===currentUser.nim).length===0 && (
-                <p className="text-sm text-slate-300 py-6 bg-slate-900 rounded-xl border border-slate-700">
+                <p className="text-sm text-stone-600 py-6 bg-[#FAF6EE] rounded-xl border border-[#DED6C6]">
                   Kamu belum memiliki properti. Lempar dadu dan beli petak kampus!
                 </p>
               )}
@@ -1157,7 +1157,7 @@ export default function MonopoliBoard() {
             <button
               type="button"
               onClick={()=>setShowAssetsModal(false)}
-              className="w-full min-h-[44px] py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold text-sm text-white transition-colors"
+              className="w-full min-h-[44px] py-2.5 bg-[#E7DFCE] hover:bg-[#E7DFCE] rounded-xl font-bold text-sm text-stone-900 transition-colors"
             >
               Tutup
             </button>
@@ -1168,21 +1168,21 @@ export default function MonopoliBoard() {
       {/* MODAL: UPGRADE */}
       {showUpgradeModal && activeTile && activeProp && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-[2px] p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="upgrade-modal-title"
           onClick={() => setShowUpgradeModal(false)}
         >
           <div
-            className="bg-slate-800 p-6 md:p-8 rounded-2xl w-full max-w-sm text-center border border-slate-700 shadow-xl"
+            className="bg-white p-6 md:p-8 rounded-2xl w-full max-w-sm text-center border border-[#DED6C6] shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="upgrade-modal-title" className="text-xl font-bold mb-2 text-white">
+            <h2 id="upgrade-modal-title" className="text-xl font-bold mb-2 text-stone-900">
               {activeProp.upgrade_level>=5?'Status: Apartemen Maksimal':`Tingkatkan ke ${activeProp.upgrade_level>=4?'Apartemen':'Rumah Lvl '+((activeProp.upgrade_level||0)+1)}?`}
             </h2>
             {activeProp.upgrade_level<5 && (
-              <p className="text-amber-400 font-mono font-bold text-lg mb-6">
+              <p className="text-amber-700 font-mono font-bold text-lg mb-6">
                 Biaya: Rp {Math.floor(activeTile.price*0.5)}k
               </p>
             )}
@@ -1199,7 +1199,7 @@ export default function MonopoliBoard() {
               <button
                 type="button"
                 onClick={()=>setShowUpgradeModal(false)}
-                className="flex-1 min-h-[44px] py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-colors"
+                className="flex-1 min-h-[44px] py-3 bg-[#E7DFCE] hover:bg-[#E7DFCE] text-stone-900 font-bold rounded-xl transition-colors"
               >
                 Tutup
               </button>
@@ -1211,18 +1211,18 @@ export default function MonopoliBoard() {
       {/* MODAL: BELI */}
       {showBuyModal && activeTile && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-[2px] p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="buy-modal-title"
           onClick={() => setShowBuyModal(false)}
         >
           <div
-            className="bg-slate-800 p-6 md:p-8 rounded-2xl w-full max-w-sm text-center border border-emerald-500/60 shadow-xl"
+            className="bg-white p-6 md:p-8 rounded-2xl w-full max-w-sm text-center border border-emerald-500/60 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="buy-modal-title" className="text-2xl font-bold mb-2 text-white">Beli {activeTile.name}?</h2>
-            <p className="text-emerald-400 font-mono font-bold text-xl mb-6">Harga: Rp {activeTile.price}k</p>
+            <h2 id="buy-modal-title" className="text-2xl font-bold mb-2 text-stone-900">Beli {activeTile.name}?</h2>
+            <p className="text-green-800 font-mono font-bold text-xl mb-6">Harga: Rp {activeTile.price}k</p>
             <div className="flex gap-3">
               <button
                 type="button"
@@ -1234,7 +1234,7 @@ export default function MonopoliBoard() {
               <button
                 type="button"
                 onClick={()=>setShowBuyModal(false)}
-                className="flex-1 min-h-[44px] py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-colors"
+                className="flex-1 min-h-[44px] py-3 bg-[#E7DFCE] hover:bg-[#E7DFCE] text-stone-900 font-bold rounded-xl transition-colors"
               >
                 Lewati
               </button>
@@ -1246,17 +1246,17 @@ export default function MonopoliBoard() {
       {/* MODAL: TOD */}
       {showToD && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-[2px] p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="tod-modal-title"
         >
-          <div className="bg-slate-800 p-6 md:p-8 rounded-2xl w-full max-w-sm text-center border border-slate-700 shadow-xl min-h-[340px] flex flex-col justify-between overflow-hidden">
+          <div className="bg-white p-6 md:p-8 rounded-2xl w-full max-w-sm text-center border border-[#DED6C6] shadow-xl min-h-[340px] flex flex-col justify-between overflow-hidden">
             {!todType ? (
               <>
                 <div>
-                  <p className="text-xs font-mono font-bold text-amber-400 uppercase mb-1">Petak Lab Lingkungan</p>
-                  <h2 id="tod-modal-title" className="text-2xl text-white font-bold mb-6">Pilih Tantanganmu</h2>
+                  <p className="text-xs font-mono font-bold text-amber-700 uppercase mb-1">Petak Lab Lingkungan</p>
+                  <h2 id="tod-modal-title" className="text-2xl text-stone-900 font-bold mb-6">Pilih Tantanganmu</h2>
                 </div>
                 <div className="flex gap-3">
                   <button
@@ -1277,11 +1277,11 @@ export default function MonopoliBoard() {
               </>
             ) : !todQuestion ? (
               <div className="flex flex-col flex-1">
-                <h2 id="tod-modal-title" className="text-sm font-mono font-bold text-amber-400 uppercase mb-3">
+                <h2 id="tod-modal-title" className="text-sm font-mono font-bold text-amber-700 uppercase mb-3">
                   Mengacak Pertanyaan {todType}...
                 </h2>
-                <div className="bg-slate-900 p-6 rounded-xl mb-6 h-36 flex items-center justify-center border border-slate-700">
-                  <p className="text-lg font-bold text-white text-center leading-snug">{spinningText}</p>
+                <div className="bg-[#FAF6EE] p-6 rounded-xl mb-6 h-36 flex items-center justify-center border border-[#DED6C6]">
+                  <p className="text-lg font-bold text-stone-900 text-center leading-snug">{spinningText}</p>
                 </div>
                 <div className="mt-auto">
                   {isSpinning && (
@@ -1297,8 +1297,8 @@ export default function MonopoliBoard() {
               </div>
             ) : (
               <div className="flex flex-col flex-1 justify-center">
-                <h2 id="tod-modal-title" className="text-xl font-bold mb-4 text-amber-400 uppercase">{todType}</h2>
-                <p className="text-white mb-8 font-medium text-center flex-1 text-base leading-relaxed">{todQuestion}</p>
+                <h2 id="tod-modal-title" className="text-xl font-bold mb-4 text-amber-700 uppercase">{todType}</h2>
+                <p className="text-stone-900 mb-8 font-medium text-center flex-1 text-base leading-relaxed">{todQuestion}</p>
                 <button
                   type="button"
                   onClick={()=>{setShowToD(false);setTodType('');setTodQuestion('');}}
@@ -1315,18 +1315,18 @@ export default function MonopoliBoard() {
       {/* MODAL: EVENT */}
       {showEventCard && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-[2px] p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="event-modal-title"
           onClick={() => setShowEventCard(false)}
         >
           <div
-            className="bg-slate-800 p-6 md:p-8 rounded-2xl w-full max-w-sm text-center border border-amber-400/60 shadow-xl"
+            className="bg-white p-6 md:p-8 rounded-2xl w-full max-w-sm text-center border border-amber-400/60 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="event-modal-title" className="text-xl font-bold mb-3 text-amber-400">{activeCard.title}</h2>
-            <p className="mb-6 text-slate-100 text-sm leading-relaxed">{activeCard.text}</p>
+            <h2 id="event-modal-title" className="text-xl font-bold mb-3 text-amber-700">{activeCard.title}</h2>
+            <p className="mb-6 text-stone-900 text-sm leading-relaxed">{activeCard.text}</p>
             <button
               type="button"
               onClick={()=>setShowEventCard(false)}

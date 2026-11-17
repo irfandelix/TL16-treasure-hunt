@@ -172,7 +172,7 @@ export default function AdminDashboard({ onBack }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex justify-center items-center text-amber-400 font-mono">
+      <div className="min-h-screen bg-[#FAF6EE] flex justify-center items-center text-amber-700 font-mono">
         Memuat Ruang Panitia 1 Dekade...
       </div>
     );
@@ -180,20 +180,20 @@ export default function AdminDashboard({ onBack }) {
 
   if (secretMode) {
     return (
-      <div className="min-h-screen bg-slate-900 p-4 md:p-8 font-sans text-slate-200 pb-20">
+      <div className="min-h-screen bg-[#FAF6EE] p-4 md:p-8 font-sans text-stone-800 pb-20">
         <div className="max-w-4xl mx-auto">
           
-          <div className="border-b border-slate-700 pb-6 mb-8 flex flex-wrap justify-between items-center gap-4">
+          <div className="border-b border-[#DED6C6] pb-6 mb-8 flex flex-wrap justify-between items-center gap-4">
             <div>
-              <p className="text-xs font-mono text-amber-400 uppercase font-bold mb-1">Dokumentasi Internal Panitia</p>
-              <h1 className="text-2xl md:text-3xl font-bold text-white">
+              <p className="text-xs font-mono text-amber-700 uppercase font-bold mb-1">Dokumentasi Internal Panitia</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-stone-900">
                 Catatan Pengembang & Panitia
               </h1>
             </div>
             <button 
               type="button"
               onClick={() => setSecretMode(false)}
-              className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 min-h-[44px] rounded-xl border border-slate-600 font-bold transition-colors"
+              className="text-xs bg-white hover:bg-[#F3EDE0] text-stone-800 px-4 py-2.5 min-h-[44px] rounded-xl border border-[#C7BDA8] font-bold transition-colors"
             >
               Kembali ke Ruang Panitia
             </button>
@@ -202,13 +202,13 @@ export default function AdminDashboard({ onBack }) {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="md:col-span-2 space-y-6">
               
-              <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-md">
-                <h2 className="text-amber-400 font-bold mb-4 text-base">
+              <div className="bg-white border border-[#DED6C6] rounded-2xl p-5 shadow-md">
+                <h2 className="text-amber-700 font-bold mb-4 text-base">
                   Tambah Catatan Pembaruan
                 </h2>
                 <form onSubmit={handleAddNote} className="flex flex-col gap-3">
                   {noteError && (
-                    <div role="alert" className="p-3 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-200 text-xs font-medium">
+                    <div role="alert" className="p-3 rounded-xl bg-rose-50 border border-rose-500/40 text-rose-200 text-xs font-medium">
                       {noteError}
                     </div>
                   )}
@@ -219,7 +219,7 @@ export default function AdminDashboard({ onBack }) {
                         id="note-tag-select"
                         value={newNoteTag}
                         onChange={(e) => setNewNoteTag(e.target.value)}
-                        className="w-full sm:w-auto min-h-[44px] bg-slate-900 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-xs font-mono"
+                        className="w-full sm:w-auto min-h-[44px] bg-[#FAF6EE] border border-[#C7BDA8] text-stone-800 rounded-xl px-3 py-2 text-xs font-mono"
                       >
                         <option value="[SYS]">[SYS] Sistem</option>
                         <option value="[UI]">[UI] Tampilan</option>
@@ -236,14 +236,14 @@ export default function AdminDashboard({ onBack }) {
                         value={newNoteText}
                         onChange={(e) => setNewNoteText(e.target.value)}
                         placeholder="Tulis rincian pembaruan di sini..."
-                        className="w-full min-h-[44px] bg-slate-900 border border-slate-600 text-white rounded-xl px-3.5 py-2 text-sm placeholder:text-slate-400"
+                        className="w-full min-h-[44px] bg-[#FAF6EE] border border-[#C7BDA8] text-stone-900 rounded-xl px-3.5 py-2 text-sm placeholder:text-stone-500"
                       />
                     </div>
                   </div>
                   <button 
                     type="submit"
                     disabled={isSubmittingNote || !newNoteText.trim()}
-                    className="min-h-[44px] bg-amber-400 hover:bg-amber-300 text-slate-950 disabled:bg-slate-700 disabled:text-slate-300 py-2.5 px-4 rounded-xl text-sm font-bold transition-colors"
+                    className="min-h-[44px] bg-amber-400 hover:bg-amber-300 text-slate-950 disabled:bg-[#E7DFCE] disabled:text-stone-500 py-2.5 px-4 rounded-xl text-sm font-bold transition-colors"
                   >
                     {isSubmittingNote ? 'Menyimpan Catatan...' : 'Simpan Catatan'}
                   </button>
@@ -251,18 +251,18 @@ export default function AdminDashboard({ onBack }) {
               </div>
 
               <div className="space-y-4">
-                <h2 className="text-slate-200 font-bold text-base border-b border-slate-700 pb-2">
+                <h2 className="text-stone-800 font-bold text-base border-b border-[#DED6C6] pb-2">
                   Riwayat Catatan Sistem
                 </h2>
                 {patchNotes.length === 0 ? (
-                  <p className="text-slate-300 text-sm bg-slate-800 p-4 rounded-xl border border-slate-700">
+                  <p className="text-stone-600 text-sm bg-white p-4 rounded-xl border border-[#DED6C6]">
                     Belum ada catatan sistem yang ditambahkan.
                   </p>
                 ) : (
                   patchNotes.map((note) => (
-                    <div key={note.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <div key={note.id} className="bg-white p-4 rounded-xl border border-[#DED6C6]">
                       <div className="flex justify-between items-center gap-2 mb-2">
-                        <span className="text-xs font-mono text-slate-300">{note.date}</span>
+                        <span className="text-xs font-mono text-stone-600">{note.date}</span>
                         {confirmDeleteId === note.id ? (
                           <div className="flex items-center gap-2">
                             <button
@@ -275,7 +275,7 @@ export default function AdminDashboard({ onBack }) {
                             <button
                               type="button"
                               onClick={() => setConfirmDeleteId(null)}
-                              className="text-xs font-bold text-slate-200 bg-slate-700 hover:bg-slate-600 px-3 py-1.5 min-h-[44px] rounded-lg transition-colors"
+                              className="text-xs font-bold text-stone-800 bg-[#E7DFCE] hover:bg-[#E7DFCE] px-3 py-1.5 min-h-[44px] rounded-lg transition-colors"
                             >
                               Batal
                             </button>
@@ -285,14 +285,14 @@ export default function AdminDashboard({ onBack }) {
                             type="button"
                             onClick={() => setConfirmDeleteId(note.id)}
                             aria-label={`Hapus catatan ${note.text}`}
-                            className="text-xs font-bold text-rose-300 hover:text-white bg-rose-950/60 hover:bg-rose-700 border border-rose-500/30 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-lg transition-colors"
+                            className="text-xs font-bold text-rose-700 hover:text-white bg-rose-50 hover:bg-rose-700 border border-rose-500/30 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-lg transition-colors"
                           >
                             Hapus
                           </button>
                         )}
                       </div>
-                      <p className="text-sm text-slate-100 leading-relaxed">
-                        <span className="font-mono font-bold text-amber-400 mr-2">{note.tag}</span>
+                      <p className="text-sm text-stone-900 leading-relaxed">
+                        <span className="font-mono font-bold text-amber-700 mr-2">{note.tag}</span>
                         {note.text}
                       </p>
                     </div>
@@ -302,27 +302,27 @@ export default function AdminDashboard({ onBack }) {
             </div>
 
             <div className="space-y-4">
-              <section className="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <h3 className="text-amber-400 font-bold mb-2 text-sm">Modul Monopoli TL16</h3>
-                <p className="text-slate-300 text-xs leading-relaxed">
+              <section className="bg-white p-5 rounded-xl border border-[#DED6C6]">
+                <h3 className="text-amber-700 font-bold mb-2 text-sm">Modul Monopoli TL16</h3>
+                <p className="text-stone-600 text-xs leading-relaxed">
                   Seluruh pemain bergerak serentak di satu papan virtual dengan mekanik UKT dan kartu Tantangan Jujur atau Berani.
                 </p>
               </section>
-              <section className="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <h3 className="text-emerald-400 font-bold mb-2 text-sm">Modul Sidang Dosen Killer</h3>
-                <p className="text-slate-300 text-xs leading-relaxed">
+              <section className="bg-white p-5 rounded-xl border border-[#DED6C6]">
+                <h3 className="text-green-800 font-bold mb-2 text-sm">Modul Sidang Dosen Killer</h3>
+                <p className="text-stone-600 text-xs leading-relaxed">
                   Rasio peran otomatis menyesuaikan jumlah pemain (Dosen Killer, Intel Kampus, dan Mahasiswa Kura-Kura).
                 </p>
               </section>
-              <section className="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <h3 className="text-amber-400 font-bold mb-2 text-sm">Modul UNO Sedulur 16</h3>
-                <p className="text-slate-300 text-xs leading-relaxed">
+              <section className="bg-white p-5 rounded-xl border border-[#DED6C6]">
+                <h3 className="text-amber-700 font-bold mb-2 text-sm">Modul UNO Sedulur 16</h3>
+                <p className="text-stone-600 text-xs leading-relaxed">
                   Mendukung tumpukan kartu hukuman (+2 dan +4) serta sinkronisasi kartu meja secara langsung via Supabase.
                 </p>
               </section>
-              <section className="bg-slate-800 p-5 rounded-xl border border-amber-400/40">
-                <h3 className="text-amber-400 font-bold mb-2 text-sm">Panduan Host Ruangan</h3>
-                <p className="text-slate-300 text-xs leading-relaxed">
+              <section className="bg-white p-5 rounded-xl border border-amber-400/40">
+                <h3 className="text-amber-700 font-bold mb-2 text-sm">Panduan Host Ruangan</h3>
+                <p className="text-stone-600 text-xs leading-relaxed">
                   Pastikan perangkat Host memiliki koneksi stabil dan layar tetap menyala selama memandu sesi permainan bersama.
                 </p>
               </section>
@@ -334,46 +334,46 @@ export default function AdminDashboard({ onBack }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8 font-sans pb-24">
+    <div className="min-h-screen bg-[#FAF6EE] text-stone-900 p-4 md:p-8 font-sans pb-24">
       <div className="max-w-4xl mx-auto">
         
         <button 
           type="button"
           onClick={onBack}
-          className="mb-6 min-h-[44px] px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center text-amber-400 font-bold text-sm transition-colors"
+          className="mb-6 min-h-[44px] px-4 py-2 rounded-xl bg-white hover:bg-[#F3EDE0] border border-[#DED6C6] flex items-center text-amber-700 font-bold text-sm transition-colors"
         >
           Kembali ke Beranda
         </button>
 
         {errorMsg && (
-          <div role="alert" className="mb-6 p-4 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-sm flex items-center justify-between gap-4">
+          <div role="alert" className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-500/40 text-rose-700 text-sm flex items-center justify-between gap-4">
             <span>{errorMsg}</span>
             <button
               type="button"
               onClick={fetchSettings}
-              className="px-4 py-2 min-h-[44px] bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold text-xs border border-slate-700"
+              className="px-4 py-2 min-h-[44px] bg-[#FAF6EE] hover:bg-white text-stone-900 rounded-lg font-bold text-xs border border-[#DED6C6]"
             >
               Muat Ulang
             </button>
           </div>
         )}
 
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-10 shadow-md">
+        <div className="bg-white border border-[#DED6C6] rounded-2xl p-6 md:p-10 shadow-md">
           
-          <div className="mb-8 border-b border-slate-700 pb-6">
-            <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+          <div className="mb-8 border-b border-[#DED6C6] pb-6">
+            <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
               Pengaturan Acara Reuni 1 Dekade
             </p>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Ruang Kendali Panitia TL 2016</h1>
-            <p className="text-slate-300 text-sm mt-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-stone-900">Ruang Kendali Panitia TL 2016</h1>
+            <p className="text-stone-600 text-sm mt-1">
               Atur jadwal pembukaan setiap kado permainan dan visibilitas papan klasemen angkatan.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             
-            <div className="bg-slate-900 p-5 rounded-xl border border-slate-700">
-              <label htmlFor="schedule-wheel" className="block text-lg font-bold text-amber-400 mb-2">
+            <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6]">
+              <label htmlFor="schedule-wheel" className="block text-lg font-bold text-amber-700 mb-2">
                 Jadwal Wheel of Family
               </label>
               <div className="flex flex-col gap-3 mt-2">
@@ -382,17 +382,17 @@ export default function AdminDashboard({ onBack }) {
                   type="datetime-local" 
                   value={unlockDate}
                   onChange={(e) => setUnlockDate(e.target.value)}
-                  className="w-full min-h-[44px] bg-slate-800 border border-slate-600 rounded-xl p-3 text-white focus:border-amber-400"
+                  className="w-full min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-amber-400"
                 />
                 <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs font-mono text-slate-300">
+                  <span className="text-xs font-mono text-stone-600">
                     {unlockDate ? 'Status: Terjadwal Aktif' : 'Status: Menunggu Jadwal'}
                   </span>
                   {unlockDate && (
                     <button
                       type="button"
                       onClick={handleClearDate}
-                      className="text-xs font-bold text-rose-300 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-slate-800 hover:bg-rose-700 transition-colors"
+                      className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 transition-colors"
                     >
                       Reset Jadwal
                     </button>
@@ -401,8 +401,8 @@ export default function AdminDashboard({ onBack }) {
               </div>
             </div>
 
-            <div className="bg-slate-900 p-5 rounded-xl border border-slate-700">
-              <label htmlFor="schedule-monopoli" className="block text-lg font-bold text-emerald-400 mb-2">
+            <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6]">
+              <label htmlFor="schedule-monopoli" className="block text-lg font-bold text-green-800 mb-2">
                 Jadwal Monopoli TL16
               </label>
               <div className="flex flex-col gap-3 mt-2">
@@ -411,17 +411,17 @@ export default function AdminDashboard({ onBack }) {
                   type="datetime-local" 
                   value={monopoliDate}
                   onChange={(e) => setMonopoliDate(e.target.value)}
-                  className="w-full min-h-[44px] bg-slate-800 border border-slate-600 rounded-xl p-3 text-white focus:border-amber-400"
+                  className="w-full min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-amber-400"
                 />
                 <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs font-mono text-slate-300">
+                  <span className="text-xs font-mono text-stone-600">
                     {monopoliDate ? 'Status: Terjadwal Aktif' : 'Status: Menunggu Jadwal'}
                   </span>
                   {monopoliDate && (
                     <button
                       type="button"
                       onClick={handleClearMonopoliDate}
-                      className="text-xs font-bold text-rose-300 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-slate-800 hover:bg-rose-700 transition-colors"
+                      className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 transition-colors"
                     >
                       Reset Jadwal
                     </button>
@@ -430,8 +430,8 @@ export default function AdminDashboard({ onBack }) {
               </div>
             </div>
 
-            <div className="bg-slate-900 p-5 rounded-xl border border-slate-700">
-              <label htmlFor="schedule-werewolf" className="block text-lg font-bold text-amber-400 mb-2">
+            <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6]">
+              <label htmlFor="schedule-werewolf" className="block text-lg font-bold text-amber-700 mb-2">
                 Jadwal Sidang Dosen Killer
               </label>
               <div className="flex flex-col gap-3 mt-2">
@@ -440,17 +440,17 @@ export default function AdminDashboard({ onBack }) {
                   type="datetime-local" 
                   value={werewolfDate}
                   onChange={(e) => setWerewolfDate(e.target.value)}
-                  className="w-full min-h-[44px] bg-slate-800 border border-slate-600 rounded-xl p-3 text-white focus:border-amber-400"
+                  className="w-full min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-amber-400"
                 />
                 <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs font-mono text-slate-300">
+                  <span className="text-xs font-mono text-stone-600">
                     {werewolfDate ? 'Status: Terjadwal Aktif' : 'Status: Menunggu Jadwal'}
                   </span>
                   {werewolfDate && (
                     <button
                       type="button"
                       onClick={handleClearWerewolfDate}
-                      className="text-xs font-bold text-rose-300 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-slate-800 hover:bg-rose-700 transition-colors"
+                      className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 transition-colors"
                     >
                       Reset Jadwal
                     </button>
@@ -459,8 +459,8 @@ export default function AdminDashboard({ onBack }) {
               </div>
             </div>
 
-            <div className="bg-slate-900 p-5 rounded-xl border border-slate-700">
-              <label htmlFor="schedule-uno" className="block text-lg font-bold text-emerald-400 mb-2">
+            <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6]">
+              <label htmlFor="schedule-uno" className="block text-lg font-bold text-green-800 mb-2">
                 Jadwal UNO Sedulur 16
               </label>
               <div className="flex flex-col gap-3 mt-2">
@@ -469,17 +469,17 @@ export default function AdminDashboard({ onBack }) {
                   type="datetime-local" 
                   value={unoDate}
                   onChange={(e) => setUnoDate(e.target.value)}
-                  className="w-full min-h-[44px] bg-slate-800 border border-slate-600 rounded-xl p-3 text-white focus:border-amber-400"
+                  className="w-full min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-amber-400"
                 />
                 <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs font-mono text-slate-300">
+                  <span className="text-xs font-mono text-stone-600">
                     {unoDate ? 'Status: Terjadwal Aktif' : 'Status: Menunggu Jadwal'}
                   </span>
                   {unoDate && (
                     <button
                       type="button"
                       onClick={handleClearUnoDate}
-                      className="text-xs font-bold text-rose-300 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-slate-800 hover:bg-rose-700 transition-colors"
+                      className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 transition-colors"
                     >
                       Reset Jadwal
                     </button>
@@ -488,12 +488,12 @@ export default function AdminDashboard({ onBack }) {
               </div>
             </div>
 
-            <div className="bg-slate-900 p-5 rounded-xl border border-slate-700 md:col-span-2">
-              <h2 className="text-lg font-bold text-amber-400 mb-2">
+            <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6] md:col-span-2">
+              <h2 className="text-lg font-bold text-amber-700 mb-2">
                 Visibilitas Klasemen Angkatan
               </h2>
-              <div className="flex items-center justify-between bg-slate-800 p-4 rounded-xl border border-slate-700 mt-3">
-                <label htmlFor="toggle-scoreboard" className="font-bold text-slate-200 cursor-pointer">
+              <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-[#DED6C6] mt-3">
+                <label htmlFor="toggle-scoreboard" className="font-bold text-stone-800 cursor-pointer">
                   Tampilkan Papan Klasemen di Beranda Peserta
                 </label>
                 <label htmlFor="toggle-scoreboard" className="relative inline-flex items-center cursor-pointer min-h-[44px]">
@@ -504,24 +504,24 @@ export default function AdminDashboard({ onBack }) {
                     checked={showScoreboard}
                     onChange={() => setShowScoreboard(!showScoreboard)}
                   />
-                  <div className="w-14 h-7 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[10px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
+                  <div className="w-14 h-7 bg-[#E7DFCE] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[10px] after:left-[2px] after:bg-white after:border-[#C7BDA8] after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
                 </label>
               </div>
             </div>
 
           </div>
 
-          <div className="bg-slate-900 p-6 rounded-xl border border-slate-700 w-full mb-8">
-            <h2 className="text-lg font-bold text-white mb-1">
+          <div className="bg-[#FAF6EE] p-6 rounded-xl border border-[#DED6C6] w-full mb-8">
+            <h2 className="text-lg font-bold text-stone-900 mb-1">
               Pratinjau Jadwal Kejutan Acara
             </h2>
-            <p className="text-xs text-slate-300 mb-5">
+            <p className="text-xs text-stone-600 mb-5">
               Tabel ini otomatis menyesuaikan tanggal yang diatur di atas. Kosongkan tanggal jika permainan masih ingin disimpan sebagai kejutan.
             </p>
             
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-200">
-                <thead className="bg-slate-800 text-xs uppercase text-slate-300">
+              <table className="w-full text-left text-sm text-stone-800">
+                <thead className="bg-white text-xs uppercase text-stone-600">
                   <tr>
                     <th className="px-4 py-3 rounded-tl-lg">Bulan</th>
                     <th className="px-4 py-3">Minggu</th>
@@ -531,23 +531,23 @@ export default function AdminDashboard({ onBack }) {
                 </thead>
                 <tbody className="divide-y divide-slate-800">
                   {autoRoadmap.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-800/60">
-                      <td className="px-4 py-3 font-bold text-white">{item.month}</td>
-                      <td className="px-4 py-3 text-slate-300">{item.week}</td>
-                      <td className="px-4 py-3 font-bold text-white">{item.game}</td>
+                    <tr key={item.id} className="hover:bg-white/60">
+                      <td className="px-4 py-3 font-bold text-stone-900">{item.month}</td>
+                      <td className="px-4 py-3 text-stone-600">{item.week}</td>
+                      <td className="px-4 py-3 font-bold text-stone-900">{item.game}</td>
                       <td className="px-4 py-3">
                         {item.status === 'released' && (
-                          <span className="text-emerald-300 font-bold text-xs bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-1 rounded-md">
+                          <span className="text-green-900 font-bold text-xs bg-green-100 border border-emerald-500/40 px-2.5 py-1 rounded-md">
                             Sudah Dibuka
                           </span>
                         )}
                         {item.status === 'upcoming' && (
-                          <span className="text-amber-300 font-bold text-xs bg-amber-950/80 border border-amber-400/40 px-2.5 py-1 rounded-md">
+                          <span className="text-amber-800 font-bold text-xs bg-amber-950/80 border border-amber-400/40 px-2.5 py-1 rounded-md">
                             Terjadwal
                           </span>
                         )}
                         {item.status === 'secret' && (
-                          <span className="text-slate-300 font-bold text-xs bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700">
+                          <span className="text-stone-600 font-bold text-xs bg-white px-2.5 py-1 rounded-md border border-[#DED6C6]">
                             Kado Kejutan
                           </span>
                         )}
@@ -563,14 +563,14 @@ export default function AdminDashboard({ onBack }) {
             <button 
               type="button"
               onClick={() => setSecretMode(true)}
-              className="min-h-[44px] bg-slate-900 border border-slate-700 hover:border-amber-400 text-slate-200 hover:text-amber-400 px-6 py-3 rounded-xl text-xs font-mono font-bold tracking-wider transition-colors"
+              className="min-h-[44px] bg-[#FAF6EE] border border-[#DED6C6] hover:border-amber-400 text-stone-800 hover:text-amber-700 px-6 py-3 rounded-xl text-xs font-mono font-bold tracking-wider transition-colors"
             >
               Buka Catatan Pengembang & Panitia
             </button>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-emerald-400 font-mono text-sm min-h-[24px]">{saveStatus}</p>
+          <div className="mt-8 pt-6 border-t border-[#DED6C6] flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-green-800 font-mono text-sm min-h-[24px]">{saveStatus}</p>
             <button 
               type="button"
               onClick={handleSave}

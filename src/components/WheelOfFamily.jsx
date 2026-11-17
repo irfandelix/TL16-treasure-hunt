@@ -84,34 +84,31 @@ export default function WheelOfFamily() {
   };
 
   return (
-    <div className="flex flex-col items-center w-full text-white font-sans pb-16">
-      <div className="w-full max-w-4xl bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-10 shadow-md relative overflow-hidden">
+    <div className="flex flex-col items-center w-full text-stone-900 font-sans pb-16">
+      <div className="w-full max-w-4xl bg-white border border-[#DED6C6] rounded-2xl p-6 md:p-10 relative overflow-hidden">
         
         <div className="text-center mb-8">
-          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
-            Perayaan 1 Dekade Teknik Lingkungan 2016
-          </p>
-          <h2 className="text-3xl md:text-5xl font-bold text-amber-400 tracking-tight mb-2">
+          <h2 className="text-3xl md:text-5xl font-bold text-stone-900 tracking-tight mb-2">
             Wheel of Family
           </h2>
-          <p className="text-slate-300 text-sm md:text-base">
+          <p className="text-stone-600 text-sm md:text-base">
             Saatnya Bernostalgia Bersama Sedulur 16 ({peserta.length} Kapsul Terkumpul)
           </p>
         </div>
 
         <div className="flex flex-col items-center justify-center">
           {isLoading ? (
-            <div className="h-64 flex flex-col items-center justify-center border border-slate-700 bg-slate-900 rounded-2xl w-full p-6">
-              <div className="w-10 h-10 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin mb-3"></div>
-              <p className="text-slate-300 font-mono text-sm">Memuat daftar alumni Kapsul Waktu...</p>
+            <div className="h-64 flex flex-col items-center justify-center border border-[#DED6C6] bg-[#FAF6EE] rounded-2xl w-full p-6">
+              <div className="w-10 h-10 border-4 border-[#DED6C6] border-t-green-900 rounded-full animate-spin mb-3"></div>
+              <p className="text-stone-600 font-mono text-sm">Memuat daftar alumni Kapsul Waktu...</p>
             </div>
           ) : errorMsg ? (
-            <div role="alert" className="h-64 flex flex-col items-center justify-center border border-rose-500/40 bg-rose-950/30 rounded-2xl w-full p-6 text-center">
-              <p className="text-rose-300 font-semibold mb-4">{errorMsg}</p>
+            <div role="alert" className="h-64 flex flex-col items-center justify-center border border-rose-300 bg-rose-50 rounded-2xl w-full p-6 text-center">
+              <p className="text-rose-800 font-semibold mb-4">{errorMsg}</p>
               <button
                 type="button"
                 onClick={fetchPeserta}
-                className="px-5 py-2.5 min-h-[44px] rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm"
+                className="px-5 py-2.5 min-h-[44px] rounded-xl bg-green-900 hover:bg-green-800 text-white font-bold text-sm"
               >
                 Coba Lagi
               </button>
@@ -123,23 +120,23 @@ export default function WheelOfFamily() {
                 prizeNumber={prizeNumber}
                 data={dataWheel}
                 onStopSpinning={handleStopSpinning}
-                outerBorderColor="#1e293b"
-                outerBorderWidth={8}
-                innerBorderColor="#0f172a"
+                outerBorderColor="#1c1917"
+                outerBorderWidth={6}
+                innerBorderColor="#faf6ee"
                 innerBorderWidth={4}
-                radiusLineColor="#334155"
+                radiusLineColor="#faf6ee"
                 radiusLineWidth={1}
-                backgroundColors={['#b45309', '#047857', '#1e293b', '#0f172a']}
-                textColors={['#f8fafc']}
+                backgroundColors={['#14532d', '#d97706', '#b91c1c', '#1e3a8a']}
+                textColors={['#faf6ee']}
                 fontSize={15}
                 textDistance={60}
                 spinDuration={0.8}
               />
             </div>
           ) : (
-            <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-slate-700 bg-slate-900 rounded-2xl w-full p-6 text-center">
-              <p className="text-slate-200 font-bold text-base mb-1">Belum Ada Kapsul Waktu yang Masuk</p>
-              <p className="text-slate-300 text-sm max-w-md">
+            <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-[#C7BDA8] bg-[#FAF6EE] rounded-2xl w-full p-6 text-center">
+              <p className="text-stone-900 font-bold text-base mb-1">Belum Ada Kapsul Waktu yang Masuk</p>
+              <p className="text-stone-600 text-sm max-w-md">
                 Ajak teman-teman Sedulur 16 mengisi foto terbaru dan pesan di menu Kapsul Waktu agar namanya masuk ke roda putar!
               </p>
             </div>
@@ -149,10 +146,10 @@ export default function WheelOfFamily() {
             type="button"
             onClick={handleSpinClick}
             disabled={mustSpin || dataWheel.length === 0 || isLoading}
-            className={`mt-8 md:mt-4 px-10 py-4 min-h-[52px] rounded-xl font-bold text-lg md:text-xl tracking-wide transition-colors shadow-md 
+            className={`mt-8 md:mt-4 px-10 py-4 min-h-[52px] rounded-xl font-bold text-lg md:text-xl tracking-wide transition-colors 
               ${mustSpin || dataWheel.length === 0 || isLoading
-                ? 'bg-slate-700 text-slate-300 cursor-not-allowed' 
-                : 'bg-amber-400 hover:bg-amber-300 text-slate-950'
+                ? 'bg-stone-300 text-stone-600 cursor-not-allowed' 
+                : 'bg-green-900 hover:bg-green-800 text-white'
               }`}
           >
             {mustSpin ? 'Memutar Roda Kenangan...' : 'Putar Roda Sekarang'}
@@ -163,37 +160,34 @@ export default function WheelOfFamily() {
 
       {showResult && pemenang && (
         <div
-          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-950/90 overflow-y-auto"
+          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-stone-950/65 backdrop-blur-[2px] overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-labelledby="winner-modal-title"
           onClick={() => setShowResult(false)}
         >
           <div
-            className="relative w-full max-w-4xl bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-xl my-8"
+            className="relative w-full max-w-4xl bg-white border border-[#DED6C6] rounded-2xl p-6 md:p-8 shadow-xl my-8"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
               type="button"
               onClick={() => setShowResult(false)}
               aria-label="Tutup jendela pemenang"
-              className="absolute top-4 right-4 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xl font-bold transition-colors"
+              className="absolute top-4 right-4 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-[#FAF6EE] hover:bg-[#F3EDE0] text-stone-800 border border-[#DED6C6] text-xl font-bold transition-colors"
             >
               &times;
             </button>
 
             <div className="text-center mb-6 pr-10">
-              <p className="text-amber-400 font-mono font-bold tracking-wider text-xs md:text-sm uppercase mb-1">
-                Alumni Terpilih 1 Dekade
-              </p>
-              <h3 id="winner-modal-title" className="text-2xl md:text-4xl font-bold text-white">
+              <h3 id="winner-modal-title" className="text-2xl md:text-4xl font-bold text-stone-900">
                 {pemenang.nama}
               </h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center max-w-2xl mx-auto">
               
-              <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border-2 border-slate-700 bg-slate-900 shadow-md">
+              <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border border-[#DED6C6] bg-[#FAF6EE]">
                 <img 
                   src={`/2016/${pemenang.nim}.webp`} 
                   alt={`Foto ${pemenang.nama} tahun 2016`} 
@@ -201,12 +195,12 @@ export default function WheelOfFamily() {
                   height="426"
                   className="w-full h-full object-cover" 
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-slate-950/85 py-2.5 px-4 border-t border-slate-800">
-                  <p className="text-slate-200 font-mono text-sm font-bold">Era Maba 2016</p>
+                <div className="absolute bottom-0 left-0 right-0 bg-stone-950/80 py-2.5 px-4">
+                  <p className="text-white font-mono text-sm font-bold">Era Maba 2016</p>
                 </div>
               </div>
 
-              <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border-2 border-amber-400 bg-slate-900 shadow-md">
+              <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border-2 border-amber-500 bg-[#FAF6EE]">
                 <img 
                   src={pemenang.foto_now} 
                   alt={`Foto ${pemenang.nama} tahun 2026`} 
@@ -214,18 +208,18 @@ export default function WheelOfFamily() {
                   height="426"
                   className="w-full h-full object-cover" 
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-slate-950/85 py-2.5 px-4 border-t border-amber-400/40 text-right">
-                  <p className="text-amber-400 font-mono text-sm font-bold">Kini 2026 (1 Dekade)</p>
+                <div className="absolute bottom-0 left-0 right-0 bg-stone-950/80 py-2.5 px-4 text-right">
+                  <p className="text-amber-300 font-mono text-sm font-bold">Kini 2026 (1 Dekade)</p>
                 </div>
               </div>
 
             </div>
 
-            <div className="mt-6 max-w-2xl mx-auto bg-slate-900 border border-slate-700 p-5 rounded-xl">
-              <p className="text-xs font-mono font-bold text-amber-400 uppercase mb-2 text-center">
+            <div className="mt-6 max-w-2xl mx-auto bg-[#FAF6EE] border border-[#DED6C6] p-5 rounded-xl">
+              <p className="text-xs font-bold text-green-900 uppercase tracking-wide mb-2 text-center">
                 Pesan Untuk Sedulur 16
               </p>
-              <p className="text-slate-100 text-center text-base md:text-lg leading-relaxed">
+              <p className="text-stone-800 text-center text-base md:text-lg leading-relaxed">
                 {pemenang.pesan_anniv}
               </p>
             </div>

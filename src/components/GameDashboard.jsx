@@ -219,7 +219,7 @@ export default function GameDashboard() {
 
   if (isChecking) {
     return (
-      <main className="min-h-screen bg-slate-900 flex justify-center items-center text-slate-200 font-semibold">
+      <main className="min-h-screen bg-[#FAF6EE] flex justify-center items-center text-stone-700 font-semibold">
         Memuat Portal Perayaan 1 Dekade TL 2016...
       </main>
     );
@@ -228,15 +228,15 @@ export default function GameDashboard() {
   if (!user) return <Login onLoginSuccess={setUser} />;
 
   const renderSubView = (Component, props = {}) => (
-    <div className="min-h-screen bg-slate-900 text-slate-50 p-4 md:p-8">
+    <div className="min-h-screen bg-[#FAF6EE] text-stone-900 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
-        <nav aria-label="Navigasi kembali" className="mb-6">
+        <nav aria-label="Navigasi kembali" className="mb-6 pb-4 border-b border-[#DED6C6]">
           <button
             type="button"
             onClick={() => setActiveView('dashboard')}
-            className="min-h-[44px] px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-600 text-amber-300 hover:bg-slate-700 font-bold text-sm transition-colors"
+            className="min-h-[44px] px-4 py-2.5 rounded-xl bg-white border border-[#DED6C6] text-green-900 hover:bg-[#F3EDE0] font-bold text-sm transition-colors"
           >
-            Kembali ke Beranda Perayaan
+            &larr; Kembali ke Beranda Perayaan
           </button>
         </nav>
         <main>
@@ -265,31 +265,31 @@ export default function GameDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-50 p-4 md:p-8 relative">
+    <div className="min-h-screen bg-[#FAF6EE] text-stone-900 p-4 md:p-8 relative">
       {showAnniversary && (
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby="anniv-welcome-title"
-          className="fixed inset-0 z-50 bg-slate-950/90 flex flex-col items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-[2px] flex flex-col items-center justify-center p-4"
         >
-          <div className="bg-slate-800 border-2 border-amber-400 p-8 md:p-10 rounded-2xl max-w-lg w-full text-center shadow-lg">
+          <div className="bg-white border border-[#DED6C6] p-8 md:p-10 rounded-2xl max-w-lg w-full text-center shadow-xl">
             <h2 id="anniv-welcome-title" className="flex justify-center mb-5">
               <img
                 src="/Asset 2.webp"
                 alt="Happy Anniversary Teknik Lingkungan 2016"
                 width="280"
                 height="109"
-                className="w-full max-w-[280px] h-auto"
+                className="w-full max-w-[260px] h-auto"
               />
             </h2>
-            <p className="text-slate-200 text-base mb-8 leading-relaxed">
-              Selamat datang kembali, <strong>{user.nama}</strong>! Mari rayakan satu dekade Teknik Lingkungan 2016 dengan mengisi kapsul kenangan dan bermain bersama.
+            <p className="text-stone-700 text-base mb-8 leading-relaxed">
+              Selamat datang kembali, <strong className="text-stone-900">{user.nama}</strong>! Mari rayakan satu dekade Teknik Lingkungan 2016 dengan mengisi kapsul kenangan dan bermain bersama.
             </p>
             <button
               type="button"
               onClick={closeAnniversary}
-              className="min-h-[48px] px-8 py-3 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-slate-950 font-bold rounded-xl transition-colors text-base"
+              className="min-h-[48px] px-8 py-3 bg-green-900 hover:bg-green-800 text-white font-bold rounded-xl transition-colors text-base"
             >
               Mulai Rayakan Sekarang
             </button>
@@ -298,7 +298,7 @@ export default function GameDashboard() {
       )}
 
       <div className="max-w-5xl mx-auto">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 border-b border-slate-700 pb-6 gap-4">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 border-b border-[#DED6C6] pb-6 gap-4">
           <div className="flex items-center gap-4">
             <img
               src="/Asset 2.webp"
@@ -308,11 +308,11 @@ export default function GameDashboard() {
               className="w-32 h-auto hidden sm:block"
             />
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-50">
+              <h1 className="text-2xl md:text-3xl font-bold text-stone-900">
                 Halo, {user.nama}!
               </h1>
-              <p className="text-slate-300 text-sm">
-                NIM: <span className="font-mono font-semibold text-emerald-300">{user.nim}</span>
+              <p className="text-stone-600 text-sm">
+                NIM: <span className="font-mono font-semibold text-green-800">{user.nim}</span>
               </p>
             </div>
           </div>
@@ -323,7 +323,7 @@ export default function GameDashboard() {
               <button
                 type="button"
                 onClick={() => setActiveView('admin')}
-                className="min-h-[44px] text-sm bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold transition-colors"
+                className="min-h-[44px] text-sm bg-green-900 hover:bg-green-800 text-white px-4 py-2.5 rounded-xl font-bold transition-colors"
               >
                 Ruang Panitia
               </button>
@@ -331,39 +331,35 @@ export default function GameDashboard() {
             <button
               type="button"
               onClick={handleLogout}
-              className="min-h-[44px] text-sm bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-600 hover:bg-rose-950 hover:border-rose-400 hover:text-rose-200 text-slate-200 font-semibold transition-colors ml-auto md:ml-0"
+              className="min-h-[44px] text-sm bg-white px-4 py-2.5 rounded-xl border border-[#DED6C6] hover:bg-rose-50 hover:border-rose-300 hover:text-rose-800 text-stone-700 font-semibold transition-colors ml-auto md:ml-0"
             >
               Keluar
             </button>
           </nav>
         </header>
 
-        <main className="space-y-12">
-          {/* BAGIAN 1: SOROTAN UTAMA PERAYAAN ULANG TAHUN (ASYMMETRIC HERO) */}
+        <main className="space-y-14">
+          {/* BAGIAN 1: SOROTAN UTAMA PERAYAAN ULANG TAHUN (EDITORIAL 2-KOLOM) */}
           <section aria-labelledby="highlight-heading">
-            <div className="mb-4">
-              <h2 id="highlight-heading" className="text-xl md:text-2xl font-bold text-amber-300">
+            <div className="mb-5">
+              <h2 id="highlight-heading" className="text-2xl md:text-3xl font-bold text-stone-900">
                 Agenda Utama Ulang Tahun 1 Dekade
               </h2>
-              <p className="text-slate-300 text-sm">
+              <p className="text-stone-600 text-sm mt-1">
                 Kirimkan foto terbaru dan pesan kenanganmu untuk diputar bersama saat puncak perayaan.
               </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Kartu Flagship: Kapsul Waktu (7 kolom di desktop) */}
-              <article className="lg:col-span-7 bg-slate-800 p-6 md:p-8 rounded-2xl border-2 border-amber-400/50 flex flex-col justify-between">
+              <article className="lg:col-span-7 bg-white p-6 md:p-8 rounded-2xl border border-[#DED6C6] flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-4">
-                    <span className="inline-block px-3 py-1 rounded-md bg-amber-400/20 text-amber-300 text-xs font-bold">
-                      Wajib Diisi Semua Alumni
-                    </span>
-                    <span aria-hidden="true" className="text-3xl">📦</span>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-slate-50 mb-2">
+                  <span className="inline-block px-3 py-1 rounded-md bg-amber-100 text-amber-900 text-xs font-bold mb-4">
+                    Wajib Diisi Semua Alumni
+                  </span>
+                  <h3 className="text-2xl md:text-3xl font-bold text-stone-900 mb-2">
                     Kapsul Waktu 2016 ke 2026
                   </h3>
-                  <p className="text-slate-200 text-sm md:text-base mb-6 leading-relaxed">
+                  <p className="text-stone-600 text-sm md:text-base mb-6 leading-relaxed">
                     Unggah satu foto terbaikmu di tahun 2026 beserta pesan hangat atau cerita lucu masa kuliah untuk ditampilkan di acara Wheel of Family.
                   </p>
                 </div>
@@ -371,28 +367,24 @@ export default function GameDashboard() {
                   <button
                     type="button"
                     onClick={() => setActiveView('kapsul')}
-                    className="w-full sm:w-auto min-h-[48px] px-6 py-3 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 rounded-xl font-bold text-slate-950 text-base transition-colors"
+                    className="w-full sm:w-auto min-h-[48px] px-6 py-3 bg-green-900 hover:bg-green-800 rounded-xl font-bold text-white text-base transition-colors"
                   >
                     Isi Kapsul Waktu Sekarang
                   </button>
                 </div>
               </article>
 
-              {/* Kartu Pendamping: Wheel of Family (5 kolom di desktop) */}
-              <article className="lg:col-span-5 bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 flex flex-col justify-between">
+              <article className="lg:col-span-5 bg-[#F3EDE0] p-6 md:p-8 rounded-2xl border border-[#DED6C6] flex flex-col justify-between">
                 {user.is_admin ? (
                   <>
                     <div>
-                      <div className="flex items-center justify-between gap-2 mb-4">
-                        <span className="inline-block px-3 py-1 rounded-md bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
-                          Akses Panitia
-                        </span>
-                        <span aria-hidden="true" className="text-3xl">🎡</span>
-                      </div>
-                      <h3 className="text-2xl font-bold text-slate-50 mb-2">
+                      <span className="inline-block px-3 py-1 rounded-md bg-green-900/10 text-green-900 text-xs font-bold mb-4">
+                        Akses Panitia
+                      </span>
+                      <h3 className="text-2xl font-bold text-stone-900 mb-2">
                         Wheel of Family
                       </h3>
-                      <p className="text-slate-300 text-sm mb-6 leading-relaxed">
+                      <p className="text-stone-700 text-sm mb-6 leading-relaxed">
                         {targetDate
                           ? 'Hitung mundur untuk peserta sedang berjalan. Panitia dapat menguji roda putar kapan saja.'
                           : 'Jadwal pembukaan roda putar belum diatur di Ruang Panitia.'}
@@ -401,71 +393,67 @@ export default function GameDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveView('wheel')}
-                      className="w-full min-h-[48px] py-3 px-5 bg-emerald-700 hover:bg-emerald-600 rounded-xl font-bold text-white text-base transition-colors"
+                      className="w-full min-h-[48px] py-3 px-5 bg-white hover:bg-stone-50 border border-[#C7BDA8] rounded-xl font-bold text-stone-900 text-base transition-colors"
                     >
                       Buka Roda Putar
                     </button>
                   </>
                 ) : !targetDate ? (
-                  <div className="my-auto text-center py-4">
-                    <span aria-hidden="true" className="text-4xl block mb-3">🎁</span>
-                    <h3 className="text-xl font-bold text-slate-50 mb-1">
+                  <div className="my-auto py-2">
+                    <h3 className="text-xl font-bold text-stone-900 mb-2">
                       Kejutan Puncak Wheel of Family
                     </h3>
-                    <p className="text-slate-300 text-sm">
+                    <p className="text-stone-700 text-sm leading-relaxed">
                       Jadwal pemutaran kapsul kenangan akan diumumkan oleh panitia. Pastikan kamu sudah mengisi Kapsul Waktu!
                     </p>
                   </div>
                 ) : !wheelUnlocked && timeLeft ? (
-                  <div className="my-auto text-center">
-                    <span className="inline-block px-3 py-1 rounded-md bg-amber-400/15 text-amber-300 text-xs font-bold mb-3">
+                  <div className="my-auto">
+                    <span className="inline-block px-3 py-1 rounded-md bg-amber-100 text-amber-900 text-xs font-bold mb-3">
                       Menuju Puncak Acara
                     </span>
-                    <h3 className="text-xl font-bold text-slate-50 mb-1">
+                    <h3 className="text-xl font-bold text-stone-900 mb-1">
                       Wheel of Family Segera Dibuka
                     </h3>
-                    <p className="text-slate-300 text-xs mb-5">
+                    <p className="text-stone-600 text-xs mb-5">
                       Hitung mundur pembukaan foto & pesan satu angkatan:
                     </p>
                     <div className="grid grid-cols-4 gap-2 text-center">
-                      <div className="bg-slate-900 border border-slate-700 py-3 px-2 rounded-xl">
-                        <span className="block font-mono font-bold text-xl sm:text-2xl text-amber-300">{timeLeft.days}</span>
-                        <span className="block text-xs text-slate-300 mt-0.5 font-medium">Hari</span>
+                      <div className="bg-white border border-[#DED6C6] py-3 px-2 rounded-xl">
+                        <span className="block font-mono font-bold text-xl sm:text-2xl text-stone-900">{timeLeft.days}</span>
+                        <span className="block text-xs text-stone-600 mt-0.5 font-medium">Hari</span>
                       </div>
-                      <div className="bg-slate-900 border border-slate-700 py-3 px-2 rounded-xl">
-                        <span className="block font-mono font-bold text-xl sm:text-2xl text-amber-300">{timeLeft.hours}</span>
-                        <span className="block text-xs text-slate-300 mt-0.5 font-medium">Jam</span>
+                      <div className="bg-white border border-[#DED6C6] py-3 px-2 rounded-xl">
+                        <span className="block font-mono font-bold text-xl sm:text-2xl text-stone-900">{timeLeft.hours}</span>
+                        <span className="block text-xs text-stone-600 mt-0.5 font-medium">Jam</span>
                       </div>
-                      <div className="bg-slate-900 border border-slate-700 py-3 px-2 rounded-xl">
-                        <span className="block font-mono font-bold text-xl sm:text-2xl text-amber-300">{timeLeft.minutes}</span>
-                        <span className="block text-xs text-slate-300 mt-0.5 font-medium">Menit</span>
+                      <div className="bg-white border border-[#DED6C6] py-3 px-2 rounded-xl">
+                        <span className="block font-mono font-bold text-xl sm:text-2xl text-stone-900">{timeLeft.minutes}</span>
+                        <span className="block text-xs text-stone-600 mt-0.5 font-medium">Menit</span>
                       </div>
-                      <div className="bg-slate-900 border border-slate-700 py-3 px-2 rounded-xl">
-                        <span className="block font-mono font-bold text-xl sm:text-2xl text-emerald-300">{timeLeft.seconds}</span>
-                        <span className="block text-xs text-slate-300 mt-0.5 font-medium">Detik</span>
+                      <div className="bg-white border border-[#DED6C6] py-3 px-2 rounded-xl">
+                        <span className="block font-mono font-bold text-xl sm:text-2xl text-green-800">{timeLeft.seconds}</span>
+                        <span className="block text-xs text-stone-600 mt-0.5 font-medium">Detik</span>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <>
                     <div>
-                      <div className="flex items-center justify-between gap-2 mb-4">
-                        <span className="inline-block px-3 py-1 rounded-md bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
-                          Sudah Dibuka
-                        </span>
-                        <span aria-hidden="true" className="text-3xl">🎡</span>
-                      </div>
-                      <h3 className="text-2xl font-bold text-amber-300 mb-2">
+                      <span className="inline-block px-3 py-1 rounded-md bg-green-900/10 text-green-900 text-xs font-bold mb-4">
+                        Sudah Dibuka
+                      </span>
+                      <h3 className="text-2xl font-bold text-stone-900 mb-2">
                         Wheel of Family
                       </h3>
-                      <p className="text-slate-200 text-sm mb-6 leading-relaxed">
+                      <p className="text-stone-700 text-sm mb-6 leading-relaxed">
                         Saatnya memutar roda kenangan dan melihat transformasi teman-teman Sedulur 16 dari tahun 2016 hingga 2026!
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActiveView('wheel')}
-                      className="w-full min-h-[48px] py-3 px-5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl font-bold text-base transition-colors"
+                      className="w-full min-h-[48px] py-3 px-5 bg-amber-500 hover:bg-amber-400 text-stone-950 rounded-xl font-bold text-base transition-colors"
                     >
                       Buka Roda Kenangan
                     </button>
@@ -475,61 +463,65 @@ export default function GameDashboard() {
             </div>
           </section>
 
-          {/* BAGIAN 2: PERMAINAN NOSTALGIA INDIVIDU (2 KOLOM) */}
+          {/* BAGIAN 2: PERMAINAN NOSTALGIA INDIVIDU (DAFTAR EDITORIAL) */}
           <section aria-labelledby="solo-games-heading">
             <div className="mb-4">
-              <h2 id="solo-games-heading" className="text-xl md:text-2xl font-bold text-slate-50">
+              <h2 id="solo-games-heading" className="text-xl md:text-2xl font-bold text-stone-900">
                 Kuis Kenangan Kampus (Main Sendiri)
               </h2>
-              <p className="text-slate-300 text-sm">
+              <p className="text-stone-600 text-sm">
                 Kumpulkan poin untuk klasemen angkatan dengan menebak lokasi kampus dan foto masa maba.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <article className="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-emerald-300 bg-emerald-950 border border-emerald-500/40 px-2.5 py-1 rounded-md">
-                      20 Lokasi Memori
-                    </span>
-                    <span aria-hidden="true" className="text-3xl">🗺️</span>
+            <div className="bg-white border border-[#DED6C6] rounded-2xl divide-y divide-[#DED6C6]">
+              <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#F3EDE0] flex items-center justify-center shrink-0 mt-0.5">
+                    <IconMap />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-50 mb-2">
-                    Digital Treasure Hunt
-                  </h3>
-                  <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-                    Napak tilas titik-titik kenangan di sekitar kampus dan tempat nongkrong legendaris angkatan 2016.
-                  </p>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h3 className="text-lg font-bold text-stone-900">Digital Treasure Hunt</h3>
+                      <span className="text-xs font-semibold text-green-900 bg-green-100 px-2 py-0.5 rounded-md">
+                        20 Lokasi Memori
+                      </span>
+                    </div>
+                    <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                      Napak tilas titik-titik kenangan di sekitar kampus dan tempat nongkrong legendaris angkatan 2016.
+                    </p>
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveView('map')}
-                  className="w-full min-h-[48px] bg-emerald-700 hover:bg-emerald-600 py-3 px-5 rounded-xl font-bold text-white text-sm transition-colors"
+                  className="w-full sm:w-auto shrink-0 min-h-[48px] bg-green-900 hover:bg-green-800 py-3 px-5 rounded-xl font-bold text-white text-sm transition-colors"
                 >
                   Mulai Tebak Lokasi
                 </button>
               </article>
 
-              <article className="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-emerald-300 bg-emerald-950 border border-emerald-500/40 px-2.5 py-1 rounded-md">
-                      20 Foto Angkatan
-                    </span>
-                    <span aria-hidden="true" className="text-3xl">👥</span>
+              <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#F3EDE0] flex items-center justify-center shrink-0 mt-0.5">
+                    <IconUsers />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-50 mb-2">
-                    Tebak Muka Blur
-                  </h3>
-                  <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-                    Seberapa hafal kamu dengan wajah teman seangkatan tahun 2016? Semakin cepat menebak, semakin tinggi poinnya.
-                  </p>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h3 className="text-lg font-bold text-stone-900">Tebak Muka Blur</h3>
+                      <span className="text-xs font-semibold text-green-900 bg-green-100 px-2 py-0.5 rounded-md">
+                        20 Foto Angkatan
+                      </span>
+                    </div>
+                    <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                      Seberapa hafal kamu dengan wajah teman seangkatan tahun 2016? Semakin cepat menebak, semakin tinggi poinnya.
+                    </p>
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveView('face')}
-                  className="w-full min-h-[48px] bg-emerald-700 hover:bg-emerald-600 py-3 px-5 rounded-xl font-bold text-white text-sm transition-colors"
+                  className="w-full sm:w-auto shrink-0 min-h-[48px] bg-green-900 hover:bg-green-800 py-3 px-5 rounded-xl font-bold text-white text-sm transition-colors"
                 >
                   Mulai Tebak Foto
                 </button>
@@ -541,54 +533,58 @@ export default function GameDashboard() {
           {(isMonopoliUnlocked || monopoliApproaching || isWerewolfUnlocked || werewolfApproaching || isUnoUnlocked || unoApproaching) && (
             <section aria-labelledby="party-games-heading">
               <div className="mb-4">
-                <h2 id="party-games-heading" className="text-xl md:text-2xl font-bold text-slate-50">
+                <h2 id="party-games-heading" className="text-xl md:text-2xl font-bold text-stone-900">
                   Arena Main Bareng (Multiplayer)
                 </h2>
-                <p className="text-slate-300 text-sm">
+                <p className="text-stone-600 text-sm">
                   Permainan seru untuk dimainkan bersama satu tongkrongan secara langsung.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white border border-[#DED6C6] rounded-2xl divide-y divide-[#DED6C6]">
                 {monopoliApproaching && !isMonopoliUnlocked && (
-                  <article className="bg-slate-800/70 p-6 rounded-2xl border border-dashed border-amber-400/50 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="bg-amber-950 border border-amber-400/40 text-amber-300 text-xs font-bold px-2.5 py-1 rounded-md">
-                          Kado Segera Dibuka
-                        </span>
-                        <span aria-hidden="true" className="text-2xl">🎁</span>
+                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FAF6EE]/60">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <IconBoard />
                       </div>
-                      <h3 className="text-lg font-bold text-slate-200 mb-2">
-                        Monopoli TL16
-                      </h3>
-                      <p className="text-slate-300 text-sm leading-relaxed">
-                        Kado permainan papan kenangan 4 tahun masa kuliah ini akan segera dibuka sesuai jadwal perayaan.
-                      </p>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="text-lg font-bold text-stone-800">Monopoli TL16</h3>
+                          <span className="bg-amber-100 text-amber-900 text-xs font-bold px-2 py-0.5 rounded-md">
+                            Segera Dibuka
+                          </span>
+                        </div>
+                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                          Permainan papan kenangan 4 tahun masa kuliah ini akan segera dibuka sesuai jadwal perayaan.
+                        </p>
+                      </div>
                     </div>
                   </article>
                 )}
 
                 {isMonopoliUnlocked && (
-                  <article className="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-xs font-bold px-2.5 py-1 rounded-md">
-                          Siap Dimainkan
-                        </span>
-                        <span aria-hidden="true" className="text-2xl">🎲</span>
+                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <IconBoard />
                       </div>
-                      <h3 className="text-lg font-bold text-slate-50 mb-2">
-                        Monopoli TL16
-                      </h3>
-                      <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-                        Kelilingi petak kampus, kumpulkan properti kontrakan, dan jawab tantangan Truth or Dare bersama teman-teman.
-                      </p>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="text-lg font-bold text-stone-900">Monopoli TL16</h3>
+                          <span className="bg-green-100 text-green-900 text-xs font-bold px-2 py-0.5 rounded-md">
+                            Siap Dimainkan
+                          </span>
+                        </div>
+                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                          Kelilingi petak kampus, kumpulkan properti kontrakan, dan jawab tantangan Truth or Dare bersama teman-teman.
+                        </p>
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActiveView('monopoli')}
-                      className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 py-3 px-4 rounded-xl font-bold text-slate-950 text-sm transition-colors"
+                      className="w-full sm:w-auto shrink-0 min-h-[48px] bg-amber-500 hover:bg-amber-400 py-3 px-5 rounded-xl font-bold text-stone-950 text-sm transition-colors"
                     >
                       Buka Papan Monopoli
                     </button>
@@ -596,44 +592,48 @@ export default function GameDashboard() {
                 )}
 
                 {werewolfApproaching && !isWerewolfUnlocked && (
-                  <article className="bg-slate-800/70 p-6 rounded-2xl border border-dashed border-amber-400/50 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="bg-amber-950 border border-amber-400/40 text-amber-300 text-xs font-bold px-2.5 py-1 rounded-md">
-                          Kado Segera Dibuka
-                        </span>
-                        <span aria-hidden="true" className="text-2xl">🎁</span>
+                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FAF6EE]/60">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <IconClass />
                       </div>
-                      <h3 className="text-lg font-bold text-slate-200 mb-2">
-                        Dosen Killer
-                      </h3>
-                      <p className="text-slate-300 text-sm leading-relaxed">
-                        Permainan deduksi sosial khas ruang kelas TL 2016 ini sedang disiapkan untuk sesi kumpul angkatan.
-                      </p>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="text-lg font-bold text-stone-800">Dosen Killer</h3>
+                          <span className="bg-amber-100 text-amber-900 text-xs font-bold px-2 py-0.5 rounded-md">
+                            Segera Dibuka
+                          </span>
+                        </div>
+                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                          Permainan deduksi sosial khas ruang kelas TL 2016 ini sedang disiapkan untuk sesi kumpul angkatan.
+                        </p>
+                      </div>
                     </div>
                   </article>
                 )}
 
                 {isWerewolfUnlocked && (
-                  <article className="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-xs font-bold px-2.5 py-1 rounded-md">
-                          Siap Dimainkan
-                        </span>
-                        <span aria-hidden="true" className="text-2xl">🎓</span>
+                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <IconClass />
                       </div>
-                      <h3 className="text-lg font-bold text-slate-50 mb-2">
-                        Dosen Killer
-                      </h3>
-                      <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-                        Permainan tebak peran ala kelas kuliah: temukan siapa yang menyamar sebagai Dosen Killer sebelum satu kelas kena remedial!
-                      </p>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="text-lg font-bold text-stone-900">Dosen Killer</h3>
+                          <span className="bg-green-100 text-green-900 text-xs font-bold px-2 py-0.5 rounded-md">
+                            Siap Dimainkan
+                          </span>
+                        </div>
+                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                          Permainan tebak peran ala kelas kuliah: temukan siapa yang menyamar sebagai Dosen Killer sebelum satu kelas kena remedial!
+                        </p>
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActiveView('dosenkiller')}
-                      className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 py-3 px-4 rounded-xl font-bold text-slate-950 text-sm transition-colors"
+                      className="w-full sm:w-auto shrink-0 min-h-[48px] bg-amber-500 hover:bg-amber-400 py-3 px-5 rounded-xl font-bold text-stone-950 text-sm transition-colors"
                     >
                       Masuk Ruang Kelas
                     </button>
@@ -641,44 +641,48 @@ export default function GameDashboard() {
                 )}
 
                 {unoApproaching && !isUnoUnlocked && (
-                  <article className="bg-slate-800/70 p-6 rounded-2xl border border-dashed border-amber-400/50 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="bg-amber-950 border border-amber-400/40 text-amber-300 text-xs font-bold px-2.5 py-1 rounded-md">
-                          Kado Segera Dibuka
-                        </span>
-                        <span aria-hidden="true" className="text-2xl">🎁</span>
+                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FAF6EE]/60">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <IconCards />
                       </div>
-                      <h3 className="text-lg font-bold text-slate-200 mb-2">
-                        UNO Seru TL16
-                      </h3>
-                      <p className="text-slate-300 text-sm leading-relaxed">
-                        Meja kartu UNO spesial reuni 1 Dekade akan dibuka menjelang sesi permainan bersama.
-                      </p>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="text-lg font-bold text-stone-800">UNO Seru TL16</h3>
+                          <span className="bg-amber-100 text-amber-900 text-xs font-bold px-2 py-0.5 rounded-md">
+                            Segera Dibuka
+                          </span>
+                        </div>
+                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                          Meja kartu UNO spesial reuni 1 Dekade akan dibuka menjelang sesi permainan bersama.
+                        </p>
+                      </div>
                     </div>
                   </article>
                 )}
 
                 {isUnoUnlocked && (
-                  <article className="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-xs font-bold px-2.5 py-1 rounded-md">
-                          Siap Dimainkan
-                        </span>
-                        <span aria-hidden="true" className="text-2xl">🃏</span>
+                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <IconCards />
                       </div>
-                      <h3 className="text-lg font-bold text-slate-50 mb-2">
-                        UNO Seru TL16
-                      </h3>
-                      <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-                        Buka meja kartu bersama teman-teman angkatan dengan aturan tumpuk kartu yang meriah.
-                      </p>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="text-lg font-bold text-stone-900">UNO Seru TL16</h3>
+                          <span className="bg-green-100 text-green-900 text-xs font-bold px-2 py-0.5 rounded-md">
+                            Siap Dimainkan
+                          </span>
+                        </div>
+                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                          Buka meja kartu bersama teman-teman angkatan dengan aturan tumpuk kartu yang meriah.
+                        </p>
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActiveView('unobrutal')}
-                      className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 py-3 px-4 rounded-xl font-bold text-slate-950 text-sm transition-colors"
+                      className="w-full sm:w-auto shrink-0 min-h-[48px] bg-amber-500 hover:bg-amber-400 py-3 px-5 rounded-xl font-bold text-stone-950 text-sm transition-colors"
                     >
                       Gabung Meja Kartu
                     </button>
@@ -691,7 +695,7 @@ export default function GameDashboard() {
           {/* BAGIAN 4: PAPAN KLASEMEN */}
           <Suspense
             fallback={
-              <div className="text-center p-8 text-slate-300 bg-slate-800 rounded-2xl border border-slate-700">
+              <div className="text-center p-8 text-stone-600 bg-white rounded-2xl border border-[#DED6C6]">
                 Memuat Papan Klasemen...
               </div>
             }
@@ -700,8 +704,8 @@ export default function GameDashboard() {
           </Suspense>
         </main>
 
-        <footer className="mt-16 pt-8 border-t border-slate-800 text-center text-slate-300 text-xs space-y-1">
-          <p className="font-semibold text-amber-300">Perayaan 1 Dekade Teknik Lingkungan Angkatan 2016 (Sedulur 16)</p>
+        <footer className="mt-16 pt-8 border-t border-[#DED6C6] text-center text-stone-600 text-xs space-y-1">
+          <p className="font-semibold text-stone-800">Perayaan 1 Dekade Teknik Lingkungan Angkatan 2016 (Sedulur 16)</p>
           <p>2016 - 2026 | Kebersamaan Satu Dekade</p>
         </footer>
       </div>

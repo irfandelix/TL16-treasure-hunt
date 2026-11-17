@@ -375,17 +375,17 @@ export default function DosenKillerGame() {
 
   if (!isInRoom) {
     return (
-      <div className="p-6 md:p-8 max-w-md mx-auto bg-slate-800 rounded-2xl border border-slate-700 mt-10 text-center shadow-md">
-        <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+      <div className="p-6 md:p-8 max-w-md mx-auto bg-white rounded-2xl border border-[#DED6C6] mt-10 text-center shadow-md">
+        <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
           Deduksi Sosial Angkatan
         </p>
-        <h2 className="text-2xl font-bold text-white mb-1">Sidang Dosen Killer</h2>
-        <p className="text-sm text-slate-300 mb-6">
+        <h2 className="text-2xl font-bold text-stone-900 mb-1">Sidang Dosen Killer</h2>
+        <p className="text-sm text-stone-600 mb-6">
           Buka ruang kelas baru atau gabung ke kelas yang sudah dibuat temanmu.
         </p>
 
         {lobbyError && (
-          <div role="alert" className="mb-4 p-3 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-200 text-xs font-medium">
+          <div role="alert" className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-500/40 text-rose-200 text-xs font-medium">
             {lobbyError}
           </div>
         )}
@@ -399,9 +399,9 @@ export default function DosenKillerGame() {
             Buka Kelas Baru (Buat Ruangan)
           </button>
           <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-slate-700"></div>
-            <span className="flex-shrink mx-4 text-slate-300 font-mono text-xs">ATAU GABUNG KELAS</span>
-            <div className="flex-grow border-t border-slate-700"></div>
+            <div className="flex-grow border-t border-[#DED6C6]"></div>
+            <span className="flex-shrink mx-4 text-stone-600 font-mono text-xs">ATAU GABUNG KELAS</span>
+            <div className="flex-grow border-t border-[#DED6C6]"></div>
           </div>
           <div className="flex gap-2">
             <label htmlFor="dk-room-code-input" className="sr-only">
@@ -413,7 +413,7 @@ export default function DosenKillerGame() {
               placeholder="CONTOH: DK-392"
               value={inputRoomCode}
               onChange={(e) => setInputRoomCode(e.target.value)}
-              className="flex-1 min-h-[48px] bg-slate-900 border border-slate-600 rounded-xl text-center text-sm font-mono font-bold tracking-widest text-white uppercase focus:border-amber-400 placeholder:text-slate-400"
+              className="flex-1 min-h-[48px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl text-center text-sm font-mono font-bold tracking-widest text-stone-900 uppercase focus:border-amber-400 placeholder:text-stone-500"
             />
             <button
               type="button"
@@ -436,22 +436,22 @@ export default function DosenKillerGame() {
       <>
         {showAdminWarning && currentUser.isAdmin && (
           <div
-            className="fixed inset-0 z-[99999] bg-slate-950/90 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[99999] bg-stone-950/60 backdrop-blur-[2px] flex items-center justify-center p-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="host-warning-title"
           >
-            <div className="bg-slate-800 border border-amber-400/50 rounded-2xl max-w-md p-6 text-center shadow-xl">
-              <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+            <div className="bg-white border border-amber-400/50 rounded-2xl max-w-md p-6 text-center shadow-xl">
+              <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
                 Panduan Pemandu Kelas
               </p>
-              <h3 id="host-warning-title" className="text-xl font-bold text-white mb-2">
+              <h3 id="host-warning-title" className="text-xl font-bold text-stone-900 mb-2">
                 Perangkat Ini Memandu Jalannya Kelas
               </h3>
-              <p className="text-slate-200 text-sm mb-4 leading-relaxed">
+              <p className="text-stone-800 text-sm mb-4 leading-relaxed">
                 Perangkat Admin mengatur pergantian waktu malam, diskusi, dan pemungutan suara secara otomatis.
               </p>
-              <div className="text-left text-xs text-slate-200 space-y-2 mb-6 bg-slate-900 p-4 rounded-xl border border-slate-700">
+              <div className="text-left text-xs text-stone-800 space-y-2 mb-6 bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
                 <p>1. Pastikan koneksi internet perangkat ini stabil selama sesi berlangsung.</p>
                 <p>2. Jangan menutup tab atau mematikan layar ponsel hingga permainan selesai.</p>
               </div>
@@ -472,17 +472,17 @@ export default function DosenKillerGame() {
               <button 
                 type="button"
                 onClick={async () => await supabase.from('dosen_killer_state').update({ fase_game: 'LOBBY' }).eq('room_code', roomCode)} 
-                className="min-h-[44px] px-4 py-2 bg-slate-800 text-slate-200 border border-slate-700 rounded-xl hover:bg-slate-700 text-xs font-mono font-bold"
+                className="min-h-[44px] px-4 py-2 bg-white text-stone-800 border border-[#DED6C6] rounded-xl hover:bg-[#F3EDE0] text-xs font-mono font-bold"
               >
                 Atur Ulang Kelas
               </button>
             </div>
           )}
 
-          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+          <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
             Ruang Tunggu Kelas
           </p>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">
+          <h1 className="text-3xl md:text-4xl font-bold text-stone-900 mb-6">
             Malam Keakraban TL 2016
           </h1>
 
@@ -493,76 +493,76 @@ export default function DosenKillerGame() {
               setCopySuccess(true);
               setTimeout(() => setCopySuccess(false), 2500);
             }}
-            className="bg-slate-800 border-2 border-dashed border-amber-400/70 hover:border-amber-400 p-6 md:p-8 rounded-2xl inline-block mb-8 shadow-md transition-colors group"
+            className="bg-white border-2 border-dashed border-amber-400/70 hover:border-amber-400 p-6 md:p-8 rounded-2xl inline-block mb-8 shadow-md transition-colors group"
           >
-            <span className="block text-xs md:text-sm text-slate-200 font-bold tracking-wider mb-2 uppercase">
+            <span className="block text-xs md:text-sm text-stone-800 font-bold tracking-wider mb-2 uppercase">
               {copySuccess ? 'Kode Kelas Berhasil Disalin!' : 'Kode Kelas (Klik untuk Salin)'}
             </span>
-            <span className="block text-4xl md:text-6xl font-bold text-amber-400 tracking-widest font-mono">
+            <span className="block text-4xl md:text-6xl font-bold text-amber-700 tracking-widest font-mono">
               {roomCode}
             </span>
           </button>
           
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 font-mono text-xs">
-            <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
-              <span className="text-rose-400 font-bold text-sm block">{currentJmlDosen} Dosen</span>
-              <span className="text-slate-300 text-xs">Pemberi Nilai E</span>
+            <div className="bg-white p-3 rounded-xl border border-[#DED6C6] text-center">
+              <span className="text-rose-700 font-bold text-sm block">{currentJmlDosen} Dosen</span>
+              <span className="text-stone-600 text-xs">Pemberi Nilai E</span>
             </div>
-            <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
-              <span className="text-sky-400 font-bold text-sm block">1 Intel</span>
-              <span className="text-slate-300 text-xs">Penyelidik</span>
+            <div className="bg-white p-3 rounded-xl border border-[#DED6C6] text-center">
+              <span className="text-sky-800 font-bold text-sm block">1 Intel</span>
+              <span className="text-stone-600 text-xs">Penyelidik</span>
             </div>
-            <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
-              <span className="text-emerald-400 font-bold text-sm block">1 Ahli</span>
-              <span className="text-slate-300 text-xs">Penyelamat Nilai</span>
+            <div className="bg-white p-3 rounded-xl border border-[#DED6C6] text-center">
+              <span className="text-green-800 font-bold text-sm block">1 Ahli</span>
+              <span className="text-stone-600 text-xs">Penyelamat Nilai</span>
             </div>
-            <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
-              <span className="text-amber-400 font-bold text-sm block">1 Uptodate</span>
-              <span className="text-slate-300 text-xs">Kebal Nilai E</span>
+            <div className="bg-white p-3 rounded-xl border border-[#DED6C6] text-center">
+              <span className="text-amber-700 font-bold text-sm block">1 Uptodate</span>
+              <span className="text-stone-600 text-xs">Kebal Nilai E</span>
             </div>
-            <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center col-span-2 sm:col-span-1">
-              <span className="text-slate-100 font-bold text-sm block">{Math.max(0, pemain.length - (currentJmlDosen + 3))} Mahasiswa</span>
-              <span className="text-slate-300 text-xs">Peserta Sidang</span>
+            <div className="bg-white p-3 rounded-xl border border-[#DED6C6] text-center col-span-2 sm:col-span-1">
+              <span className="text-stone-900 font-bold text-sm block">{Math.max(0, pemain.length - (currentJmlDosen + 3))} Mahasiswa</span>
+              <span className="text-stone-600 text-xs">Peserta Sidang</span>
             </div>
           </div>
 
-          <div className="bg-slate-800 p-6 rounded-2xl mb-8 border border-slate-700">
-            <h2 className="font-bold text-white mb-4 text-base">Mahasiswa Hadir ({pemain.length}/100)</h2>
+          <div className="bg-white p-6 rounded-2xl mb-8 border border-[#DED6C6]">
+            <h2 className="font-bold text-stone-900 mb-4 text-base">Mahasiswa Hadir ({pemain.length}/100)</h2>
             <div className="flex flex-wrap gap-2 justify-center">
               {pemain.map(p => (
-                <span key={p.nim} className="bg-slate-900 px-4 py-2 rounded-xl text-xs font-bold text-slate-200 border border-slate-700">
+                <span key={p.nim} className="bg-[#FAF6EE] px-4 py-2 rounded-xl text-xs font-bold text-stone-800 border border-[#DED6C6]">
                   {p.nama} {p.nim === currentUser.nim && '(Kamu)'}
                 </span>
               ))}
             </div>
           </div>
 
-          <div className="bg-slate-800 p-6 rounded-2xl mb-8 border border-slate-700 text-left">
-            <h2 className="font-bold text-amber-400 mb-4 text-base text-center border-b border-slate-700 pb-3">
+          <div className="bg-white p-6 rounded-2xl mb-8 border border-[#DED6C6] text-left">
+            <h2 className="font-bold text-amber-700 mb-4 text-base text-center border-b border-[#DED6C6] pb-3">
               Panduan Peran Kelas
             </h2>
             <div className="grid sm:grid-cols-2 gap-4 text-xs">
-              <div className="bg-slate-900 p-4 rounded-xl border border-slate-700">
-                <h3 className="text-rose-400 font-bold mb-1">Dosen Killer</h3>
-                <p className="text-slate-300 leading-relaxed">
+              <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
+                <h3 className="text-rose-700 font-bold mb-1">Dosen Killer</h3>
+                <p className="text-stone-600 leading-relaxed">
                   Memilih 1 mahasiswa setiap malam untuk diberi nilai E (DO) dan dapat berdiskusi di ruang pesan khusus sesama Dosen Killer.
                 </p>
               </div>
-              <div className="bg-slate-900 p-4 rounded-xl border border-slate-700">
-                <h3 className="text-sky-400 font-bold mb-1">Mahasiswa Intel</h3>
-                <p className="text-slate-300 leading-relaxed">
+              <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
+                <h3 className="text-sky-800 font-bold mb-1">Mahasiswa Intel</h3>
+                <p className="text-stone-600 leading-relaxed">
                   Menerima petunjuk 3 nama kandidat setiap siang (1 Dosen Killer asli dan 2 Mahasiswa) untuk membantu arah diskusi.
                 </p>
               </div>
-              <div className="bg-slate-900 p-4 rounded-xl border border-slate-700">
-                <h3 className="text-emerald-400 font-bold mb-1">Mahasiswa Ahli</h3>
-                <p className="text-slate-300 leading-relaxed">
+              <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
+                <h3 className="text-green-800 font-bold mb-1">Mahasiswa Ahli</h3>
+                <p className="text-stone-600 leading-relaxed">
                   Memilih 1 teman setiap malam untuk diselamatkan nilainya agar terhindar dari ancaman DO.
                 </p>
               </div>
-              <div className="bg-slate-900 p-4 rounded-xl border border-slate-700">
-                <h3 className="text-amber-400 font-bold mb-1">Mahasiswa Uptodate & Biasa</h3>
-                <p className="text-slate-300 leading-relaxed">
+              <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
+                <h3 className="text-amber-700 font-bold mb-1">Mahasiswa Uptodate & Biasa</h3>
+                <p className="text-stone-600 leading-relaxed">
                   Mahasiswa Uptodate kebal serangan malam pertama, sementara seluruh mahasiswa berdiskusi dan memilih suspek saat siang hari.
                 </p>
               </div>
@@ -584,7 +584,7 @@ export default function DosenKillerGame() {
   }
 
   const GlobalTimer = () => (
-    <div className="fixed top-4 right-4 z-[5000] bg-slate-900 border border-amber-400/50 text-amber-400 font-bold px-4 py-2 rounded-xl shadow-md font-mono flex items-center gap-2">
+    <div className="fixed top-4 right-4 z-[5000] bg-[#FAF6EE] border border-amber-400/50 text-amber-700 font-bold px-4 py-2 rounded-xl shadow-md font-mono flex items-center gap-2">
       <span>Sisa Waktu:</span>
       <span className="w-8 text-right">{sisaWaktuUI}d</span>
     </div>
@@ -595,14 +595,14 @@ export default function DosenKillerGame() {
   if (faseGame === 'SELESAI') {
     const isMenang = pesanLayar.includes('MAHASISWA MENANG');
     return (
-      <div className="fixed inset-0 bg-slate-900 flex flex-col items-center justify-center p-6 text-center z-50">
-        <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-2">
+      <div className="fixed inset-0 bg-[#FAF6EE] flex flex-col items-center justify-center p-6 text-center z-50">
+        <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-2">
           Hasil Akhir Sidang Angkatan
         </p>
-        <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${isMenang ? 'text-emerald-400' : 'text-rose-400'}`}>
+        <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${isMenang ? 'text-green-800' : 'text-rose-700'}`}>
           {isMenang ? 'Tim Mahasiswa Menang!' : 'Tim Dosen Killer Menang!'}
         </h2>
-        <p className="text-slate-200 text-sm max-w-md leading-relaxed">{pesanLayar}</p>
+        <p className="text-stone-800 text-sm max-w-md leading-relaxed">{pesanLayar}</p>
 
         {currentUser.isAdmin && (
           <button
@@ -622,38 +622,38 @@ export default function DosenKillerGame() {
       <GlobalTimer />
       
       {faseGame === 'MALAM' && peranKu === 'DOSEN_KILLER' && isHidup && (
-        <div className="fixed bottom-4 left-4 w-72 md:w-80 bg-slate-800 border border-rose-500/60 rounded-2xl shadow-xl z-[9999] flex flex-col overflow-hidden">
-          <div className="bg-slate-900 px-3 py-2 border-b border-slate-700 flex justify-between items-center gap-2">
-            <span className="text-rose-400 font-bold text-xs font-mono">
+        <div className="fixed bottom-4 left-4 w-72 md:w-80 bg-white border border-rose-500/60 rounded-2xl shadow-xl z-[9999] flex flex-col overflow-hidden">
+          <div className="bg-[#FAF6EE] px-3 py-2 border-b border-[#DED6C6] flex justify-between items-center gap-2">
+            <span className="text-rose-700 font-bold text-xs font-mono">
               Diskusi Khusus Dosen Killer
             </span>
             <button
               type="button"
               onClick={() => setIsDkChatCollapsed(prev => !prev)}
-              className="min-h-[36px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono border border-slate-700"
+              className="min-h-[36px] px-2.5 py-1 rounded-lg bg-white hover:bg-[#F3EDE0] text-stone-800 text-xs font-mono border border-[#DED6C6]"
             >
               {isDkChatCollapsed ? 'Buka' : 'Tutup'}
             </button>
           </div>
           {!isDkChatCollapsed && (
             <>
-              <div className="h-44 p-3 overflow-y-auto flex flex-col gap-3 bg-slate-900/90">
+              <div className="h-44 p-3 overflow-y-auto flex flex-col gap-3 bg-[#FAF6EE]">
                 {dkChat.length === 0 && (
-                  <p className="text-center text-xs text-slate-300 font-mono my-auto">
+                  <p className="text-center text-xs text-stone-600 font-mono my-auto">
                     Diskusikan target malam ini bersama rekan Dosen Killer...
                   </p>
                 )}
                 {dkChat.map((c, i) => (
                   <div key={i} className={`flex flex-col max-w-[85%] ${c.sender === currentUser.nama ? 'self-end items-end' : 'self-start items-start'}`}>
-                    <span className="text-rose-300 font-bold text-[10px] mb-0.5">{c.sender}</span>
-                    <div className={`px-3 py-1.5 rounded-xl text-xs ${c.sender === currentUser.nama ? 'bg-rose-700 text-white' : 'bg-slate-800 border border-slate-700 text-slate-200'}`}>
+                    <span className="text-rose-700 font-bold text-[10px] mb-0.5">{c.sender}</span>
+                    <div className={`px-3 py-1.5 rounded-xl text-xs ${c.sender === currentUser.nama ? 'bg-rose-700 text-white' : 'bg-white border border-[#DED6C6] text-stone-800'}`}>
                       {c.text}
                     </div>
                   </div>
                 ))}
                 <div ref={chatEndRef} />
               </div>
-              <form onSubmit={kirimPesanDK} className="p-2 bg-slate-800 border-t border-slate-700 flex gap-2">
+              <form onSubmit={kirimPesanDK} className="p-2 bg-white border-t border-[#DED6C6] flex gap-2">
                 <label htmlFor="dk-secret-chat-input" className="sr-only">
                   Pesan Rahasia Dosen Killer
                 </label>
@@ -662,7 +662,7 @@ export default function DosenKillerGame() {
                   type="text" 
                   value={chatInput} 
                   onChange={e => setChatInput(e.target.value)} 
-                  className="w-full min-h-[44px] bg-slate-900 text-white text-xs px-3 py-2 rounded-lg border border-slate-600 focus:border-amber-400 placeholder:text-slate-400" 
+                  className="w-full min-h-[44px] bg-[#FAF6EE] text-stone-900 text-xs px-3 py-2 rounded-lg border border-[#C7BDA8] focus:border-amber-400 placeholder:text-stone-500" 
                   placeholder="Tulis rencana malam ini..." 
                 />
                 <button
@@ -678,27 +678,27 @@ export default function DosenKillerGame() {
       )}
 
       {peranKu === 'INTEL' && isHidup && intelSuspects.length > 0 && (faseGame === 'DISKUSI' || faseGame === 'VOTING') && (
-        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-slate-800 border-2 border-sky-400 p-4 rounded-2xl shadow-xl z-[4000]">
-          <div className="flex items-center justify-between gap-2 border-b border-slate-700 pb-2 mb-2">
-            <h3 className="text-sky-300 font-bold text-sm">
+        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-white border-2 border-sky-400 p-4 rounded-2xl shadow-xl z-[4000]">
+          <div className="flex items-center justify-between gap-2 border-b border-[#DED6C6] pb-2 mb-2">
+            <h3 className="text-sky-900 font-bold text-sm">
               Catatan Penyelidikan Intel
             </h3>
             <button
               type="button"
               onClick={() => setIsIntelCollapsed(prev => !prev)}
-              className="min-h-[36px] px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-200 text-xs font-mono border border-slate-700"
+              className="min-h-[36px] px-2.5 py-1 rounded-lg bg-[#FAF6EE] hover:bg-[#F3EDE0] text-stone-800 text-xs font-mono border border-[#DED6C6]"
             >
               {isIntelCollapsed ? 'Lihat' : 'Sembunyikan'}
             </button>
           </div>
           {!isIntelCollapsed && (
             <>
-              <p className="text-slate-200 text-xs mb-3 leading-relaxed">
+              <p className="text-stone-800 text-xs mb-3 leading-relaxed">
                 Berdasarkan pengamatan semalam, salah satu dari kandidat berikut adalah Dosen Killer:
               </p>
               <div className="flex flex-col gap-2">
                 {intelSuspects.map((s, i) => (
-                  <div key={i} className="bg-slate-900 border border-sky-500/40 text-white text-center py-2 rounded-lg text-xs font-bold">
+                  <div key={i} className="bg-[#FAF6EE] border border-sky-500/40 text-stone-900 text-center py-2 rounded-lg text-xs font-bold">
                     {s.nama}
                   </div>
                 ))}

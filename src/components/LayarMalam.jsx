@@ -28,12 +28,9 @@ export default function LayarMalam({ peranKu, isHidup, pemain, currentUser }) {
 
   if (!isHidup) {
     return (
-      <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center p-6 text-center z-50">
-        <p className="text-xs font-mono font-bold text-rose-400 uppercase tracking-wider mb-1">
-          Status Peserta
-        </p>
-        <h2 className="text-white font-bold text-2xl">Kamu Sudah Terkena DO</h2>
-        <p className="text-slate-300 text-sm mt-2 max-w-sm">
+      <div className="fixed inset-0 bg-[#FAF6EE] flex flex-col items-center justify-center p-6 text-center z-50">
+        <h2 className="text-stone-900 font-bold text-2xl">Kamu Sudah Terkena DO</h2>
+        <p className="text-stone-600 text-sm mt-2 max-w-sm">
           Kamu tetap bisa memantau jalannya permainan hingga sidang selesai.
         </p>
       </div>
@@ -41,26 +38,23 @@ export default function LayarMalam({ peranKu, isHidup, pemain, currentUser }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-slate-900 flex flex-col items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-[#FAF6EE] flex flex-col items-center justify-center p-4 z-50">
       <div className="max-w-md w-full text-center">
-        <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
-          Siklus Malam
-        </p>
-        <h2 className="text-2xl font-bold text-white mb-2">Fase Malam Hari</h2>
-        <p className="text-xs text-slate-300 font-mono mb-6">
+        <h2 className="text-2xl font-bold text-stone-900 mb-2">Fase Malam Hari</h2>
+        <p className="text-xs text-stone-600 font-mono mb-6">
           Saatnya peran khusus mengambil tindakan secara rahasia...
         </p>
 
         {(peranKu === 'BIASA' || peranKu === 'UPTODATE' || peranKu === 'INTEL') ? (
-          <div className="bg-slate-800 border border-slate-700 p-6 rounded-2xl">
-            <h3 className="text-amber-400 font-bold text-lg">
+          <div className="bg-white border border-[#DED6C6] p-6 rounded-2xl">
+            <h3 className="text-green-900 font-bold text-lg">
               {peranKu === 'UPTODATE'
                 ? 'Mahasiswa Uptodate'
                 : peranKu === 'INTEL'
                 ? 'Mahasiswa Intel'
                 : 'Mahasiswa Biasa'}
             </h3>
-            <p className="text-slate-200 text-sm mt-2 leading-relaxed">
+            <p className="text-stone-700 text-sm mt-2 leading-relaxed">
               {peranKu === 'UPTODATE'
                 ? 'Kamu kebal terhadap ancaman nilai E pada malam pertama. Tunggu hingga pagi tiba untuk berdiskusi.'
                 : peranKu === 'INTEL'
@@ -69,14 +63,14 @@ export default function LayarMalam({ peranKu, isHidup, pemain, currentUser }) {
             </p>
           </div>
         ) : (
-          <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl max-h-[60vh] overflow-y-auto w-full text-left">
-            <p className="text-amber-400 font-bold text-xs font-mono uppercase tracking-wider mb-3">
+          <div className="bg-white border border-[#DED6C6] p-5 rounded-2xl max-h-[60vh] overflow-y-auto w-full text-left">
+            <p className="text-green-900 font-bold text-xs uppercase tracking-wide mb-3">
               {peranKu === 'DOSEN_KILLER' && 'Pilih Mahasiswa yang Akan Diberi Nilai E:'}
               {peranKu === 'AHLI' && 'Pilih Mahasiswa yang Ingin Diselamatkan Nilainya:'}
             </p>
 
             {pesanAksi ? (
-              <div className="bg-slate-900 p-4 rounded-xl border border-emerald-500/40 text-center text-emerald-300 font-mono text-sm">
+              <div className="bg-green-50 p-4 rounded-xl border border-green-300 text-center text-green-900 font-mono text-sm">
                 {pesanAksi}
               </div>
             ) : (
@@ -86,7 +80,7 @@ export default function LayarMalam({ peranKu, isHidup, pemain, currentUser }) {
                     key={t.nim}
                     type="button"
                     onClick={() => handleAksiMalam(t.nim, t.nama)}
-                    className="w-full min-h-[48px] bg-slate-900 hover:bg-slate-700 text-slate-100 font-bold py-3 px-4 rounded-xl text-sm text-left transition-colors border border-slate-700"
+                    className="w-full min-h-[48px] bg-[#FAF6EE] hover:bg-[#F3EDE0] text-stone-900 font-bold py-3 px-4 rounded-xl text-sm text-left transition-colors border border-[#DED6C6]"
                   >
                     {t.nama}
                   </button>

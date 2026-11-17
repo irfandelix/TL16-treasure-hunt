@@ -165,8 +165,8 @@ export default function FaceGame() {
 
   if (loading) {
     return (
-      <div className="text-center p-10 text-amber-400 font-mono flex flex-col items-center justify-center mt-16">
-        <div className="w-12 h-12 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin mb-4"></div>
+      <div className="text-center p-10 text-stone-700 font-mono flex flex-col items-center justify-center mt-16">
+        <div className="w-12 h-12 border-4 border-[#DED6C6] border-t-green-900 rounded-full animate-spin mb-4"></div>
         Menyiapkan Foto Kenangan...
       </div>
     );
@@ -174,13 +174,13 @@ export default function FaceGame() {
 
   if (errorMsg) {
     return (
-      <div role="alert" className="text-center p-8 bg-slate-800 rounded-2xl border border-rose-500/40 mt-10 shadow-md max-w-md mx-auto">
-        <h2 className="text-xl font-bold text-rose-400 mb-2">Gagal Memuat Permainan</h2>
-        <p className="text-slate-300 mb-6 text-sm">{errorMsg}</p>
+      <div role="alert" className="text-center p-8 bg-white rounded-2xl border border-rose-300 mt-10 max-w-md mx-auto">
+        <h2 className="text-xl font-bold text-rose-800 mb-2">Gagal Memuat Permainan</h2>
+        <p className="text-stone-600 mb-6 text-sm">{errorMsg}</p>
         <button
           type="button"
           onClick={initGame}
-          className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-6 py-3 min-h-[44px] rounded-xl transition-colors w-full"
+          className="bg-green-900 hover:bg-green-800 text-white font-bold px-6 py-3 min-h-[44px] rounded-xl transition-colors w-full"
         >
           Coba Lagi
         </button>
@@ -190,13 +190,10 @@ export default function FaceGame() {
   
   if (currentIndex >= 20) {
     return (
-      <div className="text-center p-8 md:p-10 bg-slate-800 rounded-2xl border border-emerald-500/50 shadow-md max-w-md mx-auto">
-        <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
-          Kuis Selesai
-        </p>
-        <h2 className="text-3xl font-bold text-white mb-3">Tebak Foto Selesai!</h2>
-        <p className="text-slate-300 mb-6">
-          Total skor kenangan kamu: <span className="text-emerald-400 font-mono font-bold text-2xl">{score}</span>
+      <div className="text-center p-8 md:p-10 bg-white rounded-2xl border border-[#DED6C6] max-w-md mx-auto">
+        <h2 className="text-3xl font-bold text-stone-900 mb-3">Tebak Foto Selesai!</h2>
+        <p className="text-stone-600 mb-6">
+          Total skor kenangan kamu: <span className="text-green-900 font-mono font-bold text-2xl">{score}</span>
         </p>
         
         <div className="flex flex-col gap-3">
@@ -207,12 +204,12 @@ export default function FaceGame() {
               localStorage.removeItem(`session_face_${userNim}`); 
               window.location.reload(); 
             }} 
-            className="bg-amber-400 hover:bg-amber-300 text-slate-950 px-8 py-3.5 min-h-[48px] rounded-xl font-bold transition-colors"
+            className="bg-green-900 hover:bg-green-800 text-white px-8 py-3.5 min-h-[48px] rounded-xl font-bold transition-colors"
           >
             Main Ulang Kuis Foto
           </button>
 
-          <a href="/" className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-700 border border-slate-600 px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-white transition-colors">
+          <a href="/" className="inline-flex items-center justify-center bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#DED6C6] px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-stone-800 transition-colors">
             Kembali ke Beranda
           </a>
         </div>
@@ -224,9 +221,9 @@ export default function FaceGame() {
 
   if (!currentPerson) {
     return (
-      <div className="text-center p-8 bg-slate-800 rounded-2xl border border-rose-500/40 mt-10 shadow-md max-w-md mx-auto">
-        <h2 className="text-2xl font-bold text-rose-400 mb-3">Sesi Kuis Perlu Dimuat Ulang</h2>
-        <p className="text-slate-300 mb-6 text-sm">
+      <div className="text-center p-8 bg-white rounded-2xl border border-rose-300 mt-10 max-w-md mx-auto">
+        <h2 className="text-2xl font-bold text-rose-800 mb-3">Sesi Kuis Perlu Dimuat Ulang</h2>
+        <p className="text-stone-600 mb-6 text-sm">
           Data sesi sebelumnya tidak lengkap. Klik tombol di bawah untuk menyegarkan sesi permainanmu.
         </p>
         <button 
@@ -236,7 +233,7 @@ export default function FaceGame() {
             localStorage.removeItem(`session_face_${userNim}`);
             window.location.reload();
           }} 
-          className="bg-amber-400 hover:bg-amber-300 text-slate-950 px-6 py-3.5 min-h-[48px] rounded-xl font-bold transition-colors w-full"
+          className="bg-green-900 hover:bg-green-800 text-white px-6 py-3.5 min-h-[48px] rounded-xl font-bold transition-colors w-full"
         >
           Muat Ulang Sesi
         </button>
@@ -245,24 +242,24 @@ export default function FaceGame() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-slate-800 rounded-2xl shadow-md border border-slate-700">
+    <div className="max-w-md mx-auto p-6 bg-white rounded-2xl border border-[#DED6C6]">
       <div className="flex justify-between items-center mb-4">
-        <span className="text-xs font-mono font-bold text-emerald-400 bg-slate-900 border border-emerald-500/30 px-3 py-1 rounded-lg">
+        <span className="text-xs font-mono font-bold text-green-900 bg-green-100 px-3 py-1 rounded-lg">
           Foto {currentIndex + 1} / 20
         </span>
-        <div className={`font-mono font-bold text-xl ${timeLeft <= 10 ? 'text-rose-400' : 'text-amber-400'}`}>
+        <div className={`font-mono font-bold text-xl ${timeLeft <= 10 ? 'text-rose-700' : 'text-amber-700'}`}>
           00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}
         </div>
       </div>
 
-      <div className="w-full bg-slate-900 h-2 rounded-full mb-6 overflow-hidden">
+      <div className="w-full bg-[#EDE6D8] h-2 rounded-full mb-6 overflow-hidden">
         <div 
-          className={`h-full transition-all duration-1000 ${timeLeft <= 10 ? 'bg-rose-500' : 'bg-emerald-500'}`}
+          className={`h-full transition-all duration-1000 ${timeLeft <= 10 ? 'bg-rose-600' : 'bg-green-800'}`}
           style={{ width: `${(timeLeft / 60) * 100}%` }}
         ></div>
       </div>
 
-      <div className="relative aspect-square mb-5 overflow-hidden rounded-xl border-2 border-slate-700 bg-slate-900">
+      <div className="relative aspect-square mb-5 overflow-hidden rounded-xl border border-[#DED6C6] bg-[#FAF6EE]">
         <img 
           src={`/2016/${currentPerson.nim}.webp`} 
           width="400"
@@ -271,15 +268,15 @@ export default function FaceGame() {
           alt={`Foto misteri alumni ke-${currentIndex + 1}`}
         />
         {timeLeft === 0 && !isRevealed && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/85 text-rose-400 font-bold text-2xl border-2 border-rose-500 m-8 rounded-xl">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/90 text-rose-800 font-bold text-2xl border-2 border-rose-400 m-8 rounded-xl">
             Waktu Habis!
           </div>
         )}
       </div>
 
-      <div className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 mb-6 text-center">
-        <p className="text-xs font-mono text-amber-400 uppercase font-bold mb-0.5">Petunjuk</p>
-        <p className="text-slate-200 text-sm">{currentPerson.hint || "Teman seangkatan Teknik Lingkungan 2016"}</p>
+      <div className="bg-[#FAF6EE] border border-[#DED6C6] rounded-xl px-4 py-3 mb-6 text-center">
+        <p className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-0.5">Petunjuk</p>
+        <p className="text-stone-700 text-sm">{currentPerson.hint || "Teman seangkatan Teknik Lingkungan 2016"}</p>
       </div>
 
       <div className="space-y-3">
@@ -289,7 +286,7 @@ export default function FaceGame() {
               key={idx}
               type="button"
               onClick={() => handleGuess(opt)}
-              className="w-full min-h-[48px] bg-slate-900 hover:bg-slate-700 border border-slate-600 hover:border-amber-400 py-3.5 px-4 rounded-xl font-bold text-white transition-colors text-base"
+              className="w-full min-h-[48px] bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#C7BDA8] hover:border-green-800 py-3.5 px-4 rounded-xl font-bold text-stone-900 transition-colors text-base"
             >
               {opt}
             </button>
@@ -298,20 +295,20 @@ export default function FaceGame() {
           <div className="space-y-4">
             <div className={`p-4 rounded-xl border text-center ${
               selectedAnswer === currentPerson.nama 
-                ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300' 
-                : 'bg-rose-950/60 border-rose-500/50 text-rose-300'
+                ? 'bg-green-50 border-green-300 text-green-900' 
+                : 'bg-rose-50 border-rose-300 text-rose-800'
             }`}>
-              <p className="text-xs font-mono font-bold mb-1 uppercase tracking-wider">
+              <p className="text-xs font-bold mb-1 uppercase tracking-wider">
                 {selectedAnswer === currentPerson.nama
                   ? `Tebakan Tepat! (+${lastPoints} Poin)`
                   : 'Belum Tepat / Waktu Habis'}
               </p>
-              <p className="font-bold text-xl text-white">{currentPerson.nama}</p>
+              <p className="font-bold text-xl text-stone-900">{currentPerson.nama}</p>
             </div>
             <button 
               type="button"
               onClick={nextPerson}
-              className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 py-3.5 px-6 rounded-xl font-bold transition-colors shadow-md"
+              className="w-full min-h-[48px] bg-green-900 hover:bg-green-800 text-white py-3.5 px-6 rounded-xl font-bold transition-colors"
             >
               Lanjut ke Foto Berikutnya ({currentIndex + 1 > 20 ? 20 : currentIndex + 1}/20)
             </button>

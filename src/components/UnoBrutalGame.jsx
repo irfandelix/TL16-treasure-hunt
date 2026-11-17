@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const CARD_COLORS = [
-  { name: 'Merah', bg: 'bg-rose-700', border: 'border-rose-400', text: 'text-white' },
+  { name: 'Merah', bg: 'bg-rose-700', border: 'border-rose-400', text: 'text-stone-900' },
   { name: 'Kuning', bg: 'bg-amber-400', border: 'border-amber-200', text: 'text-slate-950' },
-  { name: 'Hijau', bg: 'bg-emerald-700', border: 'border-emerald-400', text: 'text-white' },
-  { name: 'Biru', bg: 'bg-sky-700', border: 'border-sky-400', text: 'text-white' },
+  { name: 'Hijau', bg: 'bg-emerald-700', border: 'border-emerald-400', text: 'text-stone-900' },
+  { name: 'Biru', bg: 'bg-sky-700', border: 'border-sky-400', text: 'text-stone-900' },
 ];
 
 const CARD_VALUES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '+2', 'Skip', 'Titip Absen'];
@@ -337,29 +337,29 @@ export default function UnoBrutalGame() {
     return (
       <div className="max-w-4xl mx-auto pb-20">
         <div className="text-center mb-8">
-          <p className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
+          <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
             Permainan Kartu Seru
           </p>
-          <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight mb-2">
+          <h1 className="text-3xl md:text-5xl font-bold text-stone-900 tracking-tight mb-2">
             UNO Sedulur 16
           </h1>
-          <p className="text-slate-300 text-sm md:text-base">
+          <p className="text-stone-600 text-sm md:text-base">
             Adu cepat habiskan kartu bersama teman satu angkatan dengan kartu spesial ala kuliah.
           </p>
         </div>
 
         {errorMsg && (
-          <div role="alert" className="bg-rose-950/60 border border-rose-500/40 text-rose-300 p-4 rounded-xl mb-6 text-center font-semibold text-sm">
+          <div role="alert" className="bg-rose-50 border border-rose-500/40 text-rose-700 p-4 rounded-xl mb-6 text-center font-semibold text-sm">
             {errorMsg}
           </div>
         )}
 
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-slate-800 border border-slate-700 p-6 md:p-8 rounded-2xl shadow-md flex flex-col justify-between text-center">
+          <div className="bg-white border border-[#DED6C6] p-6 md:p-8 rounded-2xl shadow-md flex flex-col justify-between text-center">
             <div>
-              <p className="text-xs font-mono font-bold text-amber-400 uppercase mb-1">Pembuat Meja</p>
-              <h2 className="text-2xl font-bold text-white mb-2">Buka Meja Baru</h2>
-              <p className="text-slate-300 text-sm mb-6">
+              <p className="text-xs font-mono font-bold text-amber-700 uppercase mb-1">Pembuat Meja</p>
+              <h2 className="text-2xl font-bold text-stone-900 mb-2">Buka Meja Baru</h2>
+              <p className="text-stone-600 text-sm mb-6">
                 Buat kode meja 4 karakter dan ajak teman-teman Sedulur 16 bergabung.
               </p>
             </div>
@@ -373,11 +373,11 @@ export default function UnoBrutalGame() {
             </button>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 p-6 md:p-8 rounded-2xl shadow-md flex flex-col justify-between text-center">
+          <div className="bg-white border border-[#DED6C6] p-6 md:p-8 rounded-2xl shadow-md flex flex-col justify-between text-center">
             <div>
-              <p className="text-xs font-mono font-bold text-emerald-400 uppercase mb-1">Pemain Tamu</p>
-              <h2 className="text-2xl font-bold text-white mb-2">Gabung ke Meja</h2>
-              <p className="text-slate-300 text-sm mb-4">
+              <p className="text-xs font-mono font-bold text-green-800 uppercase mb-1">Pemain Tamu</p>
+              <h2 className="text-2xl font-bold text-stone-900 mb-2">Gabung ke Meja</h2>
+              <p className="text-stone-600 text-sm mb-4">
                 Masukkan 4 karakter kode meja yang dibagikan oleh temanmu.
               </p>
             </div>
@@ -392,7 +392,7 @@ export default function UnoBrutalGame() {
                 onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                 placeholder="KODE 4 DIGIT"
                 maxLength={4}
-                className="w-full bg-slate-900 border border-slate-600 rounded-xl p-3.5 text-center text-xl font-mono font-bold text-white tracking-widest focus:border-amber-400 placeholder:text-slate-400 placeholder:font-sans placeholder:text-sm placeholder:tracking-normal uppercase"
+                className="w-full bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl p-3.5 text-center text-xl font-mono font-bold text-stone-900 tracking-widest focus:border-amber-400 placeholder:text-stone-500 placeholder:font-sans placeholder:text-sm placeholder:tracking-normal uppercase"
               />
               <button 
                 type="submit"
@@ -405,26 +405,26 @@ export default function UnoBrutalGame() {
           </div>
         </div>
         
-        <div className="mt-8 bg-slate-800 border border-slate-700 rounded-2xl p-6">
-          <h3 className="text-amber-400 font-bold mb-4 text-base">
+        <div className="mt-8 bg-white border border-[#DED6C6] rounded-2xl p-6">
+          <h3 className="text-amber-700 font-bold mb-4 text-base">
             Aturan Seru UNO Sedulur 16
           </h3>
           <div className="grid sm:grid-cols-3 gap-4 text-sm">
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-700">
-              <h4 className="font-bold text-white mb-1">Tumpuk Kartu +2</h4>
-              <p className="text-slate-300 text-xs leading-relaxed">
+            <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
+              <h4 className="font-bold text-stone-900 mb-1">Tumpuk Kartu +2</h4>
+              <p className="text-stone-600 text-xs leading-relaxed">
                 Kartu +2 dapat ditumpuk dengan kartu +2 lainnya agar giliran berikutnya menarik lebih banyak kartu.
               </p>
             </div>
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-700">
-              <h4 className="font-bold text-white mb-1">Cocok Warna atau Angka</h4>
-              <p className="text-slate-300 text-xs leading-relaxed">
+            <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
+              <h4 className="font-bold text-stone-900 mb-1">Cocok Warna atau Angka</h4>
+              <p className="text-stone-600 text-xs leading-relaxed">
                 Keluarkan kartu yang memiliki warna atau nilai yang sama dengan kartu teratas di meja.
               </p>
             </div>
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-700">
-              <h4 className="font-bold text-white mb-1">Kartu Titip Absen</h4>
-              <p className="text-slate-300 text-xs leading-relaxed">
+            <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
+              <h4 className="font-bold text-stone-900 mb-1">Kartu Titip Absen</h4>
+              <p className="text-stone-600 text-xs leading-relaxed">
                 Kartu bebas (Wild) khas anak kuliah yang dapat dimainkan di atas warna kartu apa saja.
               </p>
             </div>
@@ -437,31 +437,31 @@ export default function UnoBrutalGame() {
   const isHost = players.find(p => p.nim === user?.nim)?.is_host;
 
   return (
-    <div className="max-w-5xl mx-auto min-h-[75vh] flex flex-col bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-md relative">
+    <div className="max-w-5xl mx-auto min-h-[75vh] flex flex-col bg-white border border-[#DED6C6] rounded-2xl overflow-hidden shadow-md relative">
       
-      <div className="bg-slate-900 p-4 border-b border-slate-700 flex flex-wrap justify-between items-center gap-3 z-20">
+      <div className="bg-[#FAF6EE] p-4 border-b border-[#DED6C6] flex flex-wrap justify-between items-center gap-3 z-20">
         <div className="flex items-center gap-3">
-          <span className="text-amber-400 font-bold text-lg">UNO Sedulur 16</span>
-          <span className="bg-slate-800 text-slate-200 px-3 py-1 rounded-lg font-mono text-sm font-bold border border-slate-700">
-            Meja: <span className="text-amber-400">{currentRoom}</span>
+          <span className="text-amber-700 font-bold text-lg">UNO Sedulur 16</span>
+          <span className="bg-white text-stone-800 px-3 py-1 rounded-lg font-mono text-sm font-bold border border-[#DED6C6]">
+            Meja: <span className="text-amber-700">{currentRoom}</span>
           </span>
         </div>
         <button
           type="button"
           onClick={leaveRoom}
-          className="text-xs bg-slate-800 text-slate-200 border border-slate-600 hover:bg-rose-700 hover:text-white hover:border-rose-600 px-4 py-2 min-h-[44px] rounded-xl transition-colors font-bold"
+          className="text-xs bg-white text-stone-800 border border-[#C7BDA8] hover:bg-rose-700 hover:text-white hover:border-rose-600 px-4 py-2 min-h-[44px] rounded-xl transition-colors font-bold"
         >
           Keluar Meja
         </button>
       </div>
 
       {errorMsg && (
-        <div role="alert" className="m-4 p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center">
+        <div role="alert" className="m-4 p-3 rounded-xl bg-rose-50 border border-rose-500/40 text-rose-700 text-xs font-semibold text-center">
           {errorMsg}
         </div>
       )}
 
-      <div className="flex-1 p-6 flex flex-col justify-between bg-slate-900/50 gap-6">
+      <div className="flex-1 p-6 flex flex-col justify-between bg-[#FAF6EE] gap-6">
         
         <div className="flex flex-wrap gap-3">
           {players.map((p) => {
@@ -470,20 +470,20 @@ export default function UnoBrutalGame() {
             return (
               <div
                 key={p.nim}
-                className={`bg-slate-800 border px-4 py-2.5 rounded-xl flex flex-col items-center min-w-[110px] shadow-sm transition-colors ${
-                  isPlayerTurn ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-slate-700'
+                className={`bg-white border px-4 py-2.5 rounded-xl flex flex-col items-center min-w-[110px] shadow-sm transition-colors ${
+                  isPlayerTurn ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-[#DED6C6]'
                 }`}
               >
-                <span className="text-xs font-mono text-amber-400 mb-0.5">
+                <span className="text-xs font-mono text-amber-700 mb-0.5">
                   {p.is_host ? 'Host Meja' : 'Pemain'}
                 </span>
-                <span className="font-bold text-white text-sm truncate max-w-[140px]">
+                <span className="font-bold text-stone-900 text-sm truncate max-w-[140px]">
                   {p.nama.split(' ')[0]} {p.nim === user?.nim ? '(Kamu)' : ''}
                 </span>
                 <span className={`mt-1 text-xs font-mono px-2 py-0.5 rounded border ${
                   isPlayerTurn
                     ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold'
-                    : 'text-emerald-300 bg-slate-900 border-emerald-500/30'
+                    : 'text-green-900 bg-[#FAF6EE] border-emerald-500/30'
                 }`}>
                   {roomStatus === 'playing'
                     ? `${cardCount} Kartu${isPlayerTurn ? ' • Giliran' : ''}`
@@ -502,10 +502,10 @@ export default function UnoBrutalGame() {
               type="button"
               onClick={roomStatus === 'playing' ? handleDrawCard : undefined}
               disabled={roomStatus !== 'playing' || (currentTurn && currentTurn !== user?.nim)}
-              className="w-28 h-40 bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 rounded-xl shadow-md flex flex-col items-center justify-center p-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-28 h-40 bg-white hover:bg-[#F3EDE0] border-2 border-[#C7BDA8] rounded-xl shadow-md flex flex-col items-center justify-center p-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <span className="text-amber-400 font-bold text-lg">AMBIL</span>
-              <span className="text-slate-300 text-xs font-mono mt-1">Tumpukan Kartu</span>
+              <span className="text-amber-700 font-bold text-lg">AMBIL</span>
+              <span className="text-stone-600 text-xs font-mono mt-1">Tumpukan Kartu</span>
             </button>
 
             {roomStatus === 'playing' || roomStatus === 'finished' ? (
@@ -515,8 +515,8 @@ export default function UnoBrutalGame() {
                 <span className="text-xs font-mono font-bold self-end">TL16</span>
               </div>
             ) : (
-              <div className="w-28 h-40 bg-slate-800 border-2 border-slate-700 border-dashed rounded-xl flex items-center justify-center p-3">
-                <span className="text-slate-300 text-xs text-center font-mono">
+              <div className="w-28 h-40 bg-white border-2 border-[#DED6C6] border-dashed rounded-xl flex items-center justify-center p-3">
+                <span className="text-stone-600 text-xs text-center font-mono">
                   Menunggu Permainan Dimulai
                 </span>
               </div>
@@ -524,7 +524,7 @@ export default function UnoBrutalGame() {
           </div>
 
           {statusNotice && (
-            <p className="mt-4 text-sm text-amber-300 font-medium text-center bg-slate-800 border border-slate-700 px-4 py-2 rounded-xl">
+            <p className="mt-4 text-sm text-amber-800 font-medium text-center bg-white border border-[#DED6C6] px-4 py-2 rounded-xl">
               {statusNotice}
             </p>
           )}
@@ -542,23 +542,23 @@ export default function UnoBrutalGame() {
                 >
                   {loading ? 'Memulai Permainan...' : 'Mulai Permainan Kartu'}
                 </button>
-                <p className="text-slate-300 text-xs text-center mt-2 font-mono">
+                <p className="text-stone-600 text-xs text-center mt-2 font-mono">
                   Minimal 2 pemain di dalam meja untuk memulai ({players.length} pemain hadir)
                 </p>
               </>
             ) : (
-              <p className="text-slate-300 text-sm font-mono text-center">
+              <p className="text-stone-600 text-sm font-mono text-center">
                 Menunggu Host memulai permainan...
               </p>
             )}
           </div>
         ) : roomStatus === 'finished' ? (
-          <div className="bg-slate-800 border border-emerald-500/50 rounded-xl p-6 text-center">
-            <h2 className="text-2xl font-bold text-emerald-400 mb-2">
+          <div className="bg-white border border-emerald-500/50 rounded-xl p-6 text-center">
+            <h2 className="text-2xl font-bold text-green-800 mb-2">
               Permainan Selesai!
             </h2>
-            <p className="text-slate-200 text-sm mb-4">
-              Pemenang putaran ini: <strong className="text-amber-400">{players.find((p) => (Array.isArray(p.hand) && p.hand.length === 0) || p.nim === currentTurn)?.nama || 'Sedulur 16'}</strong>
+            <p className="text-stone-800 text-sm mb-4">
+              Pemenang putaran ini: <strong className="text-amber-700">{players.find((p) => (Array.isArray(p.hand) && p.hand.length === 0) || p.nim === currentTurn)?.nama || 'Sedulur 16'}</strong>
             </p>
             {isHost && (
               <button
@@ -572,16 +572,16 @@ export default function UnoBrutalGame() {
             )}
           </div>
         ) : (
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+          <div className="bg-white border border-[#DED6C6] rounded-xl p-4">
             <div className="flex justify-between items-center mb-3">
-              <h2 className="text-sm font-bold text-white">
-                Kartu di Tanganmu ({myHand.length}) {currentTurn === user?.nim ? <span className="text-amber-400 ml-2">• Giliran Kamu!</span> : ''}
+              <h2 className="text-sm font-bold text-stone-900">
+                Kartu di Tanganmu ({myHand.length}) {currentTurn === user?.nim ? <span className="text-amber-700 ml-2">• Giliran Kamu!</span> : ''}
               </h2>
               <button
                 type="button"
                 onClick={handleDrawCard}
                 disabled={currentTurn && currentTurn !== user?.nim}
-                className="text-xs font-bold bg-slate-900 hover:bg-slate-700 text-amber-400 border border-slate-600 px-3 py-2 min-h-[44px] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-xs font-bold bg-[#FAF6EE] hover:bg-[#F3EDE0] text-amber-700 border border-[#C7BDA8] px-3 py-2 min-h-[44px] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 + Ambil 1 Kartu
               </button>

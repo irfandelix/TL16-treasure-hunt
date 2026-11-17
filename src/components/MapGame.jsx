@@ -64,15 +64,15 @@ export default function MapGame() {
   const centerMap = locationsData[0]?.kordinat || [-7.7694, 110.3777];
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 bg-slate-800 rounded-2xl shadow-md border border-slate-700">
+    <div className="max-w-4xl mx-auto p-4 md:p-6 bg-white rounded-2xl border border-[#DED6C6]">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-2xl font-bold text-amber-400">Napak Tilas TL 2016</h2>
-          <p className="text-slate-300 text-sm">Klik pin di peta dan tebak nama lokasinya!</p>
+          <h2 className="text-2xl font-bold text-stone-900">Napak Tilas TL 2016</h2>
+          <p className="text-stone-600 text-sm">Klik pin di peta dan tebak nama lokasinya!</p>
         </div>
-        <div className="bg-slate-900 px-5 py-3 rounded-xl border border-emerald-500/30">
-          <span className="text-slate-300 text-xs font-mono font-bold block">SKOR PETA</span>
-          <span className="text-2xl font-mono font-bold text-emerald-400">{score} / {locationsData.length}</span>
+        <div className="bg-[#FAF6EE] px-5 py-3 rounded-xl border border-[#DED6C6]">
+          <span className="text-stone-600 text-xs font-mono font-bold block">SKOR PETA</span>
+          <span className="text-2xl font-mono font-bold text-green-900">{score} / {locationsData.length}</span>
         </div>
       </div>
 
@@ -81,8 +81,8 @@ export default function MapGame() {
           role={feedback.type === 'error' ? 'alert' : 'status'}
           className={`mb-4 p-3.5 rounded-xl border text-sm font-medium flex items-center justify-between gap-3 ${
             feedback.type === 'success'
-              ? 'bg-emerald-950/70 border-emerald-500/50 text-emerald-200'
-              : 'bg-rose-950/70 border-rose-500/50 text-rose-200'
+              ? 'bg-green-50 border-green-300 text-green-900'
+              : 'bg-rose-50 border-rose-300 text-rose-800'
           }`}
         >
           <span>{feedback.text}</span>
@@ -90,18 +90,18 @@ export default function MapGame() {
             type="button"
             onClick={() => setFeedback(null)}
             aria-label="Tutup notifikasi"
-            className="min-w-[36px] min-h-[36px] rounded-lg bg-slate-900/70 hover:bg-slate-900 text-slate-200 text-xs font-bold px-2"
+            className="min-w-[36px] min-h-[36px] rounded-lg bg-white hover:bg-stone-100 text-stone-800 text-xs font-bold px-2 border border-[#DED6C6]"
           >
             Tutup
           </button>
         </div>
       )}
 
-      <div className="h-[500px] w-full rounded-xl overflow-hidden border-2 border-slate-700 relative z-0">
+      <div className="h-[500px] w-full rounded-xl overflow-hidden border border-[#DED6C6] relative z-0">
         <MapContainer center={centerMap} zoom={16} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           />
 
           {locationsData.map((loc) => {
