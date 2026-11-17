@@ -58,7 +58,30 @@ export default function DosenKillerGame() {
   }, [showAdminWarning]);
 
   useEffect(() => {
+    if (!currentUser.nim) return;
+    const savedDkRoom = localStorage.getItem(`dk_room_${currentUser.nim}`);
+    if (savedDkRoom && !isInRoom) {
+      supabase
+        .from('dosen_killer_state')
+        .select('room_code')
+        .eq('room_code', savedDkRoom)
+        .single()
+        .then(({ data }) => {
+          if (data?.room_code) {
+            setRoomCode(data.room_code);
+            setIsInRoom(true);
+          } else {
+            localStorage.removeItem(`dk_room_${currentUser.nim}`);
+          }
+        });
+    }
+  }, []);
+
+  useEffect(() => {
     if (!isInRoom || !roomCode) return;
+    if (currentUser.nim) {
+      localStorage.setItem(`dk_room_${currentUser.nim}`, roomCode);
+    }
 
     if (currentUser.isAdmin) {
       setShowAdminWarning(true);

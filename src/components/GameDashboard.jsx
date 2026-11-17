@@ -92,9 +92,25 @@ export default function GameDashboard() {
 
     if (savedNim) {
       setUser({ nim: savedNim, nama: savedNama, is_admin: isAdmin });
+      const savedView = localStorage.getItem(`active_view_${savedNim}`);
+      const allowedViews = ['dashboard', 'map', 'face', 'kapsul', 'wheel', 'monopoli', 'dosenkiller', 'unobrutal', 'updates', 'admin'];
+      if (savedView && allowedViews.includes(savedView)) {
+        if (savedView !== 'admin' || isAdmin) {
+          setActiveView(savedView);
+        }
+      }
     }
     setIsChecking(false);
   }, []);
+
+  useEffect(() => {
+    if (!user?.nim) return;
+    if (activeView === 'dashboard') {
+      localStorage.removeItem(`active_view_${user.nim}`);
+    } else {
+      localStorage.setItem(`active_view_${user.nim}`, activeView);
+    }
+  }, [activeView, user?.nim]);
 
   const closeAnniversary = () => {
     setShowAnniversary(false);

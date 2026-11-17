@@ -177,6 +177,38 @@ export default function MonopoliBoard() {
             [{ nim: user.nim, nama: user.nama, points: currentPts }],
             { onConflict: 'nim' }
           );
+
+          const savedRoomId = localStorage.getItem(`monopoli_room_${user.nim}`);
+          if (savedRoomId) {
+            const { data: savedRoom } = await supabase
+              .from('monopoli_rooms')
+              .select('*')
+              .eq('id', savedRoomId)
+              .single();
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+            if (savedRoom && new Date(savedRoom.last_active) >= oneHourAgo) {
+              const { data: inRoomPlayer } = await supabase
+                .from('monopoli_players')
+                .select('*')
+                .match({ room_id: savedRoomId, nim: user.nim })
+                .single();
+              if (inRoomPlayer) {
+                hasSelectedColor.current = Boolean(inRoomPlayer.color);
+                setCurrentRoom(savedRoom);
+                setAppState(
+                  savedRoom.status === 'finished'
+                    ? 'result'
+                    : savedRoom.status === 'playing'
+                    ? 'game'
+                    : 'room'
+                );
+              } else {
+                localStorage.removeItem(`monopoli_room_${user.nim}`);
+              }
+            } else {
+              localStorage.removeItem(`monopoli_room_${user.nim}`);
+            }
+          }
         } else {
           alert("NIM tidak ditemukan di database alumni!");
         }
@@ -311,6 +343,7 @@ export default function MonopoliBoard() {
     }
 
     setSelectedInfo(null);
+    localStorage.setItem(`monopoli_room_${currentUser.nim}`, rCode);
     setCurrentRoom(room);
     setAppState(room.status === 'playing' ? 'game' : 'room');
   };
@@ -324,6 +357,9 @@ export default function MonopoliBoard() {
   const exitGame = async () => {
     hasSelectedColor.current = false;
     setSelectedInfo(null);
+    if (currentUser.nim) {
+      localStorage.removeItem(`monopoli_room_${currentUser.nim}`);
+    }
 
     if (!currentRoom) {
       setAppState('lobby');

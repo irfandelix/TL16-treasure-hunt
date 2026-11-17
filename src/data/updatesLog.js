@@ -1,5 +1,23 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-014',
+    date: '17 November 2026',
+    version: 'v2.4.5',
+    category: 'Fitur Baru',
+    title: 'Pertahankan Halaman & Ruangan Permainan Saat Refresh',
+    commit: 'latest',
+    summary: 'Menjaga pemain tetap berada di permainan dan ruangan yang sedang dimainkan ketika halaman di-refresh, tanpa kembali ke dashboard utama.',
+    changes: [
+      'Menyimpan tampilan aktif (activeView) per NIM di localStorage sehingga refresh di tengah kuis atau permainan tetap membuka permainan tersebut.',
+      'Menyimpan ID ruangan aktif pada Monopoli TL16, Sidang Dosen Killer, dan UNO Sedulur 16 agar pemain otomatis masuk kembali ke ruangannya setelah refresh.',
+      'Membersihkan status ruangan secara otomatis saat pemain menekan tombol Keluar atau kembali ke beranda.'
+    ],
+    docs: {
+      files: ['src/components/GameDashboard.jsx', 'src/components/MonopoliBoard.jsx', 'src/components/DosenKillerGame.jsx', 'src/components/UnoBrutalGame.jsx'],
+      notes: 'Menggunakan key active_view_{nim}, monopoli_room_{nim}, dk_room_{nim}, dan uno_room_{nim} di localStorage dengan validasi status ruangan ke Supabase saat komponen dimuat.'
+    }
+  },
+  {
     id: 'upd-013',
     date: '17 November 2026',
     version: 'v2.4.4',

@@ -36,6 +36,21 @@ export default function UnoBrutalGame() {
     const nama = localStorage.getItem('user_nama');
     if (nim && nama) {
       setUser({ nim, nama });
+      const savedUnoRoom = localStorage.getItem(`uno_room_${nim}`);
+      if (savedUnoRoom) {
+        supabase
+          .from('uno_players')
+          .select('room_code')
+          .match({ room_code: savedUnoRoom, nim })
+          .single()
+          .then(({ data }) => {
+            if (data?.room_code) {
+              setCurrentRoom(data.room_code);
+            } else {
+              localStorage.removeItem(`uno_room_${nim}`);
+            }
+          });
+      }
     }
   }, []);
 
@@ -122,6 +137,7 @@ export default function UnoBrutalGame() {
         .insert([{ room_code: code, nim: user.nim, nama: user.nama, is_host: true, hand: [] }]);
       if (playerError) throw playerError;
 
+      localStorage.setItem(`uno_room_${user.nim}`, code);
       setRoomStatus('waiting');
       setCurrentRoom(code);
     } catch (err) {
@@ -154,6 +170,7 @@ export default function UnoBrutalGame() {
 
       if (playerError && playerError.code !== '23505') throw playerError;
 
+      localStorage.setItem(`uno_room_${user.nim}`, roomCode);
       setRoomStatus(roomData.status);
       setCurrentRoom(roomCode);
     } catch (err) {
@@ -323,6 +340,7 @@ export default function UnoBrutalGame() {
   const leaveRoom = async () => {
     if (currentRoom && user) {
       await supabase.from('uno_players').delete().match({ room_code: currentRoom, nim: user.nim });
+      localStorage.removeItem(`uno_room_${user.nim}`);
     }
     setCurrentRoom(null);
     setRoomStatus('waiting');
