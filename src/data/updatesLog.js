@@ -1,5 +1,22 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-012',
+    date: '17 November 2026',
+    version: 'v2.4.3',
+    category: 'Fitur Baru',
+    title: 'Pembersihan Otomatis Riwayat Ruangan Monopoli Setelah 30 Menit',
+    commit: 'latest',
+    summary: 'Menghapus data riwayat permainan Monopoli yang telah selesai setelah 30 menit tanpa menghapus perolehan poin pemain di klasemen.',
+    changes: [
+      'Menghapus otomatis data ruangan, posisi pemain, dan kepemilikan properti di tabel monopoli_rooms, monopoli_players, dan monopoli_properties 30 menit setelah permainan selesai.',
+      'Menjaga skor kemenangan tetap tersimpan permanen pada alumni.skor_monopoli dan monopoli_users.points.'
+    ],
+    docs: {
+      files: ['src/components/MonopoliBoard.jsx'],
+      notes: 'Menggunakan fungsi cleanupExpiredFinishedRooms saat lobi dibuka/disegarkan serta timer 30 menit pada layar hasil akhir (appState === result).'
+    }
+  },
+  {
     id: 'upd-011',
     date: '17 November 2026',
     version: 'v2.4.2',

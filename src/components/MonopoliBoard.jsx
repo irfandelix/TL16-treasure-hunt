@@ -152,8 +152,26 @@ export default function MonopoliBoard() {
     initUser();
   }, []);
 
+  const cleanupExpiredFinishedRooms = useCallback(async () => {
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const { data: expiredRooms } = await supabase
+      .from('monopoli_rooms')
+      .select('id')
+      .eq('status', 'finished')
+      .lt('last_active', thirtyMinutesAgo);
+
+    if (expiredRooms && expiredRooms.length > 0) {
+      const expiredIds = expiredRooms.map(r => r.id);
+      await supabase.from('monopoli_properties').delete().in('room_id', expiredIds);
+      await supabase.from('monopoli_players').delete().in('room_id', expiredIds);
+      await supabase.from('monopoli_rooms').delete().in('id', expiredIds);
+    }
+  }, []);
+
   const fetchActiveRooms = useCallback(async () => {
     setLoadingRooms(true);
+    await cleanupExpiredFinishedRooms();
+
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { data: roomsData } = await supabase
       .from('monopoli_rooms')
@@ -178,7 +196,27 @@ export default function MonopoliBoard() {
       setActiveRooms([]);
     }
     setLoadingRooms(false);
-  }, []);
+  }, [cleanupExpiredFinishedRooms]);
+
+  useEffect(() => {
+    if (appState !== 'result' || !currentRoom?.id) return;
+    const finishedAt = currentRoom.last_active ? new Date(currentRoom.last_active).getTime() : Date.now();
+    const remainingMs = Math.max(0, finishedAt + 30 * 60 * 1000 - Date.now());
+
+    const timer = setTimeout(async () => {
+      const roomId = currentRoom.id;
+      await supabase.from('monopoli_properties').delete().eq('room_id', roomId);
+      await supabase.from('monopoli_players').delete().eq('room_id', roomId);
+      await supabase.from('monopoli_rooms').delete().eq('id', roomId);
+      setAppState('lobby');
+      setCurrentRoom(null);
+      setMyState(null);
+      setPlayers([]);
+      setProperties([]);
+    }, remainingMs);
+
+    return () => clearTimeout(timer);
+  }, [appState, currentRoom?.id, currentRoom?.last_active]);
 
   useEffect(() => {
     if (appState !== 'lobby') return;
@@ -900,6 +938,10 @@ export default function MonopoliBoard() {
             ))}
           </div>
           
+          <p className="text-xs text-stone-600 mb-4 leading-relaxed">
+            Poin permainan sudah tersimpan permanen ke klasemen. Riwayat ruangan ini akan dihapus otomatis setelah 30 menit.
+          </p>
+
           <button
             type="button"
             onClick={exitGame}
