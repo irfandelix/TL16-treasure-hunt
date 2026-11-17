@@ -25,6 +25,7 @@ export default function DosenKillerGame() {
   const [chatInput, setChatInput] = useState('');
   const [isDkChatCollapsed, setIsDkChatCollapsed] = useState(false);
   const [isIntelCollapsed, setIsIntelCollapsed] = useState(false);
+  const [lobbyError, setLobbyError] = useState('');
   const chatEndRef = useRef(null);
 
   const dbStateRef = useRef(null);
@@ -318,21 +319,23 @@ export default function DosenKillerGame() {
   }, [isInRoom, roomCode, faseGame]);
 
   const handleCreateRoom = async () => {
+    setLobbyError('');
     const kodeBaru = `DK-${Math.floor(100 + Math.random() * 900)}`;
     const { error } = await supabase.from('dosen_killer_state').insert([{
       room_code: kodeBaru, fase_game: 'LOBBY', pesan_pengumuman: 'Kelas baru dibuat.'
     }]);
 
     if (!error) { setRoomCode(kodeBaru); setIsInRoom(true); } 
-    else alert("Gagal membuat kelas baru. Silakan coba lagi.");
+    else setLobbyError("Gagal membuat kelas baru. Silakan coba lagi.");
   };
 
   const handleJoinRoom = async () => {
+    setLobbyError('');
     const kodeBersih = inputRoomCode.trim().toUpperCase();
-    if (!kodeBersih) return alert("Masukkan kode kelas terlebih dahulu!");
+    if (!kodeBersih) return setLobbyError("Masukkan kode kelas terlebih dahulu!");
     const { data } = await supabase.from('dosen_killer_state').select('*').eq('room_code', kodeBersih).single();
     if (data) { setRoomCode(kodeBersih); setIsInRoom(true); } 
-    else alert("Kode kelas tidak ditemukan.");
+    else setLobbyError("Kode kelas tidak ditemukan.");
   };
 
   const mulaiGame = async () => {
@@ -380,6 +383,12 @@ export default function DosenKillerGame() {
         <p className="text-sm text-slate-300 mb-6">
           Buka ruang kelas baru atau gabung ke kelas yang sudah dibuat temanmu.
         </p>
+
+        {lobbyError && (
+          <div role="alert" className="mb-4 p-3 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-200 text-xs font-medium">
+            {lobbyError}
+          </div>
+        )}
 
         <div className="space-y-4">
           <button

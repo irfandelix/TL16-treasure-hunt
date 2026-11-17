@@ -97,6 +97,7 @@ export default function MonopoliBoard() {
   const [activeProp, setActiveProp] = useState(null);
   const [showColorModal, setShowColorModal] = useState(false);
   const [selectedInfo, setSelectedInfo] = useState(null);
+  const [isBoardZoomed, setIsBoardZoomed] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -847,9 +848,19 @@ export default function MonopoliBoard() {
       </div>
 
       <div className="w-full max-w-[600px] mx-auto pb-3">
-        <div className="relative w-full aspect-square bg-slate-950 p-1 rounded-2xl border border-slate-700 shadow-inner">
+        <div className="flex justify-end mb-2 md:hidden">
+          <button
+            type="button"
+            onClick={() => setIsBoardZoomed(prev => !prev)}
+            className="min-h-[44px] px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-mono font-bold text-amber-300 transition-colors"
+          >
+            {isBoardZoomed ? 'Ukuran Papan Normal' : 'Perbesar Papan (Sentuh Mudah)'}
+          </button>
+        </div>
+        <div className={isBoardZoomed ? 'overflow-x-auto pb-2 rounded-2xl' : ''}>
+          <div className={`relative aspect-square bg-slate-950 p-1 rounded-2xl border border-slate-700 shadow-inner ${isBoardZoomed ? 'min-w-[540px] w-[540px]' : 'w-full'}`}>
 
-          <div className="grid grid-cols-11 grid-rows-11 h-full w-full gap-[1px]">
+            <div className="grid grid-cols-11 grid-rows-11 h-full w-full gap-[1px]">
             {BOARD_DATA.map((tile) => {
               let area;
               if (tile.id===0)        area='11/11';
@@ -894,7 +905,7 @@ export default function MonopoliBoard() {
                     <div
                       className="text-white font-semibold text-center leading-tight overflow-hidden"
                       style={{
-                        fontSize: isCorner ? '6.5px' : '5.5px',
+                        fontSize: isBoardZoomed ? (isCorner ? '9px' : '8px') : (isCorner ? '6.5px' : '5.5px'),
                         lineHeight: 1.1,
                         wordBreak: 'break-word',
                         hyphens: 'auto',
@@ -994,6 +1005,7 @@ export default function MonopoliBoard() {
             )}
           </div>
 
+        </div>
         </div>
       </div>
 

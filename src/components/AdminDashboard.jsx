@@ -17,6 +17,8 @@ export default function AdminDashboard({ onBack }) {
   const [newNoteTag, setNewNoteTag] = useState('[SYS]');
   const [newNoteText, setNewNoteText] = useState('');
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
+  const [noteError, setNoteError] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const fetchSettings = async () => {
     setIsLoading(true);
@@ -112,27 +114,28 @@ export default function AdminDashboard({ onBack }) {
     const updatedNotes = [newNote, ...patchNotes]; 
 
     try {
+      setNoteError('');
       const { error } = await supabase.from('app_settings').update({ patch_notes: updatedNotes }).eq('id', 1);
       if (error) throw error;
       setPatchNotes(updatedNotes);
       setNewNoteText('');
     } catch (err) {
-      alert("Gagal menyimpan catatan!");
+      setNoteError("Gagal menyimpan catatan pembaruan. Coba lagi.");
     } finally {
       setIsSubmittingNote(false);
     }
   };
 
   const handleDeleteNote = async (idToRemove) => {
-    const confirmDelete = window.confirm("Hapus catatan ini dari daftar?");
-    if (!confirmDelete) return;
-
     const updatedNotes = patchNotes.filter(n => n.id !== idToRemove);
     try {
-      await supabase.from('app_settings').update({ patch_notes: updatedNotes }).eq('id', 1);
+      setNoteError('');
+      const { error } = await supabase.from('app_settings').update({ patch_notes: updatedNotes }).eq('id', 1);
+      if (error) throw error;
       setPatchNotes(updatedNotes);
+      setConfirmDeleteId(null);
     } catch (err) {
-      alert("Gagal menghapus catatan!");
+      setNoteError("Gagal menghapus catatan. Coba lagi.");
     }
   };
 
@@ -204,6 +207,11 @@ export default function AdminDashboard({ onBack }) {
                   Tambah Catatan Pembaruan
                 </h2>
                 <form onSubmit={handleAddNote} className="flex flex-col gap-3">
+                  {noteError && (
+                    <div role="alert" className="p-3 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-200 text-xs font-medium">
+                      {noteError}
+                    </div>
+                  )}
                   <div className="flex flex-col sm:flex-row gap-3">
                     <div>
                       <label htmlFor="note-tag-select" className="sr-only">Kategori Catatan</label>
@@ -255,14 +263,33 @@ export default function AdminDashboard({ onBack }) {
                     <div key={note.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700">
                       <div className="flex justify-between items-center gap-2 mb-2">
                         <span className="text-xs font-mono text-slate-300">{note.date}</span>
-                        <button 
-                          type="button"
-                          onClick={() => handleDeleteNote(note.id)}
-                          aria-label={`Hapus catatan ${note.text}`}
-                          className="text-xs font-bold text-rose-300 hover:text-white bg-rose-950/60 hover:bg-rose-700 border border-rose-500/30 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-lg transition-colors"
-                        >
-                          Hapus
-                        </button>
+                        {confirmDeleteId === note.id ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteNote(note.id)}
+                              className="text-xs font-bold text-white bg-rose-700 hover:bg-rose-600 px-3 py-1.5 min-h-[44px] rounded-lg transition-colors"
+                            >
+                              Ya, Hapus
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="text-xs font-bold text-slate-200 bg-slate-700 hover:bg-slate-600 px-3 py-1.5 min-h-[44px] rounded-lg transition-colors"
+                            >
+                              Batal
+                            </button>
+                          </div>
+                        ) : (
+                          <button 
+                            type="button"
+                            onClick={() => setConfirmDeleteId(note.id)}
+                            aria-label={`Hapus catatan ${note.text}`}
+                            className="text-xs font-bold text-rose-300 hover:text-white bg-rose-950/60 hover:bg-rose-700 border border-rose-500/30 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-lg transition-colors"
+                          >
+                            Hapus
+                          </button>
+                        )}
                       </div>
                       <p className="text-sm text-slate-100 leading-relaxed">
                         <span className="font-mono font-bold text-amber-400 mr-2">{note.tag}</span>
