@@ -13,6 +13,7 @@ const WheelOfFamily = lazy(() => import('./WheelOfFamily'));
 const MonopoliBoard = lazy(() => import('./MonopoliBoard'));
 const DosenKillerGame = lazy(() => import('./DosenKillerGame'));
 const UnoBrutalGame = lazy(() => import('./UnoBrutalGame'));
+const UpdatesPage = lazy(() => import('./UpdatesPage'));
 
 const LoadingScreen = ({ label = 'Memuat halaman permainan...' }) => (
   <div className="min-h-[60vh] bg-[#FAF6EE] flex flex-col justify-center items-center gap-3 text-stone-700 p-6">
@@ -297,6 +298,14 @@ export default function GameDashboard() {
   if (activeView === 'dosenkiller') return renderSubView(DosenKillerGame);
   if (activeView === 'unobrutal') return renderSubView(UnoBrutalGame);
 
+  if (activeView === 'updates') {
+    return (
+      <Suspense fallback={<LoadingScreen label="Memuat catatan pembaruan..." />}>
+        <UpdatesPage onBack={() => setActiveView('dashboard')} />
+      </Suspense>
+    );
+  }
+
   if (activeView === 'admin' && user.is_admin) {
     return (
       <Suspense fallback={<LoadingScreen label="Memuat ruang panitia..." />}>
@@ -360,6 +369,13 @@ export default function GameDashboard() {
 
           <nav aria-label="Menu pengguna" className="flex flex-wrap items-center gap-3 w-full md:w-auto">
             <RoadmapModal />
+            <button
+              type="button"
+              onClick={() => setActiveView('updates')}
+              className="min-h-[44px] text-sm bg-white px-4 py-2.5 rounded-xl border border-[#DED6C6] hover:bg-[#F3EDE0] text-stone-800 font-bold transition-colors"
+            >
+              Catatan Update
+            </button>
             {user.is_admin && (
               <button
                 type="button"
