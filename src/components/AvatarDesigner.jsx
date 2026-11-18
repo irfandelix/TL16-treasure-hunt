@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PlayerAvatar from './PlayerAvatar';
+import RedactedText from './RedactedText';
 import {
   SKIN_PALETTE,
   CIRCLE_PALETTE,
@@ -17,7 +18,7 @@ import {
 function ColorSwatches({ label, palette, selected, onSelect }) {
   return (
     <div className="space-y-2">
-      <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+      <span className="block text-xs font-bold text-zinc-700">
         {label}
       </span>
       <div className="flex flex-wrap gap-2">
@@ -31,8 +32,8 @@ function ColorSwatches({ label, palette, selected, onSelect }) {
               aria-label={`${label}: ${item.label}`}
               aria-pressed={isSelected}
               onClick={() => onSelect(item.hex)}
-              className={`w-7 h-7 rounded-lg border-2 border-white transition-transform ${
-                isSelected ? 'ring-2 ring-emerald-700 scale-110' : 'ring-1 ring-slate-300 hover:scale-105'
+              className={`w-8 h-8 rounded-lg border-2 border-[#FFFDF9] transition-transform ${
+                isSelected ? 'ring-2 ring-[#14532D] scale-110' : 'ring-1 ring-[#CEC6B6] hover:scale-105'
               }`}
               style={{ backgroundColor: item.hex }}
             />
@@ -46,7 +47,7 @@ function ColorSwatches({ label, palette, selected, onSelect }) {
 function OptionPills({ label, options, selected, onSelect }) {
   return (
     <div className="space-y-2">
-      <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+      <span className="block text-xs font-bold text-zinc-700">
         {label}
       </span>
       <div className="flex flex-wrap gap-1.5">
@@ -58,10 +59,10 @@ function OptionPills({ label, options, selected, onSelect }) {
               type="button"
               aria-pressed={isSelected}
               onClick={() => onSelect(opt.id)}
-              className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+              className={`min-h-[40px] px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
                 isSelected
-                  ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  ? 'bg-[#14532D] text-white border-[#14532D]'
+                  : 'bg-[#F8F6F1] text-zinc-800 border-[#DED8CA] hover:bg-[#EFE9DC]'
               }`}
             >
               {opt.label}
@@ -76,7 +77,14 @@ function OptionPills({ label, options, selected, onSelect }) {
 /**
  * Interactive character studio using Open Peeps vector illustrations with custom Hijab support.
  */
-export default function AvatarDesigner({ user, initialConfig, onSave, onCancel, isEditing = false }) {
+export default function AvatarDesigner({
+  user,
+  initialConfig,
+  onSave,
+  onCancel,
+  isEditing = false,
+  isMonopoliUnlocked = false
+}) {
   const [config, setConfig] = useState(() =>
     initialConfig ? normalizeAvatarConfig(initialConfig) : generateSeedAvatarConfig(user?.nim || 'tl16')
   );
@@ -119,25 +127,25 @@ export default function AvatarDesigner({ user, initialConfig, onSave, onCancel, 
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F6F9] text-slate-900 p-4 sm:p-6 md:p-8 flex items-center justify-center">
-      <div className="w-full max-w-5xl space-y-5">
-        {/* Header Bar */}
-        <div className="bg-white border border-slate-200 rounded-2xl px-5 py-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
-          <div className="flex items-center gap-3 min-w-0">
+    <div className="min-h-screen bg-[#F8F6F1] text-zinc-900 p-4 sm:p-6 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#DED8CA] pb-5">
+          <div className="flex items-center gap-4 min-w-0">
             <img
               src="/Asset 2.webp"
               alt="Reuni 1 Dekade TL 2016"
-              width="96"
-              height="38"
-              className="w-20 sm:w-24 h-auto shrink-0"
+              width="112"
+              height="44"
+              fetchPriority="high"
+              className="w-24 sm:w-28 h-auto shrink-0"
             />
             <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                Desain Karakter Alumni
-              </p>
-              <h1 className="text-base sm:text-lg font-bold text-slate-900 truncate">
-                {user?.nama || 'Peserta TL 2016'}
+              <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 leading-tight truncate">
+                Desain Karakter {user?.nama || 'Alumni TL 2016'}
               </h1>
+              <p className="text-xs sm:text-sm text-zinc-600 mt-0.5">
+                NIM <span className="font-mono font-semibold text-[#14532D]">{user?.nim}</span>
+              </p>
             </div>
           </div>
 
@@ -145,24 +153,19 @@ export default function AvatarDesigner({ user, initialConfig, onSave, onCancel, 
             <button
               type="button"
               onClick={onCancel}
-              className="min-h-[42px] px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm transition-colors"
+              className="min-h-[44px] px-4 py-2 rounded-xl bg-[#FFFDF9] hover:bg-[#EFE9DC] border border-[#DED8CA] text-zinc-800 font-bold text-xs sm:text-sm transition-colors"
             >
               Batal &amp; Kembali
             </button>
           )}
-        </div>
+        </header>
 
-        {/* Bento Main Studio */}
-        <section className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-7 shadow-[0_6px_28px_-6px_rgba(15,23,42,0.07)]">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-            {/* Left Stage */}
+        <section className="bg-[#FFFDF9] border border-[#DED8CA] rounded-2xl p-5 sm:p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 lg:gap-9 items-start">
+            {/* Left Preview Stage */}
             <div className="lg:col-span-5 flex flex-col gap-4 lg:sticky lg:top-6">
-              <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 p-6 sm:p-7 text-center text-white flex flex-col items-center gap-4">
-                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold text-emerald-300">
-                  Karakter Kamu di Portal &amp; Monopoli
-                </span>
-
-                <div className="w-44 h-44 sm:w-52 sm:h-52 rounded-full border-4 border-white/90 shadow-2xl overflow-hidden flex items-center justify-center bg-slate-800">
+              <div className="rounded-2xl bg-[#14532D] p-6 sm:p-8 text-center flex flex-col items-center gap-4 border border-[#0F3F22]">
+                <div className="w-44 h-44 sm:w-52 sm:h-52 rounded-full border-4 border-[#FFFDF9] overflow-hidden flex items-center justify-center bg-[#F1ECE0]">
                   <PlayerAvatar
                     config={config}
                     seed={user?.nim}
@@ -175,9 +178,13 @@ export default function AvatarDesigner({ user, initialConfig, onSave, onCancel, 
                   <div className="font-bold text-base sm:text-lg text-white">
                     {user?.nama}
                   </div>
-                  <div className="text-xs font-mono text-slate-300 mt-0.5">
-                    NIM {user?.nim}
-                  </div>
+                  <p className="text-xs text-emerald-100 mt-1">
+                    Tampil di profil Beranda, Klasemen, dan bidak{' '}
+                    <RedactedText revealed={isMonopoliUnlocked} onDark={true} widthClass="w-16">
+                      Monopoli
+                    </RedactedText>
+                    .
+                  </p>
                 </div>
               </div>
 
@@ -185,7 +192,7 @@ export default function AvatarDesigner({ user, initialConfig, onSave, onCancel, 
                 <button
                   type="button"
                   onClick={handleRandomize}
-                  className="min-h-[48px] px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 font-bold text-sm transition-colors"
+                  className="min-h-[48px] px-4 py-3 rounded-xl bg-[#F1ECE0] hover:bg-[#E7DFCE] border border-[#DED8CA] text-zinc-900 font-bold text-sm transition-colors"
                 >
                   Acak Karakter
                 </button>
@@ -193,7 +200,11 @@ export default function AvatarDesigner({ user, initialConfig, onSave, onCancel, 
                   type="button"
                   onClick={handleConfirm}
                   disabled={saving}
-                  className="min-h-[48px] px-4 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-600 disabled:bg-slate-300 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                  className={`min-h-[48px] px-4 py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
+                    saving
+                      ? 'bg-[#E5DFD2] text-zinc-800'
+                      : 'bg-[#14532D] hover:bg-[#166534] text-white'
+                  }`}
                 >
                   {saving ? 'Menyimpan...' : 'Simpan & Masuk Beranda'}
                 </button>
@@ -202,12 +213,16 @@ export default function AvatarDesigner({ user, initialConfig, onSave, onCancel, 
 
             {/* Right Controls */}
             <div className="lg:col-span-7 space-y-5">
-              <div className="border-b border-slate-100 pb-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-                  Sesuaikan Penampilanmu
+              <div className="border-b border-[#E5DFD2] pb-4">
+                <h2 className="text-lg sm:text-xl font-bold text-zinc-900">
+                  Pilih Gaya &amp; Detail Karakter
                 </h2>
-                <p className="text-sm text-slate-600 mt-1">
-                  Detail karakter yang kamu pilih akan tersimpan otomatis dan muncul di kartu profil Beranda serta menjadi bidak di Monopoli.
+                <p className="text-sm text-zinc-600 mt-1 leading-relaxed">
+                  Seluruh pilihanmu otomatis tersimpan ke akun alumni untuk dipakai di Beranda, Klasemen, dan{' '}
+                  <RedactedText revealed={isMonopoliUnlocked} widthClass="w-16">
+                    Monopoli
+                  </RedactedText>
+                  .
                 </p>
               </div>
 

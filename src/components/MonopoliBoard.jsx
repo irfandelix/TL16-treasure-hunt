@@ -993,7 +993,11 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
                         type="button"
                         disabled={isFull}
                         onClick={() => joinRoom(room.id)}
-                        className="min-h-[44px] px-4 py-2 rounded-xl bg-green-900 hover:bg-green-800 disabled:bg-stone-300 disabled:text-stone-600 text-white text-xs font-bold transition-colors shrink-0"
+                        className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition-colors shrink-0 ${
+                          isFull
+                            ? 'bg-[#E5DFD2] text-zinc-700'
+                            : 'bg-[#14532D] hover:bg-[#166534] text-white'
+                        }`}
                       >
                         {isJoined ? 'Lanjutkan' : isFull ? 'Penuh' : 'Gabung'}
                       </button>
@@ -1138,13 +1142,13 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
   );
 
   return (
-    <div className="w-full max-w-6xl mx-auto bg-[#F4F6F9] text-slate-900 pb-16">
+    <div className="w-full max-w-6xl mx-auto bg-[#F8F6F1] text-zinc-900 pb-16">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start lg:items-stretch">
 
         {/* KOLOM KIRI (DESKTOP): PAPAN MONOPOLI BESAR */}
         <div className="lg:col-span-8 w-full">
           {/* Header ringkas khusus HP (< lg) */}
-          <div className="lg:hidden w-full flex flex-wrap justify-between items-center gap-3 mb-3 bg-white p-4 rounded-2xl border border-slate-200">
+          <div className="lg:hidden w-full flex flex-wrap justify-between items-center gap-3 mb-3 bg-[#FFFDF9] p-4 rounded-2xl border border-[#DED8CA]">
             <div>
               <div className="flex items-center gap-2.5">
                 <PlayerAvatar
@@ -1445,7 +1449,11 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
             type="button"
             onClick={rollDice}
             disabled={isRolling||isAnimating||myState?.is_bankrupt}
-            className="w-full min-h-[52px] bg-green-900 hover:bg-green-800 text-white font-bold py-4 rounded-xl transition-colors disabled:bg-[#E7DFCE] disabled:text-stone-500 disabled:cursor-not-allowed text-base"
+            className={`w-full min-h-[52px] font-bold py-4 rounded-xl transition-colors text-base ${
+              isRolling || isAnimating || myState?.is_bankrupt
+                ? 'bg-[#E5DFD2] text-zinc-700 cursor-not-allowed'
+                : 'bg-[#14532D] hover:bg-[#166534] text-white'
+            }`}
           >
             {isRolling
               ? 'Mengocok Dadu...'

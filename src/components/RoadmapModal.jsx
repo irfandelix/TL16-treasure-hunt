@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import RedactedText from './RedactedText';
 
 export default function RoadmapModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [scheduleData, setScheduleData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const isAdmin = typeof window !== 'undefined' && localStorage.getItem('is_admin') === 'true';
 
   const fetchRoadmap = async () => {
     setIsLoading(true);
@@ -151,7 +153,14 @@ export default function RoadmapModal() {
                     {scheduleData.map((item) => (
                       <tr key={item.id} className="hover:bg-[#FAF6EE] transition-colors">
                         <td className="px-4 py-3.5 font-bold">
-                          {item.status === 'secret' ? (
+                          {item.id === 3 && item.status !== 'released' && !isAdmin ? (
+                            <span className="text-stone-700">
+                              <RedactedText revealed={false} widthClass="w-20">
+                                Monopoli
+                              </RedactedText>{' '}
+                              TL16
+                            </span>
+                          ) : item.status === 'secret' ? (
                             <span className="text-stone-500">
                               Kejutan ({item.game})
                             </span>

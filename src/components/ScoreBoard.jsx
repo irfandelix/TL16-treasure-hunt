@@ -93,13 +93,13 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
   return (
     <section
       aria-labelledby="scoreboard-heading"
-      className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)]"
+      className="bg-[#FFFDF9] rounded-2xl p-6 md:p-8 border border-[#DED8CA]"
     >
-      <div className="mb-6 pb-4 border-b border-slate-100">
-        <h2 id="scoreboard-heading" className="text-2xl md:text-3xl font-bold text-slate-900">
+      <div className="mb-6 pb-4 border-b border-[#E5DFD2]">
+        <h2 id="scoreboard-heading" className="text-2xl md:text-3xl font-bold text-zinc-900">
           Klasemen Sedulur 16
         </h2>
-        <p className="text-slate-600 mt-1 text-sm">
+        <p className="text-zinc-600 mt-1 text-sm">
           {isAdmin
             ? 'Mode Panitia: seluruh nama alumni ditampilkan untuk pemantauan skor.'
             : isRevealed
@@ -109,17 +109,17 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
       </div>
 
       {isLoading ? (
-        <div className="py-12 text-center text-slate-700 text-sm flex flex-col items-center gap-3 bg-slate-50 rounded-2xl border border-slate-200">
+        <div className="py-12 text-center text-zinc-700 text-sm flex flex-col items-center gap-3 bg-[#F8F6F1] rounded-xl border border-[#DED8CA]">
           <span
             aria-hidden="true"
-            className="w-8 h-8 border-2 border-slate-300 border-t-emerald-700 rounded-full animate-spin"
+            className="w-8 h-8 border-2 border-[#C7BDA8] border-t-[#14532D] rounded-full animate-spin"
           />
           <span>Memuat data klasemen angkatan...</span>
         </div>
       ) : errorMsg ? (
         <div
           role="alert"
-          className="py-10 px-4 text-center bg-rose-50 border border-rose-200 rounded-2xl space-y-4"
+          className="py-10 px-4 text-center bg-rose-50 border border-rose-200 rounded-xl space-y-4"
         >
           <p className="text-rose-800 text-sm font-medium">{errorMsg}</p>
           <button
@@ -128,26 +128,26 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
               setIsLoading(true);
               loadAllData(isAdmin);
             }}
-            className="min-h-[44px] px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-xl text-sm"
+            className="min-h-[44px] px-5 py-2.5 bg-[#14532D] hover:bg-[#166534] text-white font-bold rounded-xl text-sm"
           >
             Muat Ulang Klasemen
           </button>
         </div>
       ) : alumni.length === 0 ? (
-        <div className="py-10 px-4 text-center text-slate-600 text-sm bg-slate-50 rounded-2xl border border-slate-200">
+        <div className="py-10 px-4 text-center text-zinc-600 text-sm bg-[#F8F6F1] rounded-xl border border-[#DED8CA]">
           Belum ada skor permainan yang tercatat. Mainkan salah satu permainan di atas untuk mulai mengumpulkan poin!
         </div>
       ) : (
-        <div className="max-h-[460px] overflow-y-auto overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+        <div className="max-h-[460px] overflow-y-auto overflow-x-auto rounded-xl border border-[#DED8CA] bg-[#FFFDF9]">
           <table className="w-full text-left border-collapse">
-            <thead className="sticky top-0 bg-slate-50 z-10 border-b border-slate-200">
-              <tr className="text-slate-700 font-bold text-xs sm:text-sm">
+            <thead className="sticky top-0 bg-[#F1ECE0] z-10 border-b border-[#DED8CA]">
+              <tr className="text-zinc-800 font-bold text-xs sm:text-sm">
                 <th scope="col" className="py-3.5 px-3 text-center w-16">No</th>
                 <th scope="col" className="py-3.5 px-4">Peserta &amp; Rincian Poin</th>
                 <th scope="col" className="py-3.5 px-3 text-center w-28">Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[#E5DFD2]">
               {alumni.map((person, index) => {
                 const totalSkor =
                   (person.skor_peta || 0) +
@@ -163,8 +163,8 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
                     : person.avatar_config || (person.nim === currentNim ? getLocalAvatarConfig(person.nim) : null);
 
                 return (
-                  <tr key={person.nim} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-4 px-3 text-center align-middle font-mono font-bold text-base text-amber-600">
+                  <tr key={person.nim} className="hover:bg-[#F8F6F1] transition-colors">
+                    <td className="py-4 px-3 text-center align-middle font-mono font-bold text-base text-amber-700">
                       #{index + 1}
                     </td>
 
@@ -173,42 +173,42 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
                         <PlayerAvatar
                           config={resolvedAvatar}
                           seed={person.nim}
-                          className="w-10 h-10 border border-slate-200"
+                          className="w-10 h-10 border border-[#DED8CA]"
                           alt={displayName}
                         />
                         <div>
-                          <div className="font-bold text-slate-900 text-sm sm:text-base">
+                          <div className="font-bold text-zinc-900 text-sm sm:text-base">
                             {displayName}
                           </div>
-                          <div className="text-xs font-mono text-slate-500 mt-0.5">
+                          <div className="text-xs font-mono text-zinc-600 mt-0.5">
                             NIM: {displayNim}
                           </div>
                         </div>
                       </div>
 
                       <div className="flex flex-wrap gap-2 mt-2.5">
-                        <span className="bg-slate-50 border border-slate-200 text-slate-700 text-xs px-2.5 py-0.5 rounded-lg font-medium">
-                          Peta: <strong className="font-mono text-emerald-700">{person.skor_peta || 0}</strong>
+                        <span className="bg-[#F8F6F1] border border-[#DED8CA] text-zinc-700 text-xs px-2.5 py-0.5 rounded-md font-medium">
+                          Peta: <strong className="font-mono text-[#14532D]">{person.skor_peta || 0}</strong>
                         </span>
-                        <span className="bg-slate-50 border border-slate-200 text-slate-700 text-xs px-2.5 py-0.5 rounded-lg font-medium">
-                          Foto: <strong className="font-mono text-emerald-700">{person.skor_muka || 0}</strong>
+                        <span className="bg-[#F8F6F1] border border-[#DED8CA] text-zinc-700 text-xs px-2.5 py-0.5 rounded-md font-medium">
+                          Foto: <strong className="font-mono text-[#14532D]">{person.skor_muka || 0}</strong>
                         </span>
 
                         {isMonopoliUnlocked && (
-                          <span className="bg-slate-50 border border-slate-200 text-slate-700 text-xs px-2.5 py-0.5 rounded-lg font-medium">
-                            Monopoli: <strong className="font-mono text-amber-600">{person.skor_monopoli || 0}</strong>
+                          <span className="bg-[#F8F6F1] border border-[#DED8CA] text-zinc-700 text-xs px-2.5 py-0.5 rounded-md font-medium">
+                            Monopoli: <strong className="font-mono text-amber-700">{person.skor_monopoli || 0}</strong>
                           </span>
                         )}
 
                         {isWerewolfUnlocked && (
-                          <span className="bg-slate-50 border border-slate-200 text-slate-700 text-xs px-2.5 py-0.5 rounded-lg font-medium">
-                            Dosen Killer: <strong className="font-mono text-amber-600">{person.skor_werewolf || 0}</strong>
+                          <span className="bg-[#F8F6F1] border border-[#DED8CA] text-zinc-700 text-xs px-2.5 py-0.5 rounded-md font-medium">
+                            Dosen Killer: <strong className="font-mono text-amber-700">{person.skor_werewolf || 0}</strong>
                           </span>
                         )}
                       </div>
                     </td>
 
-                    <td className="py-4 px-3 text-center font-mono font-bold text-lg sm:text-xl text-emerald-700 align-middle">
+                    <td className="py-4 px-3 text-center font-mono font-bold text-lg sm:text-xl text-[#14532D] align-middle">
                       {totalSkor}
                     </td>
                   </tr>

@@ -1,5 +1,33 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-018',
+    date: '18 November 2026',
+    version: 'v2.5.1',
+    category: 'Desain & UI',
+    title: 'Penyempurnaan Antarmuka Anti-Slop & Sensor Kasus Detektif Monopoli',
+    commit: 'latest',
+    summary: 'Menyelaraskan seluruh halaman ke desain editorial kertas hangat (Bricolage Grotesque & Public Sans) sesuai audit antislop/impeccable dan menyensor label Monopoli sebelum jadwal buka tiba.',
+    changes: [
+      'Menghilangkan gradasi latar belakang, header kaca blur, bayangan kartu bertumpuk, dan eyebrow pill pada Login, AvatarDesigner, GameDashboard, dan ScoreBoard.',
+      'Mengganti kartu grid seragam dengan komposisi editorial yang bervariasi antara pembagian 2 kolom kuis solo dan daftar indeks bernomor pada permainan multipemain.',
+      'Menambahkan komponen RedactedText yang menampilkan blok sensor hitam ala berkas kasus detektif untuk menyembunyikan nama Monopoli di AvatarDesigner, Beranda, dan Jadwal Acara sebelum tanggal pembukaan tiba.',
+      'Memperbaiki kontras tombol disabled pada Login dan MonopoliBoard sehingga lulus pemeriksaan detector tanpa temuan.'
+    ],
+    docs: {
+      files: [
+        'src/components/RedactedText.jsx',
+        'src/components/AvatarDesigner.jsx',
+        'src/components/GameDashboard.jsx',
+        'src/components/RoadmapModal.jsx',
+        'src/components/Login.jsx',
+        'src/components/ScoreBoard.jsx',
+        'src/components/MonopoliBoard.jsx',
+        'src/styles/global.css'
+      ],
+      notes: 'RedactedText tidak merender kata rahasia ke DOM saat revealed=false sehingga aman dari seleksi teks maupun inspeksi cepat.'
+    }
+  },
+  {
     id: 'upd-017',
     date: '18 November 2026',
     version: 'v2.5.0',

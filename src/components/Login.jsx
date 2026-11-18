@@ -42,9 +42,9 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-    <main className="min-h-screen bg-[#F4F6F9] flex justify-center items-center p-4 sm:p-6">
-      <div className="bg-white p-6 sm:p-10 rounded-3xl border border-slate-200 shadow-[0_14px_40px_-12px_rgba(15,23,42,0.1)] w-full max-w-md relative">
-        <header className="text-center mb-8 flex flex-col items-center border-b border-slate-100 pb-6">
+    <main className="min-h-screen bg-[#F8F6F1] flex justify-center items-center p-4 sm:p-6">
+      <div className="bg-[#FFFDF9] p-6 sm:p-10 rounded-2xl border border-[#DED8CA] w-full max-w-md relative">
+        <header className="text-center mb-8 flex flex-col items-center border-b border-[#E5DFD2] pb-6">
           <h1 className="w-full flex justify-center">
             <img
               src="/Asset 2.webp"
@@ -55,7 +55,7 @@ export default function Login({ onLoginSuccess }) {
               className="w-full max-w-[260px] h-auto"
             />
           </h1>
-          <p className="text-sm text-slate-600 mt-4 leading-relaxed">
+          <p className="text-sm text-zinc-600 mt-4 leading-relaxed">
             Masuk dengan NIM angkatan untuk mendesain karaktermu dan bermain bersama Sedulur 16.
           </p>
         </header>
@@ -71,7 +71,7 @@ export default function Login({ onLoginSuccess }) {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-2">
-            <label htmlFor="nim-input" className="block text-slate-800 font-semibold text-sm">
+            <label htmlFor="nim-input" className="block text-zinc-800 font-semibold text-sm">
               Nomor Induk Mahasiswa (NIM)
             </label>
             <input
@@ -82,20 +82,24 @@ export default function Login({ onLoginSuccess }) {
               onChange={(e) => setNim(e.target.value)}
               placeholder="Contoh: 114160001"
               maxLength={11}
-              className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-slate-900 font-mono text-base placeholder:text-slate-400 focus:border-emerald-600 focus:bg-white transition-colors min-h-[48px]"
+              className="w-full bg-[#F8F6F1] border border-[#CEC6B6] p-3.5 rounded-xl text-zinc-900 font-mono text-base placeholder:text-zinc-500 focus:border-[#14532D] focus:bg-white transition-colors min-h-[48px]"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 disabled:bg-slate-300 disabled:text-slate-600 py-3.5 px-6 rounded-xl font-bold text-white text-base transition-colors min-h-[48px] flex items-center justify-center gap-2"
+            className={`w-full py-3.5 px-6 rounded-xl font-bold text-base transition-colors min-h-[48px] flex items-center justify-center gap-2 ${
+              loading
+                ? 'bg-[#E5DFD2] text-zinc-800'
+                : 'bg-[#14532D] hover:bg-[#166534] active:bg-[#0F3F22] text-white'
+            }`}
           >
             {loading ? (
               <>
                 <span
                   aria-hidden="true"
-                  className="w-5 h-5 border-2 border-slate-300 border-t-white rounded-full animate-spin"
+                  className="w-5 h-5 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin"
                 />
                 <span>Memeriksa Data Alumni...</span>
               </>
@@ -105,8 +109,8 @@ export default function Login({ onLoginSuccess }) {
           </button>
         </form>
 
-        <footer className="mt-8 pt-4 border-t border-slate-100 text-center text-slate-500 text-xs space-y-1">
-          <p className="font-semibold text-slate-800">Teknik Lingkungan UPN &ldquo;Veteran&rdquo; Yogyakarta 2016</p>
+        <footer className="mt-8 pt-4 border-t border-[#E5DFD2] text-center text-zinc-600 text-xs space-y-1">
+          <p className="font-semibold text-zinc-800">Teknik Lingkungan UPN &ldquo;Veteran&rdquo; Yogyakarta 2016</p>
           <p>Gunakan NIM angkatan 2016 untuk membuka profil dan catatan skormu.</p>
         </footer>
       </div>
