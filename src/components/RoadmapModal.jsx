@@ -153,7 +153,7 @@ export default function RoadmapModal() {
                     {scheduleData.map((item) => (
                       <tr key={item.id} className="hover:bg-[#FAF6EE] transition-colors">
                         <td className="px-4 py-3.5 font-bold">
-                          {item.status !== 'released' ? (
+                          {!isAdmin && item.status !== 'released' ? (
                             <span className="text-stone-700">
                               <RedactedText revealed={false} widthClass={item.redactedWidth || 'w-28'} />
                               {item.suffix || ''}

@@ -90,11 +90,8 @@ export default function GameDashboard() {
   const [wheelUnlocked, setWheelUnlocked] = useState(false);
 
   const [isMonopoliUnlocked, setIsMonopoliUnlocked] = useState(false);
-  const [isMonopoliDateReached, setIsMonopoliDateReached] = useState(false);
   const [isWerewolfUnlocked, setIsWerewolfUnlocked] = useState(false);
-  const [isWerewolfDateReached, setIsWerewolfDateReached] = useState(false);
   const [isUnoUnlocked, setIsUnoUnlocked] = useState(false);
-  const [isUnoDateReached, setIsUnoDateReached] = useState(false);
 
   const [monopoliApproaching, setMonopoliApproaching] = useState(false);
   const [werewolfApproaching, setWerewolfApproaching] = useState(false);
@@ -284,21 +281,6 @@ export default function GameDashboard() {
       const now = Date.now();
       const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-      const monoDateReached = Boolean(
-        gameDates.monopoli && now >= new Date(gameDates.monopoli).getTime()
-      );
-      setIsMonopoliDateReached(monoDateReached);
-
-      const wolfDateReached = Boolean(
-        gameDates.werewolf && now >= new Date(gameDates.werewolf).getTime()
-      );
-      setIsWerewolfDateReached(wolfDateReached);
-
-      const unoDateReached = Boolean(
-        gameDates.uno && now >= new Date(gameDates.uno).getTime()
-      );
-      setIsUnoDateReached(unoDateReached);
-
       if (user.is_admin) {
         setIsMonopoliUnlocked(true);
         setMonopoliApproaching(false);
@@ -363,7 +345,7 @@ export default function GameDashboard() {
         user={user}
         initialConfig={avatarConfig}
         isEditing={isEditingAvatar}
-        isMonopoliUnlocked={isMonopoliDateReached}
+        isMonopoliUnlocked={isMonopoliUnlocked}
         onSave={handleSaveAvatar}
         onCancel={() => {
           setShowAvatarDesigner(false);
@@ -428,7 +410,7 @@ export default function GameDashboard() {
       id: 'monopoli',
       title: (
         <>
-          <RedactedText revealed={isMonopoliDateReached} widthClass="w-20">
+          <RedactedText revealed={isMonopoliUnlocked} widthClass="w-20">
             Monopoli
           </RedactedText>{' '}
           TL16
@@ -436,10 +418,10 @@ export default function GameDashboard() {
       ),
       unlocked: isMonopoliUnlocked,
       icon: <IconBoard />,
-      description: isMonopoliDateReached
+      description: isMonopoliUnlocked
         ? 'Kelilingi petak kampus memakai bidak karaktermu, beli properti kontrakan, dan jawab tantangan Truth or Dare.'
         : 'Permainan papan rahasia untuk angkatan TL 2016 ini akan segera dibuka sesuai jadwal perayaan.',
-      ctaLabel: isMonopoliDateReached ? 'Buka Papan Monopoli' : 'Uji Mode Rahasia',
+      ctaLabel: 'Buka Papan Monopoli',
       onClick: () => setActiveView('monopoli')
     });
   }
@@ -447,16 +429,16 @@ export default function GameDashboard() {
     multiplayerGames.push({
       id: 'dosenkiller',
       title: (
-        <RedactedText revealed={isWerewolfDateReached} widthClass="w-28">
+        <RedactedText revealed={isWerewolfUnlocked} widthClass="w-28">
           Dosen Killer
         </RedactedText>
       ),
       unlocked: isWerewolfUnlocked,
       icon: <IconClass />,
-      description: isWerewolfDateReached
+      description: isWerewolfUnlocked
         ? 'Permainan tebak peran ala kelas kuliah: temukan siapa Dosen Killer sebelum satu kelas kena remedial.'
         : 'Permainan kelompok rahasia untuk angkatan TL 2016 ini sedang disiapkan untuk sesi kumpul angkatan.',
-      ctaLabel: isWerewolfDateReached ? 'Masuk Ruang Kelas' : 'Uji Mode Rahasia',
+      ctaLabel: 'Masuk Ruang Kelas',
       onClick: () => setActiveView('dosenkiller')
     });
   }
@@ -464,16 +446,16 @@ export default function GameDashboard() {
     multiplayerGames.push({
       id: 'unobrutal',
       title: (
-        <RedactedText revealed={isUnoDateReached} widthClass="w-28">
+        <RedactedText revealed={isUnoUnlocked} widthClass="w-28">
           UNO Seru TL16
         </RedactedText>
       ),
       unlocked: isUnoUnlocked,
       icon: <IconCards />,
-      description: isUnoDateReached
+      description: isUnoUnlocked
         ? 'Buka meja kartu bersama teman-teman angkatan dengan aturan tumpuk kartu yang meriah.'
         : 'Sesi permainan bersama edisi reuni 1 Dekade akan segera dibuka sesuai jadwal perayaan.',
-      ctaLabel: isUnoDateReached ? 'Gabung Meja Kartu' : 'Uji Mode Rahasia',
+      ctaLabel: 'Gabung Meja Kartu',
       onClick: () => setActiveView('unobrutal')
     });
   }
@@ -591,7 +573,7 @@ export default function GameDashboard() {
                     </h2>
                     <p className="text-zinc-600 text-sm sm:text-base mt-2 leading-relaxed max-w-xl">
                       Unggah satu foto terbaikmu di tahun 2026 beserta pesan hangat atau cerita lucu masa kuliah untuk diputar bersama pada puncak acara{' '}
-                      <RedactedText revealed={wheelUnlocked} widthClass="w-28">
+                      <RedactedText revealed={Boolean(user.is_admin || wheelUnlocked)} widthClass="w-28">
                         Wheel of Family
                       </RedactedText>
                       .
@@ -644,15 +626,11 @@ export default function GameDashboard() {
                   {user.is_admin ? (
                     <>
                       <div>
-                        <h3 className="text-xl font-bold text-zinc-900 mb-1.5">
-                          <RedactedText revealed={wheelUnlocked} widthClass="w-32">
-                            Wheel of Family
-                          </RedactedText>
-                        </h3>
+                        <h3 className="text-xl font-bold text-zinc-900 mb-1.5">Wheel of Family</h3>
                         <p className="text-zinc-700 text-sm leading-relaxed">
                           {targetDate
-                            ? 'Hitung mundur untuk peserta sedang berjalan. Panitia dapat menguji agenda puncak kapan saja.'
-                            : 'Jadwal pembukaan agenda puncak belum diatur di Ruang Panitia.'}
+                            ? 'Hitung mundur untuk peserta sedang berjalan. Panitia dapat menguji roda putar kapan saja.'
+                            : 'Jadwal pembukaan roda putar belum diatur di Ruang Panitia.'}
                         </p>
                       </div>
                       <button
@@ -660,7 +638,7 @@ export default function GameDashboard() {
                         onClick={() => setActiveView('wheel')}
                         className="w-full min-h-[46px] py-2.5 px-5 bg-[#FFFDF9] hover:bg-white border border-[#CEC6B6] rounded-xl font-bold text-zinc-900 text-sm transition-colors"
                       >
-                        {wheelUnlocked ? 'Buka Roda Putar' : 'Uji Agenda Puncak'}
+                        Buka Roda Putar
                       </button>
                     </>
                   ) : !targetDate ? (

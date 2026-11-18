@@ -1,11 +1,33 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-020',
+    date: '18 November 2026',
+    version: 'v2.5.3',
+    category: 'Keamanan & Akses',
+    title: 'Akses Tanpa Sensor Khusus 2 Akun Admin Panitia',
+    commit: 'latest',
+    summary: 'Membuka tampilan utuh tanpa blok sensor bagi 2 akun panitia/admin yang masuk dengan is_admin=true, sambil mempertahankan sensor penuh untuk peserta dan halaman publik.',
+    changes: [
+      'Menampilkan label penuh pada AvatarDesigner, Beranda (GameDashboard), Jadwal Acara (RoadmapModal), rincian Klasemen (ScoreBoard), dan Catatan Update (/updates) khusus ketika sesi browser terautentikasi sebagai admin (is_admin=true).',
+      'Mempertahankan render SSR/statis dan sesi peserta non-admin dalam kondisi tersensor sampai jadwal pembukaan masing-masing mode di app_settings tiba.'
+    ],
+    docs: {
+      files: [
+        'src/components/GameDashboard.jsx',
+        'src/components/RoadmapModal.jsx',
+        'src/components/ScoreBoard.jsx',
+        'src/components/UpdatesPage.jsx'
+      ],
+      notes: 'Pengecekan is_admin hanya dijalankan di client setelah hidratasi/login sehingga static HTML build (/updates dan /) tetap bersih dari teks mode rahasia.'
+    }
+  },
+  {
     id: 'upd-019',
     date: '18 November 2026',
     version: 'v2.5.2',
     category: 'Keamanan & Akses',
     title: 'Penyensoran Menyeluruh Seluruh Mode Permainan yang Belum Rilis',
-    commit: 'latest',
+    commit: '3a41321',
     summary: 'Memperluas sistem sensor blok hitam ala berkas kasus detektif agar tidak satu pun mode yang belum memasuki tanggal rilis (Monopoli TL16, Dosen Killer, UNO Seru TL16, Wheel of Family, dan Magical Athlete) bocor di halaman publik maupun pratinjau admin.',
     changes: [
       'Menyensor frasa penuh "bidak Monopoli" pada panggung pratinjau dan panel kontrol AvatarDesigner hingga tanggal rilis tiba.',

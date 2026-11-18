@@ -89,6 +89,20 @@ export default function UpdatesPage({ onBack }) {
 
   useEffect(() => {
     let active = true;
+    const isAdmin = localStorage.getItem('is_admin') === 'true';
+    if (isAdmin) {
+      setUnlockedModes({
+        monopoli: true,
+        werewolf: true,
+        uno: true,
+        wheel: true,
+        athlete: true,
+      });
+      return () => {
+        active = false;
+      };
+    }
+
     const fetchUnlockDates = async () => {
       try {
         const { data, error } = await supabase
