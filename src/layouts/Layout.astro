@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import InspectGuard from '../components/InspectGuard.astro';
 const { title = 'Perayaan 1 Dekade Teknik Lingkungan 2016 (Sedulur 16)' } = Astro.props;
 ---
 <!doctype html>
@@ -25,6 +26,7 @@ const { title = 'Perayaan 1 Dekade Teknik Lingkungan 2016 (Sedulur 16)' } = Astr
 		<title>{title}</title>
 	</head>
 	<body class="bg-[#F8F6F1] text-zinc-900 m-0 p-0 min-h-screen">
+		<InspectGuard />
 		<slot />
 	</body>
 </html>

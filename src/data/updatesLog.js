@@ -1,5 +1,30 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-020',
+    date: '18 November 2026',
+    version: 'v2.5.3',
+    category: 'Keamanan & Akses',
+    title: 'Proteksi Global Anti-F12 & Anti Inspect Element',
+    commit: 'latest',
+    summary: 'Mengaktifkan pengamanan menyeluruh pada seluruh halaman untuk memblokir pintasan Developer Tools (F12), menu klik kanan Inspect Element, dan peninjauan kode sumber.',
+    changes: [
+      'Memblokir klik kanan (menu konteks Inspect Element), tombol F12, kombinasi DevTools (Ctrl+Shift+I/J/C/K/E dan Cmd+Option+I/J/C/K/U), serta pintasan Ctrl+U / Ctrl+S pada fase capture di seluruh rute portal.',
+      'Menambahkan komponen global InspectGuard yang aktif di Beranda (/), Catatan Update (/updates), halaman permainan, maupun Layout dasar.',
+      'Menyediakan layar pengaman otomatis bila sesi pemeriksaan/debugger aktif melalui menu peramban, serta mengunci sourcemap: false pada build Vite.'
+    ],
+    docs: {
+      files: [
+        'src/components/InspectGuard.astro',
+        'src/pages/index.astro',
+        'src/pages/updates.astro',
+        'src/pages/lock/magical-athlete.astro',
+        'src/layouts/Layout.astro',
+        'astro.config.mjs'
+      ],
+      notes: 'Skrip pengaman dimuat secara inline sebelum hidrasi React sehingga pintasan inspeksi diblokir di seluruh lapisan aplikasi sejak awal halaman terbuka.'
+    }
+  },
+  {
     id: 'upd-019',
     date: '18 November 2026',
     version: 'v2.5.2',

@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import UpdatesPage from '../components/UpdatesPage.jsx';
+import InspectGuard from '../components/InspectGuard.astro';
 ---
 <!doctype html>
 <html lang="id">
@@ -25,6 +26,7 @@ import UpdatesPage from '../components/UpdatesPage.jsx';
     <title>Catatan Update &amp; Dokumentasi - 1 Dekade TL 2016</title>
   </head>
   <body class="bg-[#FAF6EE] text-stone-900 m-0 p-0 min-h-screen">
+    <InspectGuard />
     <UpdatesPage client:load />
   </body>
 </html>

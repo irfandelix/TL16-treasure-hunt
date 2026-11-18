@@ -1,0 +1,106 @@
+---
+// Global client-side guard blocking context menu, DevTools shortcuts, source shortcuts, and active debugger inspection.
+---
+<script is:inline>
+  (function () {
+    if (window.__tl16InspectGuardInit) return;
+    window.__tl16InspectGuardInit = true;
+
+    function blockEvent(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+      }
+      return false;
+    }
+
+    document.addEventListener('contextmenu', blockEvent, true);
+
+    document.addEventListener(
+      'keydown',
+      function (e) {
+        var key = (e.key || '').toLowerCase();
+        var code = e.keyCode || e.which || 0;
+        var hasCtrlOrCmd = Boolean(e.ctrlKey || e.metaKey);
+
+        if (code === 123 || key === 'f12') {
+          return blockEvent(e);
+        }
+
+        if (hasCtrlOrCmd && e.shiftKey && (key === 'i' || key === 'j' || key === 'c' || key === 'k' || key === 'e')) {
+          return blockEvent(e);
+        }
+
+        if (e.metaKey && e.altKey && (key === 'i' || key === 'j' || key === 'c' || key === 'u' || key === 'k')) {
+          return blockEvent(e);
+        }
+
+        if (hasCtrlOrCmd && !e.altKey && (key === 'u' || key === 's')) {
+          return blockEvent(e);
+        }
+      },
+      true
+    );
+
+    function showDevToolsShield() {
+      if (document.getElementById('tl16-devtools-shield')) return;
+      var rootChildren = Array.prototype.slice.call(document.body ? document.body.children : []);
+      for (var i = 0; i < rootChildren.length; i += 1) {
+        if (rootChildren[i].tagName !== 'SCRIPT') {
+          rootChildren[i].style.display = 'none';
+        }
+      }
+
+      var shield = document.createElement('div');
+      shield.id = 'tl16-devtools-shield';
+      shield.setAttribute('role', 'alert');
+      shield.style.cssText =
+        'position:fixed;inset:0;z-index:2147483647;background:#FAF6EE;color:#18181B;display:flex;align-items:center;justify-content:center;padding:24px;font-family:system-ui,-apple-system,sans-serif;text-align:center;';
+
+      var box = document.createElement('div');
+      box.style.cssText =
+        'max-width:440px;width:100%;background:#FFFFFF;border:1px solid #DED6C6;border-radius:16px;padding:28px;';
+
+      var title = document.createElement('h1');
+      title.textContent = 'Pemeriksa Halaman Dinonaktifkan';
+      title.style.cssText = 'font-size:20px;font-weight:700;margin:0 0 10px 0;color:#18181B;';
+
+      var desc = document.createElement('p');
+      desc.textContent =
+        'Tutup Developer Tools (Inspect Element / Console) lalu muat ulang halaman untuk melanjutkan perayaan 1 Dekade TL 2016.';
+      desc.style.cssText = 'font-size:14px;line-height:1.6;margin:0 0 18px 0;color:#52525B;';
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = 'Muat Ulang Halaman';
+      btn.style.cssText =
+        'min-height:44px;padding:10px 20px;border:none;border-radius:12px;background:#14532D;color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer;';
+      btn.onclick = function () {
+        window.location.reload();
+      };
+
+      box.appendChild(title);
+      box.appendChild(desc);
+      box.appendChild(btn);
+      shield.appendChild(box);
+      if (document.body) {
+        document.body.appendChild(shield);
+      }
+    }
+
+    setInterval(function () {
+      if (document.visibilityState !== 'visible') return;
+      var started = performance.now();
+      try {
+        (function () {}.constructor('debugger')());
+      } catch (_err) {
+        return;
+      }
+      var elapsed = performance.now() - started;
+      if (document.visibilityState === 'visible' && elapsed > 160) {
+        showDevToolsShield();
+      }
+    }, 1500);
+  })();
+</script>

@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import GameDashboard from '../components/GameDashboard.jsx';
+import InspectGuard from '../components/InspectGuard.astro';
 ---
 <!doctype html>
 <html lang="id">
@@ -25,6 +26,7 @@ import GameDashboard from '../components/GameDashboard.jsx';
     <title>Perayaan 1 Dekade TL 2016 - Portal Sedulur 16</title>
   </head>
   <body class="bg-[#F8F6F1] text-zinc-900 m-0 p-0 min-h-screen">
+    <InspectGuard />
     <GameDashboard client:only="react" />
   </body>
 </html>
