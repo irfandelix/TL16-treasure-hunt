@@ -9,31 +9,40 @@ const SECRET_MODE_RULES = [
     key: 'monopoli',
     widthClass: 'w-20',
     pattern:
-      'bidak Monopoli(?: TL16)?|papan Monopoli(?: TL16)?|Monopoli TL16|MonopoliBoard(?:\\.jsx)?|MonopoliDice|monopoli_room_\\{nim\\}|monopoli_rooms|monopoli_players|monopoli_properties|monopoli_users|skor_monopoli|\\bMonopoli\\b|Daftar Petak(?: Papan)?|Detail Petak|kotak angka dadu|2 Dadu Bergoyang|kocokan dadu|petak tujuan|TELEPORT/MUNDUR|bonus START|properti kontrakan|Truth or Dare|uang sewa',
+      'bidak Monopoli(?: TL16)?|bidak[^,.]*|papan Monopoli(?: TL16)?|Monopoli TL16|MonopoliBoard(?:\\.jsx)?|MonopoliDice|monopoli_room_\\{nim\\}|monopoli_rooms|monopoli_players|monopoli_properties|monopoli_users|skor_monopoli|\\bMonopoli\\b|Daftar Petak(?: Papan)?|Detail Petak|kotak angka dadu|2 Dadu Bergoyang|kocokan dadu|petak tujuan|petak 11x11|papan 11x11|perbesar papan[^,.]*|TELEPORT/MUNDUR|bonus START|properti kontrakan|Truth or Dare|uang sewa|IconBoard|\\blobi\\b',
   },
   {
     key: 'werewolf',
     widthClass: 'w-24',
     pattern:
-      'Sidang Dosen Killer|Dosen Killer|DosenKillerGame(?:\\.jsx)?|DosenKiller|LayarDiskusi(?:\\.jsx)?|LayarMalam(?:\\.jsx)?|LayarVoting(?:\\.jsx)?|LayarEksekusi(?:\\.jsx)?|dk_room_\\{nim\\}|skor_werewolf|\\bwerewolf\\b|kebocoran chat|petunjuk Intel|catatan Intel|kekebalan Uptodate',
+      'Sidang Dosen Killer|Dosen Killer|DosenKillerGame(?:\\.jsx)?|DosenKiller|LayarDiskusi(?:\\.jsx)?|LayarMalam(?:\\.jsx)?|LayarVoting(?:\\.jsx)?|LayarEksekusi(?:\\.jsx)?|dk_room_\\{nim\\}|skor_werewolf|\\bwerewolf\\b|kebocoran chat|petunjuk Intel|catatan Intel|kekebalan Uptodate|IconClass|remedial',
   },
   {
     key: 'uno',
     widthClass: 'w-20',
     pattern:
-      'UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|\\bUNO\\b|top_card|current_turn|tumpuk kartu|meja kartu|kartu Skip dan \\+2',
+      'UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|\\bUNO\\b|top_card|current_turn|tumpuk kartu|meja kartu|kartu Skip dan \\+2|IconCards',
   },
   {
     key: 'wheel',
     widthClass: 'w-24',
-    pattern: 'Wheel of Family|WheelOfFamily(?:\\.jsx)?|Roda Putar|Roda Kenangan|pemutaran kapsul kenangan',
+    pattern:
+      'Wheel of Family|WheelOfFamily(?:\\.jsx)?|Roda Putar|Roda Kenangan|pemutaran kapsul kenangan|foto 2016[^,.]*|/2016/\\{nim\\}\\.webp|segmen [^,.]*',
   },
   {
     key: 'athlete',
     widthClass: 'w-24',
-    pattern: 'Magical Athlete|MagicalAthleteGame(?:\\.jsx)?',
+    pattern:
+      'src/pages/lock/magical-athlete\\.astro|/lock/magical-athlete|magical-athlete|Magical Athlete|MagicalAthleteGame(?:\\.jsx)?|athlete_rooms|athlete_players|athlete_schema\\.sql|athleteCharacters\\.js|\\b5 Permainan\\b|hak Host [^,.]*',
   },
 ];
+
+function isPathLocked(filePath, unlockedModes) {
+  return SECRET_MODE_RULES.some((rule) => {
+    if (unlockedModes[rule.key]) return false;
+    return new RegExp(rule.pattern, 'i').test(filePath);
+  });
+}
 
 function renderRedactedText(text, unlockedModes) {
   if (!text) return text;
@@ -86,6 +95,7 @@ export default function UpdatesPage({ onBack }) {
     uno: false,
     wheel: false,
     athlete: false,
+    adminOnly: false,
   });
 
   useEffect(() => {
@@ -98,6 +108,7 @@ export default function UpdatesPage({ onBack }) {
         uno: true,
         wheel: true,
         athlete: true,
+        adminOnly: true,
       });
       return () => {
         active = false;
@@ -120,6 +131,7 @@ export default function UpdatesPage({ onBack }) {
           uno: Boolean(data.uno_unlock_date && now >= new Date(data.uno_unlock_date).getTime()),
           wheel: Boolean(data.wheel_unlock_date && now >= new Date(data.wheel_unlock_date).getTime()),
           athlete: false,
+          adminOnly: false,
         });
       } catch {
         // Fallback aman: seluruh mode terjadwal tetap disensor
@@ -131,10 +143,14 @@ export default function UpdatesPage({ onBack }) {
     };
   }, []);
 
+  const visibleUpdates = UPDATES_LOG.filter(
+    (item) => !item.requiresMode || Boolean(unlockedModes[item.requiresMode])
+  );
+
   const filteredUpdates =
     selectedCategory === 'Semua'
-      ? UPDATES_LOG
-      : UPDATES_LOG.filter((item) => item.category === selectedCategory);
+      ? visibleUpdates
+      : visibleUpdates.filter((item) => item.category === selectedCategory);
 
   const toggleDoc = (id) => {
     setExpandedDocs((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -161,7 +177,7 @@ export default function UpdatesPage({ onBack }) {
             </a>
           )}
           <span className="font-mono text-xs font-bold text-stone-600 bg-[#F3EDE0] px-3 py-1.5 rounded-lg border border-[#DED6C6]">
-            Total Pembaruan: {UPDATES_LOG.length}
+            Total Pembaruan: {visibleUpdates.length}
           </span>
         </nav>
 
@@ -267,14 +283,16 @@ export default function UpdatesPage({ onBack }) {
                       <div>
                         <p className="font-bold text-stone-900 mb-1.5">File Terkait:</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {item.docs.files.map((filePath) => (
-                            <code
-                              key={filePath}
-                              className="font-mono bg-white border border-[#DED6C6] text-green-900 px-2 py-0.5 rounded-md"
-                            >
-                              {renderRedactedText(filePath, unlockedModes)}
-                            </code>
-                          ))}
+                          {item.docs.files
+                            .filter((filePath) => !isPathLocked(filePath, unlockedModes))
+                            .map((filePath) => (
+                              <code
+                                key={filePath}
+                                className="font-mono bg-white border border-[#DED6C6] text-green-900 px-2 py-0.5 rounded-md"
+                              >
+                                {renderRedactedText(filePath, unlockedModes)}
+                              </code>
+                            ))}
                         </div>
                       </div>
                     </div>

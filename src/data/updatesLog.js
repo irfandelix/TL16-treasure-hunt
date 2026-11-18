@@ -5,7 +5,7 @@ export const UPDATES_LOG = [
     version: 'v2.5.3',
     category: 'Keamanan & Akses',
     title: 'Proteksi Global Anti-F12 & Anti Inspect Element',
-    commit: 'latest',
+    commit: '43d2c73',
     summary: 'Mengaktifkan pengamanan menyeluruh pada seluruh halaman untuk memblokir pintasan Developer Tools (F12), menu klik kanan Inspect Element, dan peninjauan kode sumber.',
     changes: [
       'Memblokir klik kanan (menu konteks Inspect Element), tombol F12, kombinasi DevTools (Ctrl+Shift+I/J/C/K/E dan Cmd+Option+I/J/C/K/U), serta pintasan Ctrl+U / Ctrl+S pada fase capture di seluruh rute portal.',
@@ -26,6 +26,7 @@ export const UPDATES_LOG = [
   },
   {
     id: 'upd-019',
+    requiresMode: 'adminOnly',
     date: '18 November 2026',
     version: 'v2.5.2',
     category: 'Keamanan & Akses',
@@ -108,6 +109,7 @@ export const UPDATES_LOG = [
   },
   {
     id: 'upd-016',
+    requiresMode: 'monopoli',
     date: '17 November 2026',
     version: 'v2.4.7',
     category: 'Desain & UI',
@@ -125,6 +127,7 @@ export const UPDATES_LOG = [
   },
   {
     id: 'upd-015',
+    requiresMode: 'monopoli',
     date: '17 November 2026',
     version: 'v2.4.6',
     category: 'Desain & UI',
@@ -160,6 +163,7 @@ export const UPDATES_LOG = [
   },
   {
     id: 'upd-013',
+    requiresMode: 'monopoli',
     date: '17 November 2026',
     version: 'v2.4.4',
     category: 'Desain & UI',
@@ -177,6 +181,7 @@ export const UPDATES_LOG = [
   },
   {
     id: 'upd-012',
+    requiresMode: 'monopoli',
     date: '17 November 2026',
     version: 'v2.4.3',
     category: 'Fitur Baru',
@@ -194,6 +199,7 @@ export const UPDATES_LOG = [
   },
   {
     id: 'upd-011',
+    requiresMode: 'monopoli',
     date: '17 November 2026',
     version: 'v2.4.2',
     category: 'Fitur Baru',
@@ -211,6 +217,7 @@ export const UPDATES_LOG = [
   },
   {
     id: 'upd-010',
+    requiresMode: 'monopoli',
     date: '17 November 2026',
     version: 'v2.4.1',
     category: 'Desain & UI',
@@ -248,6 +255,7 @@ export const UPDATES_LOG = [
   },
   {
     id: 'upd-008',
+    requiresMode: 'athlete',
     date: '17 November 2026',
     version: 'v2.3.1',
     category: 'Keamanan & Akses',
@@ -339,6 +347,7 @@ export const UPDATES_LOG = [
   },
   {
     id: 'upd-003',
+    requiresMode: 'monopoli',
     date: '13 November 2026',
     version: 'v2.0.0',
     category: 'Perbaikan Bug',
