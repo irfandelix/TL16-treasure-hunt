@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-canvas: #faf6ee;
+  --color-canvas: #f4f6f9;
   --color-surface: #ffffff;
-  --color-surface-warm: #f3ede0;
-  --color-border-hairline: #ded6c6;
-  --color-brand: #14532d;
-  --color-brand-soft: #15803d;
-  --color-accent: #d97706;
-  --color-danger: #be123c;
-  --color-ink: #1c1917;
-  --color-ink-muted: #57534e;
+  --color-surface-warm: #f8fafc;
+  --color-border-hairline: #e2e8f0;
+  --color-brand: #059669;
+  --color-brand-soft: #10b981;
+  --color-accent: #f59e0b;
+  --color-danger: #e11d48;
+  --color-ink: #0f172a;
+  --color-ink-muted: #475569;
 }
 
 @layer base {
   :root {
-    --font-display: 'Fredoka', system-ui, -apple-system, sans-serif;
-    --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --font-display: 'Space Grotesk', 'Fredoka', system-ui, -apple-system, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', 'DM Sans', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
     color-scheme: light;
   }
@@ -24,6 +24,9 @@
   body {
     font-family: var(--font-sans);
     background-color: var(--color-canvas);
+    background-image:
+      radial-gradient(at 10% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 45%),
+      radial-gradient(at 90% 10%, rgba(245, 158, 11, 0.08) 0px, transparent 45%);
     color: var(--color-ink);
     caret-color: var(--color-brand);
     overflow-x: hidden;

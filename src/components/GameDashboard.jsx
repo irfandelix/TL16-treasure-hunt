@@ -3,6 +3,14 @@ import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabaseClient';
 import Login from './Login';
 import RoadmapModal from './RoadmapModal';
+import PlayerAvatar from './PlayerAvatar';
+import AvatarDesigner from './AvatarDesigner';
+import {
+  getLocalAvatarConfig,
+  loadPlayerAvatar,
+  savePlayerAvatar,
+  generateSeedAvatarConfig
+} from '../lib/avatarHelper';
 
 const TreasureHunt = lazy(() => import('./TreasureHunt'));
 const FaceGame = lazy(() => import('./FaceGame'));
@@ -16,17 +24,17 @@ const UnoBrutalGame = lazy(() => import('./UnoBrutalGame'));
 const UpdatesPage = lazy(() => import('./UpdatesPage'));
 
 const LoadingScreen = ({ label = 'Memuat halaman permainan...' }) => (
-  <div className="min-h-[60vh] bg-[#FAF6EE] flex flex-col justify-center items-center gap-3 text-stone-700 p-6">
+  <div className="min-h-[60vh] bg-[#F4F6F9] flex flex-col justify-center items-center gap-3 text-slate-700 p-6">
     <span
       aria-hidden="true"
-      className="w-9 h-9 border-3 border-[#DED6C6] border-t-green-900 rounded-full animate-spin"
+      className="w-9 h-9 border-3 border-slate-200 border-t-emerald-700 rounded-full animate-spin"
     />
     <p className="text-sm font-semibold">{label}</p>
   </div>
 );
 
 const IconMap = () => (
-  <svg aria-hidden="true" className="w-5 h-5 text-green-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg aria-hidden="true" className="w-5 h-5 text-emerald-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
     <line x1="9" y1="3" x2="9" y2="18" />
     <line x1="15" y1="6" x2="15" y2="21" />
@@ -34,7 +42,7 @@ const IconMap = () => (
 );
 
 const IconUsers = () => (
-  <svg aria-hidden="true" className="w-5 h-5 text-green-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg aria-hidden="true" className="w-5 h-5 text-sky-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
     <circle cx="9" cy="7" r="4" />
     <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -43,7 +51,7 @@ const IconUsers = () => (
 );
 
 const IconBoard = () => (
-  <svg aria-hidden="true" className="w-5 h-5 text-amber-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg aria-hidden="true" className="w-5 h-5 text-amber-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="3" width="18" height="18" rx="3" />
     <circle cx="8.5" cy="8.5" r="1" fill="currentColor" />
     <circle cx="15.5" cy="8.5" r="1" fill="currentColor" />
@@ -53,14 +61,14 @@ const IconBoard = () => (
 );
 
 const IconClass = () => (
-  <svg aria-hidden="true" className="w-5 h-5 text-amber-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg aria-hidden="true" className="w-5 h-5 text-rose-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
     <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
     <path d="M6 12v5c3 3 9 3 12 0v-5" />
   </svg>
 );
 
 const IconCards = () => (
-  <svg aria-hidden="true" className="w-5 h-5 text-amber-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg aria-hidden="true" className="w-5 h-5 text-violet-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
     <rect x="5" y="4" width="12" height="16" rx="2" />
     <path d="M9 2h10a2 2 0 0 1 2 2v14" />
   </svg>
@@ -71,6 +79,10 @@ export default function GameDashboard() {
   const [isChecking, setIsChecking] = useState(true);
   const [activeView, setActiveView] = useState('dashboard');
   const [showAnniversary, setShowAnniversary] = useState(false);
+
+  const [avatarConfig, setAvatarConfig] = useState(null);
+  const [showAvatarDesigner, setShowAvatarDesigner] = useState(false);
+  const [isEditingAvatar, setIsEditingAvatar] = useState(false);
 
   const [targetDate, setTargetDate] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
@@ -92,16 +104,36 @@ export default function GameDashboard() {
 
     if (savedNim) {
       setUser({ nim: savedNim, nama: savedNama, is_admin: isAdmin });
+      setAvatarConfig(getLocalAvatarConfig(savedNim) || generateSeedAvatarConfig(savedNim));
+
       const savedView = localStorage.getItem(`active_view_${savedNim}`);
       const allowedViews = ['dashboard', 'map', 'face', 'kapsul', 'wheel', 'monopoli', 'dosenkiller', 'unobrutal', 'updates', 'admin'];
-      if (savedView && allowedViews.includes(savedView)) {
-        if (savedView !== 'admin' || isAdmin) {
-          setActiveView(savedView);
-        }
+      let resolvedView = 'dashboard';
+      if (savedView && allowedViews.includes(savedView) && (savedView !== 'admin' || isAdmin)) {
+        resolvedView = savedView;
+        setActiveView(savedView);
+      }
+
+      if (resolvedView === 'dashboard' && !sessionStorage.getItem(`avatar_confirmed_${savedNim}`)) {
+        setShowAvatarDesigner(true);
+        setIsEditingAvatar(false);
       }
     }
     setIsChecking(false);
   }, []);
+
+  useEffect(() => {
+    if (!user?.nim) return;
+    let active = true;
+    loadPlayerAvatar(user.nim).then((loaded) => {
+      if (active && loaded) {
+        setAvatarConfig(loaded);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [user?.nim]);
 
   useEffect(() => {
     if (!user?.nim) return;
@@ -111,6 +143,26 @@ export default function GameDashboard() {
       localStorage.setItem(`active_view_${user.nim}`, activeView);
     }
   }, [activeView, user?.nim]);
+
+  const handleLoginSuccess = (loggedInUser) => {
+    const localOrSeed =
+      loggedInUser.avatar_config ||
+      getLocalAvatarConfig(loggedInUser.nim) ||
+      generateSeedAvatarConfig(loggedInUser.nim);
+    setAvatarConfig(localOrSeed);
+    setUser(loggedInUser);
+    setActiveView('dashboard');
+    setIsEditingAvatar(false);
+    setShowAvatarDesigner(true);
+  };
+
+  const handleSaveAvatar = async (nextConfig) => {
+    if (!user?.nim) return;
+    const { config: saved } = await savePlayerAvatar(user.nim, nextConfig);
+    setAvatarConfig(saved);
+    setShowAvatarDesigner(false);
+    setIsEditingAvatar(false);
+  };
 
   const closeAnniversary = () => {
     setShowAnniversary(false);
@@ -129,7 +181,7 @@ export default function GameDashboard() {
   }, [showAnniversary, user]);
 
   useEffect(() => {
-    if (user && user.nim !== 'guest') {
+    if (user && user.nim !== 'guest' && !showAvatarDesigner) {
       const hasSeen = localStorage.getItem(`has_seen_anniversary_${user.nim}`);
       if (!hasSeen) {
         setShowAnniversary(true);
@@ -144,7 +196,7 @@ export default function GameDashboard() {
         }
       }
     }
-  }, [user]);
+  }, [user, showAvatarDesigner]);
 
   useEffect(() => {
     if (!user) return;
@@ -272,30 +324,50 @@ export default function GameDashboard() {
 
   const handleLogout = () => {
     localStorage.clear();
+    sessionStorage.clear();
     window.location.reload();
   };
 
   if (isChecking) {
     return (
-      <main className="min-h-screen bg-[#FAF6EE] flex justify-center items-center text-stone-700 font-semibold">
+      <main className="min-h-screen bg-[#F4F6F9] flex justify-center items-center text-slate-700 font-semibold">
         Memuat Portal Perayaan 1 Dekade TL 2016...
       </main>
     );
   }
 
-  if (!user) return <Login onLoginSuccess={setUser} />;
+  if (!user) return <Login onLoginSuccess={handleLoginSuccess} />;
+
+  if (showAvatarDesigner) {
+    return (
+      <AvatarDesigner
+        user={user}
+        initialConfig={avatarConfig}
+        isEditing={isEditingAvatar}
+        onSave={handleSaveAvatar}
+        onCancel={() => {
+          setShowAvatarDesigner(false);
+          setIsEditingAvatar(false);
+        }}
+      />
+    );
+  }
 
   const renderSubView = (Component, props = {}) => (
-    <div className="min-h-screen bg-[#FAF6EE] text-stone-900 p-4 md:p-8">
+    <div className="min-h-screen bg-[#F4F6F9] text-slate-900 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
-        <nav aria-label="Navigasi kembali" className="mb-6 pb-4 border-b border-[#DED6C6]">
+        <nav aria-label="Navigasi kembali" className="mb-6 pb-4 border-b border-slate-200 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setActiveView('dashboard')}
-            className="min-h-[44px] px-4 py-2.5 rounded-xl bg-white border border-[#DED6C6] text-green-900 hover:bg-[#F3EDE0] font-bold text-sm transition-colors"
+            className="min-h-[44px] px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-emerald-800 hover:bg-slate-50 font-bold text-sm transition-colors shadow-xs"
           >
             &larr; Kembali ke Beranda Perayaan
           </button>
+          <div className="hidden sm:flex items-center gap-2.5 bg-white border border-slate-200 px-3 py-1.5 rounded-xl">
+            <PlayerAvatar config={avatarConfig} seed={user.nim} className="w-7 h-7" alt={user.nama} />
+            <span className="text-xs font-bold text-slate-800">{user.nama}</span>
+          </div>
         </nav>
         <main>
           <Suspense fallback={<LoadingScreen />}>
@@ -310,7 +382,7 @@ export default function GameDashboard() {
   if (activeView === 'face') return renderSubView(FaceGame);
   if (activeView === 'kapsul') return renderSubView(FormKapsulWaktu, { userLocal: user });
   if (activeView === 'wheel') return renderSubView(WheelOfFamily);
-  if (activeView === 'monopoli') return renderSubView(MonopoliBoard);
+  if (activeView === 'monopoli') return renderSubView(MonopoliBoard, { myAvatarConfig: avatarConfig });
   if (activeView === 'dosenkiller') return renderSubView(DosenKillerGame);
   if (activeView === 'unobrutal') return renderSubView(UnoBrutalGame);
 
@@ -330,16 +402,24 @@ export default function GameDashboard() {
     );
   }
 
+  const hasMultiplayerSection =
+    isMonopoliUnlocked ||
+    monopoliApproaching ||
+    isWerewolfUnlocked ||
+    werewolfApproaching ||
+    isUnoUnlocked ||
+    unoApproaching;
+
   return (
-    <div className="min-h-screen bg-[#FAF6EE] text-stone-900 p-4 md:p-8 relative">
+    <div className="min-h-screen bg-[#F4F6F9] text-slate-900 relative pb-12">
       {showAnniversary && (
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby="anniv-welcome-title"
-          className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-[2px] flex flex-col items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-[2px] flex flex-col items-center justify-center p-4"
         >
-          <div className="bg-white border border-[#DED6C6] p-8 md:p-10 rounded-2xl max-w-lg w-full text-center shadow-xl">
+          <div className="bg-white border border-slate-200 p-8 md:p-10 rounded-3xl max-w-lg w-full text-center shadow-2xl">
             <h2 id="anniv-welcome-title" className="flex justify-center mb-5">
               <img
                 src="/Asset 2.webp"
@@ -349,13 +429,13 @@ export default function GameDashboard() {
                 className="w-full max-w-[260px] h-auto"
               />
             </h2>
-            <p className="text-stone-700 text-base mb-8 leading-relaxed">
-              Selamat datang kembali, <strong className="text-stone-900">{user.nama}</strong>! Mari rayakan satu dekade Teknik Lingkungan 2016 dengan mengisi kapsul kenangan dan bermain bersama.
+            <p className="text-slate-600 text-base mb-8 leading-relaxed">
+              Selamat datang kembali, <strong className="text-slate-900">{user.nama}</strong>! Mari rayakan satu dekade Teknik Lingkungan 2016 dengan mengisi kapsul kenangan dan bermain bersama.
             </p>
             <button
               type="button"
               onClick={closeAnniversary}
-              className="min-h-[48px] px-8 py-3 bg-green-900 hover:bg-green-800 text-white font-bold rounded-xl transition-colors text-base"
+              className="min-h-[48px] px-8 py-3 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-xl transition-colors text-base"
             >
               Mulai Rayakan Sekarang
             </button>
@@ -363,32 +443,42 @@ export default function GameDashboard() {
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto">
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 border-b border-[#DED6C6] pb-6 gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <img
-              src="/Asset 2.webp"
-              alt="Happy Anniversary TL 2016"
-              width="120"
-              height="47"
-              className="w-28 h-auto hidden sm:block shrink-0"
+      {/* TOP BENTO BAR */}
+      <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-md border-b border-slate-200/80">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <PlayerAvatar
+              config={avatarConfig}
+              seed={user.nim}
+              className="w-11 h-11 border-2 border-slate-900"
+              alt={`Karakter ${user.nama}`}
             />
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-stone-900 leading-snug">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-tight truncate">
                 Halo, {user.nama}!
               </h1>
-              <p className="text-stone-600 text-sm">
-                NIM: <span className="font-mono font-semibold text-green-800">{user.nim}</span>
+              <p className="text-slate-500 text-xs">
+                NIM <span className="font-mono font-semibold text-emerald-700">{user.nim}</span> &middot; Reuni 1 Dekade TL 2016
               </p>
             </div>
           </div>
 
-          <nav aria-label="Menu pengguna" className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full lg:w-auto shrink-0">
+          <nav aria-label="Menu pengguna" className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditingAvatar(true);
+                setShowAvatarDesigner(true);
+              }}
+              className="min-h-[40px] text-xs whitespace-nowrap bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 px-3.5 py-2 rounded-xl font-bold transition-colors"
+            >
+              Edit Karakter
+            </button>
             <RoadmapModal />
             <button
               type="button"
               onClick={() => setActiveView('updates')}
-              className="min-h-[44px] text-xs sm:text-sm whitespace-nowrap bg-white px-3.5 py-2 rounded-xl border border-[#DED6C6] hover:bg-[#F3EDE0] text-stone-800 font-bold transition-colors"
+              className="min-h-[40px] text-xs whitespace-nowrap bg-slate-50 hover:bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-200 text-slate-800 font-bold transition-colors"
             >
               Catatan Update
             </button>
@@ -396,7 +486,7 @@ export default function GameDashboard() {
               <button
                 type="button"
                 onClick={() => setActiveView('admin')}
-                className="min-h-[44px] text-xs sm:text-sm whitespace-nowrap bg-green-900 hover:bg-green-800 text-white px-3.5 py-2 rounded-xl font-bold transition-colors"
+                className="min-h-[40px] text-xs whitespace-nowrap bg-emerald-700 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-xl font-bold transition-colors"
               >
                 Ruang Panitia
               </button>
@@ -404,163 +494,188 @@ export default function GameDashboard() {
             <button
               type="button"
               onClick={handleLogout}
-              className="min-h-[44px] text-xs sm:text-sm whitespace-nowrap bg-white px-3.5 py-2 rounded-xl border border-[#DED6C6] hover:bg-rose-50 hover:border-rose-300 hover:text-rose-800 text-stone-700 font-semibold transition-colors ml-auto sm:ml-0"
+              className="min-h-[40px] text-xs whitespace-nowrap bg-white px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-slate-600 font-semibold transition-colors ml-auto lg:ml-0"
             >
               Keluar
             </button>
           </nav>
-        </header>
+        </div>
+      </header>
 
-        <main className="space-y-14">
-          {/* BAGIAN 1: SOROTAN UTAMA PERAYAAN ULANG TAHUN (EDITORIAL 2-KOLOM) */}
-          <section aria-labelledby="highlight-heading">
-            <div className="mb-5">
-              <h2 id="highlight-heading" className="text-2xl md:text-3xl font-bold text-stone-900">
-                Agenda Utama Ulang Tahun 1 Dekade
-              </h2>
-              <p className="text-stone-600 text-sm mt-1">
-                Kirimkan foto terbaru dan pesan kenanganmu untuk diputar bersama saat puncak perayaan.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <article className="lg:col-span-7 bg-white p-6 md:p-8 rounded-2xl border border-[#DED6C6] flex flex-col justify-between">
-                <div>
-                  <span className="inline-block px-3 py-1 rounded-md bg-amber-100 text-amber-900 text-xs font-bold mb-4">
-                    Wajib Diisi Semua Alumni
-                  </span>
-                  <h3 className="text-2xl md:text-3xl font-bold text-stone-900 mb-2">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
+        <main className="space-y-10">
+          {/* BAGIAN 1: BENTO HERO & PROFIL KARAKTER / WHEEL OF FAMILY */}
+          <section aria-labelledby="highlight-heading" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+              {/* Hero Flagship Card */}
+              <article className="lg:col-span-7 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white p-6 sm:p-8 rounded-3xl flex flex-col justify-between relative overflow-hidden shadow-[0_12px_32px_-8px_rgba(15,23,42,0.22)]">
+                <div className="space-y-4 relative z-10">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-emerald-300">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    2016 - 2026 &bull; Wajib Diisi Semua Alumni
+                  </div>
+                  <h2 id="highlight-heading" className="text-2xl sm:text-3xl font-bold leading-tight">
                     Kapsul Waktu 2016 ke 2026
-                  </h3>
-                  <p className="text-stone-600 text-sm md:text-base mb-6 leading-relaxed">
-                    Unggah satu foto terbaikmu di tahun 2026 beserta pesan hangat atau cerita lucu masa kuliah untuk ditampilkan di acara Wheel of Family.
+                  </h2>
+                  <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-xl">
+                    Unggah satu foto terbaikmu di tahun 2026 beserta pesan hangat atau cerita lucu masa kuliah untuk diputar bersama di acara puncak Wheel of Family.
                   </p>
                 </div>
-                <div>
+
+                <div className="pt-6 flex flex-wrap items-center gap-3 relative z-10">
                   <button
                     type="button"
                     onClick={() => setActiveView('kapsul')}
-                    className="w-full sm:w-auto min-h-[48px] px-6 py-3 bg-green-900 hover:bg-green-800 rounded-xl font-bold text-white text-base transition-colors"
+                    className="w-full sm:w-auto min-h-[48px] px-6 py-3 bg-emerald-500 hover:bg-emerald-400 rounded-xl font-bold text-slate-950 text-sm sm:text-base transition-colors"
                   >
                     Isi Kapsul Waktu Sekarang
                   </button>
                 </div>
               </article>
 
-              <article className="lg:col-span-5 bg-[#F3EDE0] p-6 md:p-8 rounded-2xl border border-[#DED6C6] flex flex-col justify-between">
-                {user.is_admin ? (
-                  <>
-                    <div>
-                      <span className="inline-block px-3 py-1 rounded-md bg-green-900/10 text-green-900 text-xs font-bold mb-4">
-                        Akses Panitia
+              {/* Profil Karakter + Agenda Wheel of Family */}
+              <article className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06)] flex flex-col justify-between gap-5">
+                {/* Player Profile Summary */}
+                <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <PlayerAvatar
+                      config={avatarConfig}
+                      seed={user.nim}
+                      className="w-14 h-14 border-2 border-slate-900"
+                      alt={`Karakter ${user.nama}`}
+                    />
+                    <div className="min-w-0">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                        Karakter Aktif
                       </span>
-                      <h3 className="text-2xl font-bold text-stone-900 mb-2">
-                        Wheel of Family
-                      </h3>
-                      <p className="text-stone-700 text-sm mb-6 leading-relaxed">
-                        {targetDate
-                          ? 'Hitung mundur untuk peserta sedang berjalan. Panitia dapat menguji roda putar kapan saja.'
-                          : 'Jadwal pembukaan roda putar belum diatur di Ruang Panitia.'}
+                      <p className="font-bold text-slate-900 text-sm sm:text-base truncate">
+                        {user.nama}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveView('wheel')}
-                      className="w-full min-h-[48px] py-3 px-5 bg-white hover:bg-stone-50 border border-[#C7BDA8] rounded-xl font-bold text-stone-900 text-base transition-colors"
-                    >
-                      Buka Roda Putar
-                    </button>
-                  </>
-                ) : !targetDate ? (
-                  <div className="my-auto py-2">
-                    <h3 className="text-xl font-bold text-stone-900 mb-2">
-                      Kejutan Puncak Wheel of Family
-                    </h3>
-                    <p className="text-stone-700 text-sm leading-relaxed">
-                      Jadwal pemutaran kapsul kenangan akan diumumkan oleh panitia. Pastikan kamu sudah mengisi Kapsul Waktu!
-                    </p>
                   </div>
-                ) : !wheelUnlocked && timeLeft ? (
-                  <div className="my-auto">
-                    <span className="inline-block px-3 py-1 rounded-md bg-amber-100 text-amber-900 text-xs font-bold mb-3">
-                      Menuju Puncak Acara
-                    </span>
-                    <h3 className="text-xl font-bold text-stone-900 mb-1">
-                      Wheel of Family Segera Dibuka
-                    </h3>
-                    <p className="text-stone-600 text-xs mb-5">
-                      Hitung mundur pembukaan foto & pesan satu angkatan:
-                    </p>
-                    <div className="grid grid-cols-4 gap-2 text-center">
-                      <div className="bg-white border border-[#DED6C6] py-3 px-2 rounded-xl">
-                        <span className="block font-mono font-bold text-xl sm:text-2xl text-stone-900">{timeLeft.days}</span>
-                        <span className="block text-xs text-stone-600 mt-0.5 font-medium">Hari</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingAvatar(true);
+                      setShowAvatarDesigner(true);
+                    }}
+                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors shrink-0"
+                  >
+                    Ubah
+                  </button>
+                </div>
+
+                {/* Wheel of Family Card Body */}
+                <div className="flex-1 flex flex-col justify-between gap-4">
+                  {user.is_admin ? (
+                    <>
+                      <div>
+                        <span className="inline-block px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold mb-2">
+                          Akses Panitia
+                        </span>
+                        <h3 className="text-xl font-bold text-slate-900 mb-1">Wheel of Family</h3>
+                        <p className="text-slate-600 text-sm leading-relaxed">
+                          {targetDate
+                            ? 'Hitung mundur untuk peserta sedang berjalan. Panitia dapat menguji roda putar kapan saja.'
+                            : 'Jadwal pembukaan roda putar belum diatur di Ruang Panitia.'}
+                        </p>
                       </div>
-                      <div className="bg-white border border-[#DED6C6] py-3 px-2 rounded-xl">
-                        <span className="block font-mono font-bold text-xl sm:text-2xl text-stone-900">{timeLeft.hours}</span>
-                        <span className="block text-xs text-stone-600 mt-0.5 font-medium">Jam</span>
-                      </div>
-                      <div className="bg-white border border-[#DED6C6] py-3 px-2 rounded-xl">
-                        <span className="block font-mono font-bold text-xl sm:text-2xl text-stone-900">{timeLeft.minutes}</span>
-                        <span className="block text-xs text-stone-600 mt-0.5 font-medium">Menit</span>
-                      </div>
-                      <div className="bg-white border border-[#DED6C6] py-3 px-2 rounded-xl">
-                        <span className="block font-mono font-bold text-xl sm:text-2xl text-green-800">{timeLeft.seconds}</span>
-                        <span className="block text-xs text-stone-600 mt-0.5 font-medium">Detik</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div>
-                      <span className="inline-block px-3 py-1 rounded-md bg-green-900/10 text-green-900 text-xs font-bold mb-4">
-                        Sudah Dibuka
-                      </span>
-                      <h3 className="text-2xl font-bold text-stone-900 mb-2">
-                        Wheel of Family
+                      <button
+                        type="button"
+                        onClick={() => setActiveView('wheel')}
+                        className="w-full min-h-[46px] py-2.5 px-5 bg-slate-900 hover:bg-slate-800 rounded-xl font-bold text-white text-sm transition-colors"
+                      >
+                        Buka Roda Putar
+                      </button>
+                    </>
+                  ) : !targetDate ? (
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                      <h3 className="text-base font-bold text-slate-900 mb-1">
+                        Kejutan Puncak Wheel of Family
                       </h3>
-                      <p className="text-stone-700 text-sm mb-6 leading-relaxed">
-                        Saatnya memutar roda kenangan dan melihat transformasi teman-teman Sedulur 16 dari tahun 2016 hingga 2026!
+                      <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                        Jadwal pemutaran kapsul kenangan akan diumumkan oleh panitia. Pastikan kamu sudah mengisi Kapsul Waktu!
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveView('wheel')}
-                      className="w-full min-h-[48px] py-3 px-5 bg-amber-500 hover:bg-amber-400 text-stone-950 rounded-xl font-bold text-base transition-colors"
-                    >
-                      Buka Roda Kenangan
-                    </button>
-                  </>
-                )}
+                  ) : !wheelUnlocked && timeLeft ? (
+                    <div className="space-y-3">
+                      <div>
+                        <span className="inline-block px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-bold mb-1.5">
+                          Menuju Puncak Acara
+                        </span>
+                        <h3 className="text-lg font-bold text-slate-900">
+                          Wheel of Family Segera Dibuka
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        <div className="bg-slate-50 border border-slate-200 py-2.5 px-1.5 rounded-xl">
+                          <span className="block font-mono font-bold text-lg text-slate-900">{timeLeft.days}</span>
+                          <span className="block text-[11px] text-slate-500 font-medium">Hari</span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-200 py-2.5 px-1.5 rounded-xl">
+                          <span className="block font-mono font-bold text-lg text-slate-900">{timeLeft.hours}</span>
+                          <span className="block text-[11px] text-slate-500 font-medium">Jam</span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-200 py-2.5 px-1.5 rounded-xl">
+                          <span className="block font-mono font-bold text-lg text-slate-900">{timeLeft.minutes}</span>
+                          <span className="block text-[11px] text-slate-500 font-medium">Menit</span>
+                        </div>
+                        <div className="bg-emerald-50 border border-emerald-200 py-2.5 px-1.5 rounded-xl">
+                          <span className="block font-mono font-bold text-lg text-emerald-700">{timeLeft.seconds}</span>
+                          <span className="block text-[11px] text-emerald-700 font-medium">Detik</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <span className="inline-block px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold mb-2">
+                          Sudah Dibuka
+                        </span>
+                        <h3 className="text-xl font-bold text-slate-900 mb-1">Wheel of Family</h3>
+                        <p className="text-slate-600 text-sm leading-relaxed">
+                          Saatnya memutar roda kenangan dan melihat transformasi teman-teman Sedulur 16 dari 2016 ke 2026!
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveView('wheel')}
+                        className="w-full min-h-[46px] py-2.5 px-5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl font-bold text-sm transition-colors"
+                      >
+                        Buka Roda Kenangan
+                      </button>
+                    </>
+                  )}
+                </div>
               </article>
             </div>
           </section>
 
-          {/* BAGIAN 2: PERMAINAN NOSTALGIA INDIVIDU (DAFTAR EDITORIAL) */}
-          <section aria-labelledby="solo-games-heading">
-            <div className="mb-4">
-              <h2 id="solo-games-heading" className="text-xl md:text-2xl font-bold text-stone-900">
+          {/* BAGIAN 2: PERMAINAN NOSTALGIA INDIVIDU (BENTO GRID) */}
+          <section aria-labelledby="solo-games-heading" className="space-y-4">
+            <div>
+              <h2 id="solo-games-heading" className="text-xl sm:text-2xl font-bold text-slate-900">
                 Kuis Kenangan Kampus (Main Sendiri)
               </h2>
-              <p className="text-stone-600 text-sm">
+              <p className="text-slate-600 text-sm mt-0.5">
                 Kumpulkan poin untuk klasemen angkatan dengan menebak lokasi kampus dan foto masa maba.
               </p>
             </div>
 
-            <div className="bg-white border border-[#DED6C6] rounded-2xl divide-y divide-[#DED6C6]">
-              <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#F3EDE0] flex items-center justify-center shrink-0 mt-0.5">
-                    <IconMap />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <article className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between gap-5 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 transition-transform">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-100 flex items-center justify-center">
+                      <IconMap />
+                    </div>
+                    <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold">
+                      20 Lokasi Memori
+                    </span>
                   </div>
                   <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h3 className="text-lg font-bold text-stone-900">Digital Treasure Hunt</h3>
-                      <span className="text-xs font-semibold text-green-900 bg-green-100 px-2 py-0.5 rounded-md">
-                        20 Lokasi Memori
-                      </span>
-                    </div>
-                    <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                    <h3 className="text-lg font-bold text-slate-900">Digital Treasure Hunt</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed mt-1">
                       Napak tilas titik-titik kenangan di sekitar kampus dan tempat nongkrong legendaris angkatan 2016.
                     </p>
                   </div>
@@ -568,25 +683,25 @@ export default function GameDashboard() {
                 <button
                   type="button"
                   onClick={() => setActiveView('map')}
-                  className="w-full sm:w-auto shrink-0 min-h-[48px] bg-green-900 hover:bg-green-800 py-3 px-5 rounded-xl font-bold text-white text-sm transition-colors"
+                  className="w-full min-h-[46px] bg-emerald-700 hover:bg-emerald-600 py-3 px-5 rounded-xl font-bold text-white text-sm transition-colors"
                 >
                   Mulai Tebak Lokasi
                 </button>
               </article>
 
-              <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#F3EDE0] flex items-center justify-center shrink-0 mt-0.5">
-                    <IconUsers />
+              <article className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between gap-5 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 transition-transform">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="w-11 h-11 rounded-2xl bg-sky-100 flex items-center justify-center">
+                      <IconUsers />
+                    </div>
+                    <span className="px-3 py-1 rounded-full bg-sky-50 text-sky-800 text-xs font-bold">
+                      20 Foto Angkatan
+                    </span>
                   </div>
                   <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h3 className="text-lg font-bold text-stone-900">Tebak Muka Blur</h3>
-                      <span className="text-xs font-semibold text-green-900 bg-green-100 px-2 py-0.5 rounded-md">
-                        20 Foto Angkatan
-                      </span>
-                    </div>
-                    <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                    <h3 className="text-lg font-bold text-slate-900">Tebak Muka Blur</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed mt-1">
                       Seberapa hafal kamu dengan wajah teman seangkatan tahun 2016? Semakin cepat menebak, semakin tinggi poinnya.
                     </p>
                   </div>
@@ -594,7 +709,7 @@ export default function GameDashboard() {
                 <button
                   type="button"
                   onClick={() => setActiveView('face')}
-                  className="w-full sm:w-auto shrink-0 min-h-[48px] bg-green-900 hover:bg-green-800 py-3 px-5 rounded-xl font-bold text-white text-sm transition-colors"
+                  className="w-full min-h-[46px] bg-slate-900 hover:bg-slate-800 py-3 px-5 rounded-xl font-bold text-white text-sm transition-colors"
                 >
                   Mulai Tebak Foto
                 </button>
@@ -602,33 +717,33 @@ export default function GameDashboard() {
             </div>
           </section>
 
-          {/* BAGIAN 3: PERMAINAN BARENG SEANGKATAN (MULTIPLAYER) */}
-          {(isMonopoliUnlocked || monopoliApproaching || isWerewolfUnlocked || werewolfApproaching || isUnoUnlocked || unoApproaching) && (
-            <section aria-labelledby="party-games-heading">
-              <div className="mb-4">
-                <h2 id="party-games-heading" className="text-xl md:text-2xl font-bold text-stone-900">
+          {/* BAGIAN 3: PERMAINAN BARENG SEANGKATAN (MULTIPLAYER BENTO) */}
+          {hasMultiplayerSection && (
+            <section aria-labelledby="party-games-heading" className="space-y-4">
+              <div>
+                <h2 id="party-games-heading" className="text-xl sm:text-2xl font-bold text-slate-900">
                   Arena Main Bareng (Multiplayer)
                 </h2>
-                <p className="text-stone-600 text-sm">
-                  Permainan seru untuk dimainkan bersama satu tongkrongan secara langsung.
+                <p className="text-slate-600 text-sm mt-0.5">
+                  Permainan seru bersama satu tongkrongan memakai karakter yang sudah kamu desain.
                 </p>
               </div>
 
-              <div className="bg-white border border-[#DED6C6] rounded-2xl divide-y divide-[#DED6C6]">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {monopoliApproaching && !isMonopoliUnlocked && (
-                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FAF6EE]/60">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <IconBoard />
+                  <article className="bg-white/75 border border-slate-200 rounded-3xl p-6 flex flex-col justify-between gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="w-11 h-11 rounded-2xl bg-amber-100 flex items-center justify-center">
+                          <IconBoard />
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
+                          Segera Dibuka
+                        </span>
                       </div>
                       <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold text-stone-800">Monopoli TL16</h3>
-                          <span className="bg-amber-100 text-amber-900 text-xs font-bold px-2 py-0.5 rounded-md">
-                            Segera Dibuka
-                          </span>
-                        </div>
-                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                        <h3 className="text-lg font-bold text-slate-800">Monopoli TL16</h3>
+                        <p className="text-slate-600 text-sm leading-relaxed mt-1">
                           Permainan papan kenangan 4 tahun masa kuliah ini akan segera dibuka sesuai jadwal perayaan.
                         </p>
                       </div>
@@ -637,27 +752,27 @@ export default function GameDashboard() {
                 )}
 
                 {isMonopoliUnlocked && (
-                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <IconBoard />
+                  <article className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between gap-5 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 transition-transform">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="w-11 h-11 rounded-2xl bg-amber-100 flex items-center justify-center">
+                          <IconBoard />
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold">
+                          Siap Dimainkan
+                        </span>
                       </div>
                       <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold text-stone-900">Monopoli TL16</h3>
-                          <span className="bg-green-100 text-green-900 text-xs font-bold px-2 py-0.5 rounded-md">
-                            Siap Dimainkan
-                          </span>
-                        </div>
-                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
-                          Kelilingi petak kampus, kumpulkan properti kontrakan, dan jawab tantangan Truth or Dare bersama teman-teman.
+                        <h3 className="text-lg font-bold text-slate-900">Monopoli TL16</h3>
+                        <p className="text-slate-600 text-sm leading-relaxed mt-1">
+                          Kelilingi petak kampus memakai bidak karaktermu, beli properti, dan jawab tantangan Truth or Dare.
                         </p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActiveView('monopoli')}
-                      className="w-full sm:w-auto shrink-0 min-h-[48px] bg-amber-500 hover:bg-amber-400 py-3 px-5 rounded-xl font-bold text-stone-950 text-sm transition-colors"
+                      className="w-full min-h-[46px] bg-amber-400 hover:bg-amber-300 py-3 px-5 rounded-xl font-bold text-slate-950 text-sm transition-colors"
                     >
                       Buka Papan Monopoli
                     </button>
@@ -665,19 +780,19 @@ export default function GameDashboard() {
                 )}
 
                 {werewolfApproaching && !isWerewolfUnlocked && (
-                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FAF6EE]/60">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <IconClass />
+                  <article className="bg-white/75 border border-slate-200 rounded-3xl p-6 flex flex-col justify-between gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="w-11 h-11 rounded-2xl bg-rose-100 flex items-center justify-center">
+                          <IconClass />
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
+                          Segera Dibuka
+                        </span>
                       </div>
                       <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold text-stone-800">Dosen Killer</h3>
-                          <span className="bg-amber-100 text-amber-900 text-xs font-bold px-2 py-0.5 rounded-md">
-                            Segera Dibuka
-                          </span>
-                        </div>
-                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                        <h3 className="text-lg font-bold text-slate-800">Dosen Killer</h3>
+                        <p className="text-slate-600 text-sm leading-relaxed mt-1">
                           Permainan deduksi sosial khas ruang kelas TL 2016 ini sedang disiapkan untuk sesi kumpul angkatan.
                         </p>
                       </div>
@@ -686,27 +801,27 @@ export default function GameDashboard() {
                 )}
 
                 {isWerewolfUnlocked && (
-                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <IconClass />
+                  <article className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between gap-5 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 transition-transform">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="w-11 h-11 rounded-2xl bg-rose-100 flex items-center justify-center">
+                          <IconClass />
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold">
+                          Siap Dimainkan
+                        </span>
                       </div>
                       <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold text-stone-900">Dosen Killer</h3>
-                          <span className="bg-green-100 text-green-900 text-xs font-bold px-2 py-0.5 rounded-md">
-                            Siap Dimainkan
-                          </span>
-                        </div>
-                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
-                          Permainan tebak peran ala kelas kuliah: temukan siapa yang menyamar sebagai Dosen Killer sebelum satu kelas kena remedial!
+                        <h3 className="text-lg font-bold text-slate-900">Dosen Killer</h3>
+                        <p className="text-slate-600 text-sm leading-relaxed mt-1">
+                          Permainan tebak peran ala kelas kuliah: temukan siapa Dosen Killer sebelum satu kelas kena remedial!
                         </p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActiveView('dosenkiller')}
-                      className="w-full sm:w-auto shrink-0 min-h-[48px] bg-amber-500 hover:bg-amber-400 py-3 px-5 rounded-xl font-bold text-stone-950 text-sm transition-colors"
+                      className="w-full min-h-[46px] bg-slate-900 hover:bg-slate-800 py-3 px-5 rounded-xl font-bold text-white text-sm transition-colors"
                     >
                       Masuk Ruang Kelas
                     </button>
@@ -714,19 +829,19 @@ export default function GameDashboard() {
                 )}
 
                 {unoApproaching && !isUnoUnlocked && (
-                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FAF6EE]/60">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <IconCards />
+                  <article className="bg-white/75 border border-slate-200 rounded-3xl p-6 flex flex-col justify-between gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="w-11 h-11 rounded-2xl bg-violet-100 flex items-center justify-center">
+                          <IconCards />
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
+                          Segera Dibuka
+                        </span>
                       </div>
                       <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold text-stone-800">UNO Seru TL16</h3>
-                          <span className="bg-amber-100 text-amber-900 text-xs font-bold px-2 py-0.5 rounded-md">
-                            Segera Dibuka
-                          </span>
-                        </div>
-                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                        <h3 className="text-lg font-bold text-slate-800">UNO Seru TL16</h3>
+                        <p className="text-slate-600 text-sm leading-relaxed mt-1">
                           Meja kartu UNO spesial reuni 1 Dekade akan dibuka menjelang sesi permainan bersama.
                         </p>
                       </div>
@@ -735,19 +850,19 @@ export default function GameDashboard() {
                 )}
 
                 {isUnoUnlocked && (
-                  <article className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <IconCards />
+                  <article className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between gap-5 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 transition-transform">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="w-11 h-11 rounded-2xl bg-violet-100 flex items-center justify-center">
+                          <IconCards />
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold">
+                          Siap Dimainkan
+                        </span>
                       </div>
                       <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold text-stone-900">UNO Seru TL16</h3>
-                          <span className="bg-green-100 text-green-900 text-xs font-bold px-2 py-0.5 rounded-md">
-                            Siap Dimainkan
-                          </span>
-                        </div>
-                        <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
+                        <h3 className="text-lg font-bold text-slate-900">UNO Seru TL16</h3>
+                        <p className="text-slate-600 text-sm leading-relaxed mt-1">
                           Buka meja kartu bersama teman-teman angkatan dengan aturan tumpuk kartu yang meriah.
                         </p>
                       </div>
@@ -755,7 +870,7 @@ export default function GameDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveView('unobrutal')}
-                      className="w-full sm:w-auto shrink-0 min-h-[48px] bg-amber-500 hover:bg-amber-400 py-3 px-5 rounded-xl font-bold text-stone-950 text-sm transition-colors"
+                      className="w-full min-h-[46px] bg-slate-900 hover:bg-slate-800 py-3 px-5 rounded-xl font-bold text-white text-sm transition-colors"
                     >
                       Gabung Meja Kartu
                     </button>
@@ -768,17 +883,17 @@ export default function GameDashboard() {
           {/* BAGIAN 4: PAPAN KLASEMEN */}
           <Suspense
             fallback={
-              <div className="text-center p-8 text-stone-600 bg-white rounded-2xl border border-[#DED6C6]">
+              <div className="text-center p-8 text-slate-600 bg-white rounded-3xl border border-slate-200">
                 Memuat Papan Klasemen...
               </div>
             }
           >
-            <ScoreBoard />
+            <ScoreBoard currentNim={user.nim} currentAvatarConfig={avatarConfig} />
           </Suspense>
         </main>
 
-        <footer className="mt-16 pt-8 border-t border-[#DED6C6] text-center text-stone-600 text-xs space-y-1">
-          <p className="font-semibold text-stone-800">Perayaan 1 Dekade Teknik Lingkungan Angkatan 2016 (Sedulur 16)</p>
+        <footer className="mt-14 pt-8 border-t border-slate-200 text-center text-slate-500 text-xs space-y-1">
+          <p className="font-semibold text-slate-800">Perayaan 1 Dekade Teknik Lingkungan Angkatan 2016 (Sedulur 16)</p>
           <p>2016 - 2026 | Kebersamaan Satu Dekade</p>
         </footer>
       </div>

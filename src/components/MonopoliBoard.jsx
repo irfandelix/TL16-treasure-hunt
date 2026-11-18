@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import PlayerAvatar from './PlayerAvatar';
+import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
 const BOARD_DATA = [
   { id: 0,  name: "START",               type: "corner",   side: 0 },
@@ -101,12 +103,22 @@ function MonopoliDice({ value = 1, shaking = false, tiltRight = false }) {
   );
 }
 
-export default function MonopoliBoard() {
+const PLAYER_RING_COLOR = {
+  'bg-red-500': 'ring-red-500',
+  'bg-blue-500': 'ring-blue-500',
+  'bg-green-500': 'ring-emerald-600',
+  'bg-yellow-400': 'ring-amber-400',
+  'bg-purple-500': 'ring-purple-500',
+  'bg-pink-500': 'ring-pink-500'
+};
+
+export default function MonopoliBoard({ myAvatarConfig = null }) {
   const [appState, setAppState] = useState('lobby');
   const [currentRoom, setCurrentRoom] = useState(null);
   const [joinCode, setJoinCode] = useState('');
   const [currentUser, setCurrentUser] = useState({ nim: '', nama: '', points: 0 });
   const [players, setPlayers] = useState([]);
+  const [playerAvatars, setPlayerAvatars] = useState({});
   const [myState, setMyState] = useState(null);
   const [properties, setProperties] = useState([]);
   const [myAnimPos, setMyAnimPos] = useState(null);
@@ -144,6 +156,41 @@ export default function MonopoliBoard() {
   const [activeRooms, setActiveRooms] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [tileSearch, setTileSearch] = useState('');
+
+  useEffect(() => {
+    const nims = players.map(p => p.nim).filter(Boolean);
+    if (nims.length === 0) return;
+
+    let active = true;
+    const fetchAvatars = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('alumni')
+          .select('nim, avatar_config')
+          .in('nim', nims);
+        if (!active || error || !data) return;
+
+        const nextMap = {};
+        data.forEach((row) => {
+          if (row.avatar_config) nextMap[row.nim] = row.avatar_config;
+        });
+        setPlayerAvatars(prev => ({ ...prev, ...nextMap }));
+      } catch {
+        // Abaikan jika kolom avatar_config belum tersedia di database
+      }
+    };
+    fetchAvatars();
+    return () => {
+      active = false;
+    };
+  }, [players]);
+
+  const getPlayerAvatarConfig = (nim) => {
+    if (nim === currentUser.nim) {
+      return myAvatarConfig || getLocalAvatarConfig(nim) || playerAvatars[nim] || null;
+    }
+    return playerAvatars[nim] || null;
+  };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -842,11 +889,19 @@ export default function MonopoliBoard() {
     return (
       <div className="flex flex-col items-center justify-center w-full min-h-[75vh] p-4">
         <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          <div className="w-full bg-white p-8 rounded-2xl border border-[#DED6C6] text-center">
-            <h1 className="text-3xl font-bold text-stone-900 mb-2">Monopoli UPN TL 2016</h1>
-            <p className="text-stone-800 mb-6 text-sm">
-              Halo, <span className="font-bold text-stone-900">{currentUser.nama}</span>!
-              <span className="block text-green-800 font-mono font-bold mt-1">
+          <div className="w-full bg-white p-8 rounded-3xl border border-slate-200 text-center shadow-sm">
+            <div className="flex justify-center mb-3">
+              <PlayerAvatar
+                config={getPlayerAvatarConfig(currentUser.nim)}
+                seed={currentUser.nim}
+                className="w-16 h-16 border-2 border-slate-900"
+                alt={currentUser.nama}
+              />
+            </div>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Monopoli UPN TL 2016</h1>
+            <p className="text-slate-700 mb-6 text-sm">
+              Halo, <span className="font-bold text-slate-900">{currentUser.nama}</span>!
+              <span className="block text-emerald-700 font-mono font-bold mt-1">
                 Total Poin Monopoli: {currentUser.points}
               </span>
             </p>
@@ -968,8 +1023,14 @@ export default function MonopoliBoard() {
           </h2>
           <div className="flex flex-col gap-2 mb-6 max-h-48 overflow-y-auto pr-1">
             {players.map(p => (
-              <div key={p.nim} className="bg-[#FAF6EE] p-3 rounded-xl flex items-center justify-between border border-[#DED6C6]">
-                <span className="font-semibold text-sm text-stone-900">
+              <div key={p.nim} className="bg-slate-50 p-3 rounded-xl flex items-center gap-3 border border-slate-200">
+                <PlayerAvatar
+                  config={getPlayerAvatarConfig(p.nim)}
+                  seed={p.nim}
+                  className="w-9 h-9 border border-slate-300"
+                  alt={p.nama}
+                />
+                <span className="font-semibold text-sm text-slate-900">
                   {p.nama} {p.nim === currentUser.nim ? <span className="text-amber-700">(Kamu)</span> : ''}
                 </span>
               </div>
@@ -1077,17 +1138,25 @@ export default function MonopoliBoard() {
   );
 
   return (
-    <div className="w-full max-w-6xl mx-auto bg-[#FAF6EE] text-stone-900 pb-16">
+    <div className="w-full max-w-6xl mx-auto bg-[#F4F6F9] text-slate-900 pb-16">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start lg:items-stretch">
 
         {/* KOLOM KIRI (DESKTOP): PAPAN MONOPOLI BESAR */}
         <div className="lg:col-span-8 w-full">
           {/* Header ringkas khusus HP (< lg) */}
-          <div className="lg:hidden w-full flex flex-wrap justify-between items-center gap-3 mb-3 bg-white p-4 rounded-2xl border border-[#DED6C6]">
+          <div className="lg:hidden w-full flex flex-wrap justify-between items-center gap-3 mb-3 bg-white p-4 rounded-2xl border border-slate-200">
             <div>
-              <h2 className="text-green-900 font-bold text-base">
-                {currentUser.nama} {myState?.is_bankrupt && <span className="text-rose-700">(Bangkrut)</span>}
-              </h2>
+              <div className="flex items-center gap-2.5">
+                <PlayerAvatar
+                  config={getPlayerAvatarConfig(currentUser.nim)}
+                  seed={currentUser.nim}
+                  className="w-9 h-9 border border-slate-900"
+                  alt={currentUser.nama}
+                />
+                <h2 className="text-emerald-900 font-bold text-base">
+                  {currentUser.nama} {myState?.is_bankrupt && <span className="text-rose-700">(Bangkrut)</span>}
+                </h2>
+              </div>
               <div className="flex flex-wrap gap-2 mt-2">
                 <button
                   type="button"
@@ -1213,11 +1282,19 @@ export default function MonopoliBoard() {
 
                     {playersOnTile.length>0 && (
                       <div className="absolute bottom-[2px] left-0 right-0 flex flex-wrap gap-[2px] justify-center">
-                        {playersOnTile.map(p=>(
+                        {playersOnTile.map(p => (
                           <div
                             key={p.nim}
-                            className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border border-stone-900 ${p.color||'bg-blue-400'} ${p.nim===currentUser.nim&&isAnimating?'ring-2 ring-amber-500 scale-125':''} transition-all duration-150 shrink-0`}
-                          />
+                            title={p.nama}
+                            className={`rounded-full ring-2 ${PLAYER_RING_COLOR[p.color] || 'ring-slate-900'} ${p.nim===currentUser.nim&&isAnimating?'scale-125 shadow-md':''} transition-all duration-150 shrink-0 bg-white`}
+                          >
+                            <PlayerAvatar
+                              config={getPlayerAvatarConfig(p.nim)}
+                              seed={p.nim}
+                              className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                              alt={p.nama}
+                            />
+                          </div>
                         ))}
                       </div>
                     )}
@@ -1295,10 +1372,17 @@ export default function MonopoliBoard() {
 
                     <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center mt-1">
                       {players.filter(p=>!p.is_bankrupt).map(p=>(
-                        <div key={p.nim} className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-[#DED6C6]">
-                          <div className={`rounded-full w-2.5 h-2.5 border border-stone-900 ${p.color||'bg-slate-400'}`} />
-                          <span className="text-stone-900 text-[10px] sm:text-xs font-semibold">{p.nama.split(' ')[0]}</span>
-                          <span className="text-green-900 font-mono text-[10px] sm:text-xs font-bold">{p.cash}k</span>
+                        <div key={p.nim} className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-slate-200">
+                          <div className={`rounded-full ring-2 ${PLAYER_RING_COLOR[p.color] || 'ring-slate-400'}`}>
+                            <PlayerAvatar
+                              config={getPlayerAvatarConfig(p.nim)}
+                              seed={p.nim}
+                              className="w-4 h-4 sm:w-5 sm:h-5"
+                              alt={p.nama}
+                            />
+                          </div>
+                          <span className="text-slate-900 text-[10px] sm:text-xs font-semibold">{p.nama.split(' ')[0]}</span>
+                          <span className="text-emerald-800 font-mono text-[10px] sm:text-xs font-bold">{p.cash}k</span>
                         </div>
                       ))}
                     </div>
@@ -1313,13 +1397,21 @@ export default function MonopoliBoard() {
         {/* KOLOM KANAN (DESKTOP) / BAWAH (HP): KONTROL & DETAIL PETAK */}
         <div className="lg:col-span-4 w-full flex flex-col gap-4 lg:h-0 lg:min-h-full">
           {/* Kartu Pemain & Saldo Desktop */}
-          <div className="hidden lg:block bg-white p-5 rounded-2xl border border-[#DED6C6]">
+          <div className="hidden lg:block bg-white p-5 rounded-2xl border border-slate-200">
             <div className="flex justify-between items-start gap-3 mb-4">
-              <div>
-                <h2 className="text-stone-900 font-bold text-lg leading-tight">
-                  {currentUser.nama}
-                </h2>
-                {myState?.is_bankrupt && <span className="text-xs font-bold text-rose-700">Status: Bangkrut</span>}
+              <div className="flex items-center gap-2.5 min-w-0">
+                <PlayerAvatar
+                  config={getPlayerAvatarConfig(currentUser.nim)}
+                  seed={currentUser.nim}
+                  className="w-10 h-10 border border-slate-900"
+                  alt={currentUser.nama}
+                />
+                <div className="min-w-0">
+                  <h2 className="text-slate-900 font-bold text-base leading-tight truncate">
+                    {currentUser.nama}
+                  </h2>
+                  {myState?.is_bankrupt && <span className="text-xs font-bold text-rose-700">Status: Bangkrut</span>}
+                </div>
               </div>
               <div className="text-right shrink-0">
                 <p className="text-xs text-stone-500 uppercase font-mono font-bold">Saldo Kas</p>
