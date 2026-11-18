@@ -10,8 +10,11 @@ import {
   getLocalAvatarConfig,
   loadPlayerAvatar,
   savePlayerAvatar,
-  generateSeedAvatarConfig
+  generateSeedAvatarConfig,
+  hasLocalSavedAvatar,
+  hasSavedPlayerAvatar
 } from '../lib/avatarHelper';
+import { isAdminSession, setAdminSessionVerified } from '../lib/adminAuth';
 
 const TreasureHunt = lazy(() => import('./TreasureHunt'));
 const FaceGame = lazy(() => import('./FaceGame'));
@@ -99,28 +102,49 @@ export default function GameDashboard() {
   const [gameDates, setGameDates] = useState(null);
 
   useEffect(() => {
-    const savedNim = localStorage.getItem('user_nim');
-    const savedNama = localStorage.getItem('user_nama');
-    const isAdmin = localStorage.getItem('is_admin') === 'true';
+    let active = true;
 
-    if (savedNim) {
-      setUser({ nim: savedNim, nama: savedNama, is_admin: isAdmin });
-      setAvatarConfig(getLocalAvatarConfig(savedNim) || generateSeedAvatarConfig(savedNim));
-
-      const savedView = localStorage.getItem(`active_view_${savedNim}`);
-      const allowedViews = ['dashboard', 'map', 'face', 'kapsul', 'wheel', 'monopoli', 'dosenkiller', 'unobrutal', 'updates', 'admin'];
-      let resolvedView = 'dashboard';
-      if (savedView && allowedViews.includes(savedView) && (savedView !== 'admin' || isAdmin)) {
-        resolvedView = savedView;
-        setActiveView(savedView);
+    const initSession = async () => {
+      if (localStorage.getItem('is_admin') === 'true' && !isAdminSession()) {
+        localStorage.removeItem('user_nim');
+        localStorage.removeItem('user_nama');
+        localStorage.removeItem('is_admin');
+        setAdminSessionVerified(false);
+        if (active) setIsChecking(false);
+        return;
       }
 
-      if (resolvedView === 'dashboard' && !sessionStorage.getItem(`avatar_confirmed_${savedNim}`)) {
-        setShowAvatarDesigner(true);
-        setIsEditingAvatar(false);
+      const savedNim = localStorage.getItem('user_nim');
+      const savedNama = localStorage.getItem('user_nama');
+      const isAdmin = isAdminSession();
+
+      if (savedNim) {
+        setUser({ nim: savedNim, nama: savedNama, is_admin: isAdmin });
+        setAvatarConfig(getLocalAvatarConfig(savedNim) || generateSeedAvatarConfig(savedNim));
+
+        const savedView = localStorage.getItem(`active_view_${savedNim}`);
+        const allowedViews = ['dashboard', 'map', 'face', 'kapsul', 'wheel', 'monopoli', 'dosenkiller', 'unobrutal', 'updates', 'admin'];
+        let resolvedView = 'dashboard';
+        if (savedView && allowedViews.includes(savedView) && (savedView !== 'admin' || isAdmin)) {
+          resolvedView = savedView;
+          setActiveView(savedView);
+        }
+
+        if (resolvedView === 'dashboard') {
+          const alreadySaved = hasLocalSavedAvatar(savedNim) || (await hasSavedPlayerAvatar(savedNim));
+          if (active && !alreadySaved) {
+            setShowAvatarDesigner(true);
+            setIsEditingAvatar(false);
+          }
+        }
       }
-    }
-    setIsChecking(false);
+      if (active) setIsChecking(false);
+    };
+
+    initSession();
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -150,11 +174,12 @@ export default function GameDashboard() {
       loggedInUser.avatar_config ||
       getLocalAvatarConfig(loggedInUser.nim) ||
       generateSeedAvatarConfig(loggedInUser.nim);
+    const alreadySaved = Boolean(loggedInUser.avatar_config) || hasLocalSavedAvatar(loggedInUser.nim);
     setAvatarConfig(localOrSeed);
     setUser(loggedInUser);
     setActiveView('dashboard');
     setIsEditingAvatar(false);
-    setShowAvatarDesigner(true);
+    setShowAvatarDesigner(!alreadySaved);
   };
 
   const handleSaveAvatar = async (nextConfig) => {

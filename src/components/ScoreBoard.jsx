@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { isAdminSession } from '../lib/adminAuth';
 import PlayerAvatar from './PlayerAvatar';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
@@ -80,7 +81,7 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
   }, []);
 
   useEffect(() => {
-    const checkAdmin = localStorage.getItem('is_admin') === 'true';
+    const checkAdmin = isAdminSession();
     setIsAdmin(checkAdmin);
     loadAllData(checkAdmin);
 

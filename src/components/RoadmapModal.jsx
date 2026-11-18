@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { isAdminSession } from '../lib/adminAuth';
 import RedactedText from './RedactedText';
 
 export default function RoadmapModal() {
@@ -7,7 +8,7 @@ export default function RoadmapModal() {
   const [scheduleData, setScheduleData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const isAdmin = typeof window !== 'undefined' && localStorage.getItem('is_admin') === 'true';
+  const isAdmin = isAdminSession();
 
   const fetchRoadmap = async () => {
     setIsLoading(true);

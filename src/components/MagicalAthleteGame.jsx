@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { isAdminSession, verifyAdminPassword, setAdminSessionVerified } from '../lib/adminAuth';
 import { ATHLETE_CHARACTERS, TRACK_TILES, PLAYER_COLORS } from '../data/athleteCharacters';
 import confetti from 'canvas-confetti';
 
@@ -39,6 +40,8 @@ export default function MagicalAthleteGame() {
   });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [inputNim, setInputNim] = useState('');
+  const [pendingAdminUser, setPendingAdminUser] = useState(null);
+  const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
 
@@ -108,7 +111,14 @@ export default function MagicalAthleteGame() {
   useEffect(() => {
     const savedNim = localStorage.getItem('user_nim');
     const savedNama = localStorage.getItem('user_nama');
-    const savedAdmin = localStorage.getItem('is_admin') === 'true';
+    const savedAdmin = isAdminSession();
+
+    if (localStorage.getItem('is_admin') === 'true' && !savedAdmin) {
+      localStorage.removeItem('user_nim');
+      localStorage.removeItem('user_nama');
+      setAdminSessionVerified(false);
+      return;
+    }
 
     if (savedNim && savedNama) {
       setCurrentUser({
@@ -136,6 +146,18 @@ export default function MagicalAthleteGame() {
   const handleManualLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
+
+    if (pendingAdminUser) {
+      if (!verifyAdminPassword(adminPassword)) {
+        setLoginError('Password panitia salah! Silakan coba lagi.');
+        return;
+      }
+      finishManualLogin(pendingAdminUser, true);
+      setPendingAdminUser(null);
+      setAdminPassword('');
+      return;
+    }
+
     setLoginLoading(true);
 
     if (!inputNim.trim()) {
@@ -156,13 +178,20 @@ export default function MagicalAthleteGame() {
       return;
     }
 
-    finishManualLogin(data, data.is_admin || false);
+    if (data.is_admin) {
+      setPendingAdminUser(data);
+      setAdminPassword('');
+      setLoginLoading(false);
+      return;
+    }
+
+    finishManualLogin(data, false);
   };
 
   const finishManualLogin = (data, isAdminStatus) => {
     localStorage.setItem('user_nim', data.nim);
     localStorage.setItem('user_nama', data.nama);
-    localStorage.setItem('is_admin', Boolean(isAdminStatus).toString());
+    setAdminSessionVerified(Boolean(isAdminStatus));
 
     setCurrentUser({
       nim: data.nim,
@@ -878,26 +907,71 @@ export default function MagicalAthleteGame() {
           )}
 
           <form onSubmit={handleManualLogin} className="space-y-4">
-            <div className="text-left">
-              <label htmlFor="athlete-login-nim" className="text-xs font-mono uppercase tracking-wider text-stone-800 block mb-1.5 font-bold">
-                Nomor Induk Mahasiswa (NIM)
-              </label>
-              <input
-                id="athlete-login-nim"
-                type="text"
-                value={inputNim}
-                onChange={(e) => setInputNim(e.target.value)}
-                placeholder="Contoh: 114160001"
-                className="w-full min-h-[48px] bg-[#FAF6EE] border border-[#C7BDA8] focus:border-amber-400 rounded-xl px-4 py-3 text-stone-900 font-mono text-center tracking-wider transition-colors"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loginLoading}
-              className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition-colors shadow-md"
-            >
-              {loginLoading ? 'Memeriksa NIM...' : 'Masuk ke Arena Balap'}
-            </button>
+            {pendingAdminUser ? (
+              <>
+                <div className="bg-[#FAF6EE] border border-[#DED6C6] rounded-xl p-3 text-left text-xs">
+                  <p className="font-bold text-stone-900">Verifikasi Panitia: {pendingAdminUser.nama}</p>
+                  <p className="font-mono text-stone-600 mt-0.5">NIM {pendingAdminUser.nim}</p>
+                </div>
+                <div className="text-left">
+                  <label htmlFor="athlete-admin-pass" className="text-xs font-mono uppercase tracking-wider text-stone-800 block mb-1.5 font-bold">
+                    Password Panitia
+                  </label>
+                  <input
+                    id="athlete-admin-pass"
+                    type="password"
+                    autoComplete="current-password"
+                    autoFocus
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    placeholder="Masukkan password panitia"
+                    className="w-full min-h-[48px] bg-[#FAF6EE] border border-[#C7BDA8] focus:border-amber-400 rounded-xl px-4 py-3 text-stone-900 text-center transition-colors"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPendingAdminUser(null);
+                      setAdminPassword('');
+                      setLoginError('');
+                    }}
+                    className="w-1/3 min-h-[48px] bg-stone-200 hover:bg-stone-300 text-stone-800 font-bold py-3.5 rounded-xl transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition-colors shadow-md"
+                  >
+                    Verifikasi &amp; Masuk
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-left">
+                  <label htmlFor="athlete-login-nim" className="text-xs font-mono uppercase tracking-wider text-stone-800 block mb-1.5 font-bold">
+                    Nomor Induk Mahasiswa (NIM)
+                  </label>
+                  <input
+                    id="athlete-login-nim"
+                    type="text"
+                    value={inputNim}
+                    onChange={(e) => setInputNim(e.target.value)}
+                    placeholder="Contoh: 114160001"
+                    className="w-full min-h-[48px] bg-[#FAF6EE] border border-[#C7BDA8] focus:border-amber-400 rounded-xl px-4 py-3 text-stone-900 font-mono text-center tracking-wider transition-colors"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loginLoading}
+                  className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition-colors shadow-md"
+                >
+                  {loginLoading ? 'Memeriksa NIM...' : 'Masuk ke Arena Balap'}
+                </button>
+              </>
+            )}
           </form>
         </div>
       </div>

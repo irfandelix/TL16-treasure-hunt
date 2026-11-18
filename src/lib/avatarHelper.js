@@ -264,6 +264,18 @@ export function getLocalAvatarConfig(nim) {
   }
 }
 
+export function hasLocalSavedAvatar(nim) {
+  if (!nim || typeof window === 'undefined') return false;
+  try {
+    return (
+      localStorage.getItem(`avatar_saved_${nim}`) === 'true' ||
+      Boolean(localStorage.getItem(`avatar_config_${nim}`))
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Load a player's saved avatar from localStorage and refresh from Supabase if available.
  */
@@ -281,6 +293,7 @@ export async function loadPlayerAvatar(nim) {
     if (!error && data?.avatar_config) {
       const normalized = normalizeAvatarConfig(data.avatar_config);
       localStorage.setItem(`avatar_config_${nim}`, JSON.stringify(normalized));
+      localStorage.setItem(`avatar_saved_${nim}`, 'true');
       return normalized;
     }
   } catch {
@@ -291,7 +304,34 @@ export async function loadPlayerAvatar(nim) {
 }
 
 /**
- * Save avatar customization to localStorage, session confirmation, and Supabase (when supported).
+ * Check whether an alumni has saved avatar customization either locally or in Supabase.
+ */
+export async function hasSavedPlayerAvatar(nim) {
+  if (!nim) return false;
+  if (hasLocalSavedAvatar(nim)) return true;
+
+  try {
+    const { data, error } = await supabase
+      .from('alumni')
+      .select('avatar_config')
+      .eq('nim', nim)
+      .single();
+
+    if (!error && data?.avatar_config) {
+      const normalized = normalizeAvatarConfig(data.avatar_config);
+      localStorage.setItem(`avatar_config_${nim}`, JSON.stringify(normalized));
+      localStorage.setItem(`avatar_saved_${nim}`, 'true');
+      return true;
+    }
+  } catch {
+    // Abaikan jika kolom belum tersedia
+  }
+
+  return false;
+}
+
+/**
+ * Save avatar customization to localStorage and Supabase (when supported).
  */
 export async function savePlayerAvatar(nim, config) {
   const normalized = normalizeAvatarConfig(config);
@@ -299,7 +339,7 @@ export async function savePlayerAvatar(nim, config) {
 
   try {
     localStorage.setItem(`avatar_config_${nim}`, JSON.stringify(normalized));
-    sessionStorage.setItem(`avatar_confirmed_${nim}`, 'true');
+    localStorage.setItem(`avatar_saved_${nim}`, 'true');
   } catch {
     // Abaikan kegagalan storage browser
   }

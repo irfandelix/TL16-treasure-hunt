@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { UPDATES_LOG } from '../data/updatesLog';
 import { supabase } from '../lib/supabaseClient';
+import { isAdminSession } from '../lib/adminAuth';
 import RedactedText from './RedactedText';
 
 const SECRET_MODE_RULES = [
@@ -89,7 +90,7 @@ export default function UpdatesPage({ onBack }) {
 
   useEffect(() => {
     let active = true;
-    const isAdmin = localStorage.getItem('is_admin') === 'true';
+    const isAdmin = isAdminSession();
     if (isAdmin) {
       setUnlockedModes({
         monopoli: true,

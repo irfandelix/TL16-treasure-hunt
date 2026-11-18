@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { isAdminSession } from '../lib/adminAuth';
 
 import LayarMalam from './LayarMalam';
 import LayarDiskusi from './LayarDiskusi';
@@ -35,7 +36,7 @@ export default function DosenKillerGame() {
   const currentUser = {
     nim: localStorage.getItem('user_nim'),
     nama: localStorage.getItem('user_nama'),
-    isAdmin: localStorage.getItem('is_admin') === 'true'
+    isAdmin: isAdminSession()
   };
 
   useEffect(() => {
