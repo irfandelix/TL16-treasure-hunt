@@ -1,5 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { UPDATES_LOG } from '../data/updatesLog';
+import { supabase } from '../lib/supabaseClient';
+import RedactedText from './RedactedText';
+
+const SECRET_MODE_RULES = [
+  {
+    key: 'monopoli',
+    widthClass: 'w-20',
+    pattern:
+      'bidak Monopoli(?: TL16)?|papan Monopoli(?: TL16)?|Monopoli TL16|MonopoliBoard(?:\\.jsx)?|MonopoliDice|monopoli_room_\\{nim\\}|monopoli_rooms|monopoli_players|monopoli_properties|monopoli_users|skor_monopoli|\\bMonopoli\\b',
+  },
+  {
+    key: 'werewolf',
+    widthClass: 'w-24',
+    pattern:
+      'Sidang Dosen Killer|Dosen Killer|DosenKillerGame(?:\\.jsx)?|DosenKiller|LayarDiskusi(?:\\.jsx)?|LayarMalam(?:\\.jsx)?|LayarVoting(?:\\.jsx)?|LayarEksekusi(?:\\.jsx)?|dk_room_\\{nim\\}|skor_werewolf|\\bwerewolf\\b',
+  },
+  {
+    key: 'uno',
+    widthClass: 'w-20',
+    pattern:
+      'UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|\\bUNO\\b',
+  },
+  {
+    key: 'wheel',
+    widthClass: 'w-24',
+    pattern: 'Wheel of Family|WheelOfFamily(?:\\.jsx)?|Roda Putar|Roda Kenangan',
+  },
+  {
+    key: 'athlete',
+    widthClass: 'w-24',
+    pattern: 'Magical Athlete|MagicalAthleteGame(?:\\.jsx)?',
+  },
+];
+
+function renderRedactedText(text, unlockedModes) {
+  if (!text) return text;
+  const activeRules = SECRET_MODE_RULES.filter((rule) => !unlockedModes[rule.key]);
+  if (activeRules.length === 0) return text;
+
+  const combined = new RegExp(
+    activeRules.map((rule) => `(${rule.pattern})`).join('|'),
+    'gi'
+  );
+
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  let keyCounter = 0;
+
+  while ((match = combined.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(<Fragment key={`t-${keyCounter++}`}>{text.slice(lastIndex, match.index)}</Fragment>);
+    }
+
+    const matchedRuleIndex = activeRules.findIndex((_, idx) => match[idx + 1] !== undefined);
+    const widthClass = activeRules[matchedRuleIndex]?.widthClass || 'w-20';
+    parts.push(<RedactedText key={`r-${keyCounter++}`} revealed={false} widthClass={widthClass} />);
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex === 0) return text;
+  if (lastIndex < text.length) {
+    parts.push(<Fragment key={`t-${keyCounter++}`}>{text.slice(lastIndex)}</Fragment>);
+  }
+  return parts;
+}
 
 const CATEGORIES = ['Semua', 'Fitur Baru', 'Perbaikan Bug', 'Desain & UI', 'Keamanan & Akses'];
 
@@ -13,6 +79,42 @@ const CATEGORY_STYLE = {
 export default function UpdatesPage({ onBack }) {
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [expandedDocs, setExpandedDocs] = useState(() => ({ [UPDATES_LOG[0]?.id]: true }));
+  const [unlockedModes, setUnlockedModes] = useState({
+    monopoli: false,
+    werewolf: false,
+    uno: false,
+    wheel: false,
+    athlete: false,
+  });
+
+  useEffect(() => {
+    let active = true;
+    const fetchUnlockDates = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('monopoli_unlock_date, werewolf_unlock_date, uno_unlock_date, wheel_unlock_date')
+          .eq('id', 1)
+          .single();
+
+        if (error || !data || !active) return;
+        const now = Date.now();
+        setUnlockedModes({
+          monopoli: Boolean(data.monopoli_unlock_date && now >= new Date(data.monopoli_unlock_date).getTime()),
+          werewolf: Boolean(data.werewolf_unlock_date && now >= new Date(data.werewolf_unlock_date).getTime()),
+          uno: Boolean(data.uno_unlock_date && now >= new Date(data.uno_unlock_date).getTime()),
+          wheel: Boolean(data.wheel_unlock_date && now >= new Date(data.wheel_unlock_date).getTime()),
+          athlete: false,
+        });
+      } catch {
+        // Fallback aman: seluruh mode terjadwal tetap disensor
+      }
+    };
+    fetchUnlockDates();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filteredUpdates =
     selectedCategory === 'Semua'
@@ -115,16 +217,16 @@ export default function UpdatesPage({ onBack }) {
                 </div>
 
                 <h2 className="text-xl md:text-2xl font-bold text-stone-900 mb-2">
-                  {item.title}
+                  {renderRedactedText(item.title, unlockedModes)}
                 </h2>
                 <p className="text-stone-700 text-sm md:text-base leading-relaxed mb-4">
-                  {item.summary}
+                  {renderRedactedText(item.summary, unlockedModes)}
                 </p>
 
                 <ul className="list-disc list-inside space-y-1.5 text-sm text-stone-700 mb-5">
                   {item.changes.map((chg, idx) => (
                     <li key={idx} className="leading-relaxed">
-                      {chg}
+                      {renderRedactedText(chg, unlockedModes)}
                     </li>
                   ))}
                 </ul>
@@ -143,7 +245,9 @@ export default function UpdatesPage({ onBack }) {
                     <div className="mt-4 bg-[#FAF6EE] border border-[#DED6C6] rounded-xl p-4 space-y-3 text-xs">
                       <div>
                         <p className="font-bold text-stone-900 mb-1">Catatan Implementasi:</p>
-                        <p className="text-stone-700 leading-relaxed">{item.docs.notes}</p>
+                        <p className="text-stone-700 leading-relaxed">
+                          {renderRedactedText(item.docs.notes, unlockedModes)}
+                        </p>
                       </div>
                       <div>
                         <p className="font-bold text-stone-900 mb-1.5">File Terkait:</p>
@@ -153,7 +257,7 @@ export default function UpdatesPage({ onBack }) {
                               key={filePath}
                               className="font-mono bg-white border border-[#DED6C6] text-green-900 px-2 py-0.5 rounded-md"
                             >
-                              {filePath}
+                              {renderRedactedText(filePath, unlockedModes)}
                             </code>
                           ))}
                         </div>

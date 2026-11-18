@@ -42,10 +42,10 @@ export default function RoadmapModal() {
       setScheduleData([
         { id: 1, month: 'Mei', week: 'Minggu ke-2', game: 'Digital Treasure Hunt', status: 'released' },
         { id: 2, month: 'Mei', week: 'Minggu ke-2', game: 'Tebak Muka Blur', status: 'released' },
-        { id: 3, month: mono.month, week: mono.week, game: 'Monopoli TL16', status: mono.status },
-        { id: 4, month: wolf.month, week: wolf.week, game: 'Dosen Killer', status: wolf.status },
-        { id: 5, month: uno.month, week: uno.week, game: 'UNO Seru TL16', status: uno.status },
-        { id: 6, month: wheel.month, week: wheel.week, game: 'Wheel of Family (Puncak Acara)', status: wheel.status },
+        { id: 3, month: mono.month, week: mono.week, game: 'Monopoli TL16', status: mono.status, redactedWidth: 'w-24' },
+        { id: 4, month: wolf.month, week: wolf.week, game: 'Dosen Killer', status: wolf.status, redactedWidth: 'w-28' },
+        { id: 5, month: uno.month, week: uno.week, game: 'UNO Seru TL16', status: uno.status, redactedWidth: 'w-28' },
+        { id: 6, month: wheel.month, week: wheel.week, game: 'Wheel of Family (Puncak Acara)', suffix: ' (Puncak Acara)', status: wheel.status, redactedWidth: 'w-32' },
       ]);
     } catch (error) {
       console.error('Gagal memuat jadwal acara:', error);
@@ -153,16 +153,10 @@ export default function RoadmapModal() {
                     {scheduleData.map((item) => (
                       <tr key={item.id} className="hover:bg-[#FAF6EE] transition-colors">
                         <td className="px-4 py-3.5 font-bold">
-                          {item.id === 3 && item.status !== 'released' && !isAdmin ? (
+                          {item.status !== 'released' ? (
                             <span className="text-stone-700">
-                              <RedactedText revealed={false} widthClass="w-20">
-                                Monopoli
-                              </RedactedText>{' '}
-                              TL16
-                            </span>
-                          ) : item.status === 'secret' ? (
-                            <span className="text-stone-500">
-                              Kejutan ({item.game})
+                              <RedactedText revealed={false} widthClass={item.redactedWidth || 'w-28'} />
+                              {item.suffix || ''}
                             </span>
                           ) : (
                             <span className="text-stone-900">{item.game}</span>

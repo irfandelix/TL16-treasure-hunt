@@ -179,9 +179,9 @@ export default function AvatarDesigner({
                     {user?.nama}
                   </div>
                   <p className="text-xs text-emerald-100 mt-1">
-                    Tampil di profil Beranda, Klasemen, dan bidak{' '}
-                    <RedactedText revealed={isMonopoliUnlocked} onDark={true} widthClass="w-16">
-                      Monopoli
+                    Tampil di profil Beranda, Klasemen, dan{' '}
+                    <RedactedText revealed={isMonopoliUnlocked} onDark={true} widthClass="w-24">
+                      bidak Monopoli
                     </RedactedText>
                     .
                   </p>
@@ -219,8 +219,8 @@ export default function AvatarDesigner({
                 </h2>
                 <p className="text-sm text-zinc-600 mt-1 leading-relaxed">
                   Seluruh pilihanmu otomatis tersimpan ke akun alumni untuk dipakai di Beranda, Klasemen, dan{' '}
-                  <RedactedText revealed={isMonopoliUnlocked} widthClass="w-16">
-                    Monopoli
+                  <RedactedText revealed={isMonopoliUnlocked} widthClass="w-24">
+                    bidak Monopoli
                   </RedactedText>
                   .
                 </p>

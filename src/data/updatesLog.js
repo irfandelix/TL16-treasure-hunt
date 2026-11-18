@@ -1,11 +1,37 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-019',
+    date: '18 November 2026',
+    version: 'v2.5.2',
+    category: 'Keamanan & Akses',
+    title: 'Penyensoran Menyeluruh Seluruh Mode Permainan yang Belum Rilis',
+    commit: 'latest',
+    summary: 'Memperluas sistem sensor blok hitam ala berkas kasus detektif agar tidak satu pun mode yang belum memasuki tanggal rilis (Monopoli TL16, Dosen Killer, UNO Seru TL16, Wheel of Family, dan Magical Athlete) bocor di halaman publik maupun pratinjau admin.',
+    changes: [
+      'Menyensor frasa penuh "bidak Monopoli" pada panggung pratinjau dan panel kontrol AvatarDesigner hingga tanggal rilis tiba.',
+      'Menyensor nama seluruh agenda dan mode permainan belum rilis (Monopoli TL16, Dosen Killer, UNO Seru TL16, dan Wheel of Family) pada Beranda, Jadwal Acara, dan rincian poin Klasemen mengikuti tanggal pembukaan asli di app_settings (bahkan saat ditinjau dengan akun panitia).',
+      'Menerapkan penyensoran otomatis RedactedText pada halaman Catatan Update (/updates) untuk judul, ringkasan, daftar perubahan, catatan teknis, hingga path file mode yang masih terkunci.'
+    ],
+    docs: {
+      files: [
+        'src/components/RedactedText.jsx',
+        'src/components/AvatarDesigner.jsx',
+        'src/components/GameDashboard.jsx',
+        'src/components/RoadmapModal.jsx',
+        'src/components/ScoreBoard.jsx',
+        'src/components/UpdatesPage.jsx',
+        'src/data/updatesLog.js'
+      ],
+      notes: 'Halaman statis /updates dan seluruh komponen UI mengacu pada tanggal rilis app_settings di Supabase dengan status awal terkunci (revealed=false), sehingga DOM publik bebas dari bocoran nama mode yang belum tayang.'
+    }
+  },
+  {
     id: 'upd-018',
     date: '18 November 2026',
     version: 'v2.5.1',
     category: 'Desain & UI',
     title: 'Penyempurnaan Antarmuka Anti-Slop & Sensor Kasus Detektif Monopoli',
-    commit: 'latest',
+    commit: '4604319',
     summary: 'Menyelaraskan seluruh halaman ke desain editorial kertas hangat (Bricolage Grotesque & Public Sans) sesuai audit antislop/impeccable dan menyensor label Monopoli sebelum jadwal buka tiba.',
     changes: [
       'Menghilangkan gradasi latar belakang, header kaca blur, bayangan kartu bertumpuk, dan eyebrow pill pada Login, AvatarDesigner, GameDashboard, dan ScoreBoard.',

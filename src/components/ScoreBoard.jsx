@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import PlayerAvatar from './PlayerAvatar';
+import RedactedText from './RedactedText';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
 export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null }) {
@@ -9,6 +10,8 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
   const [isRevealed, setIsRevealed] = useState(false);
   const [isMonopoliUnlocked, setIsMonopoliUnlocked] = useState(false);
   const [isWerewolfUnlocked, setIsWerewolfUnlocked] = useState(false);
+  const [isMonopoliDateReached, setIsMonopoliDateReached] = useState(false);
+  const [isWerewolfDateReached, setIsWerewolfDateReached] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -29,16 +32,21 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
         setIsRevealed(Boolean(settings.show_scoreboard));
         const now = Date.now();
 
+        const monoDateReached = Boolean(
+          settings.monopoli_unlock_date && now >= new Date(settings.monopoli_unlock_date).getTime()
+        );
+        const wolfDateReached = Boolean(
+          settings.werewolf_unlock_date && now >= new Date(settings.werewolf_unlock_date).getTime()
+        );
+        setIsMonopoliDateReached(monoDateReached);
+        setIsWerewolfDateReached(wolfDateReached);
+
         if (checkAdmin) {
           monopoliBuka = true;
           werewolfBuka = true;
         } else {
-          if (settings.monopoli_unlock_date) {
-            monopoliBuka = now >= new Date(settings.monopoli_unlock_date).getTime();
-          }
-          if (settings.werewolf_unlock_date) {
-            werewolfBuka = now >= new Date(settings.werewolf_unlock_date).getTime();
-          }
+          monopoliBuka = monoDateReached;
+          werewolfBuka = wolfDateReached;
         }
         setIsMonopoliUnlocked(monopoliBuka);
         setIsWerewolfUnlocked(werewolfBuka);
@@ -196,13 +204,19 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
 
                         {isMonopoliUnlocked && (
                           <span className="bg-[#F8F6F1] border border-[#DED8CA] text-zinc-700 text-xs px-2.5 py-0.5 rounded-md font-medium">
-                            Monopoli: <strong className="font-mono text-amber-700">{person.skor_monopoli || 0}</strong>
+                            <RedactedText revealed={isMonopoliDateReached} widthClass="w-16">
+                              Monopoli
+                            </RedactedText>
+                            : <strong className="font-mono text-amber-700">{person.skor_monopoli || 0}</strong>
                           </span>
                         )}
 
                         {isWerewolfUnlocked && (
                           <span className="bg-[#F8F6F1] border border-[#DED8CA] text-zinc-700 text-xs px-2.5 py-0.5 rounded-md font-medium">
-                            Dosen Killer: <strong className="font-mono text-amber-700">{person.skor_werewolf || 0}</strong>
+                            <RedactedText revealed={isWerewolfDateReached} widthClass="w-20">
+                              Dosen Killer
+                            </RedactedText>
+                            : <strong className="font-mono text-amber-700">{person.skor_werewolf || 0}</strong>
                           </span>
                         )}
                       </div>

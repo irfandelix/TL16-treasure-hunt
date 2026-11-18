@@ -3,7 +3,13 @@ import React from 'react';
 /**
  * Displays text when revealed, or a detective-style black redaction bar until unlocked.
  */
-export default function RedactedText({ revealed = false, children, onDark = false, widthClass = 'w-16' }) {
+export default function RedactedText({
+  revealed = false,
+  children,
+  onDark = false,
+  widthClass = 'w-16',
+  srLabel = 'dirahasiakan sampai jadwal pembukaan'
+}) {
   if (revealed) {
     return <>{children}</>;
   }
@@ -17,7 +23,7 @@ export default function RedactedText({ revealed = false, children, onDark = fals
           onDark ? 'border border-white/30' : ''
         }`}
       />
-      <span className="sr-only">permainan rahasia (menunggu jadwal buka)</span>
+      <span className="sr-only">{srLabel}</span>
     </span>
   );
 }
