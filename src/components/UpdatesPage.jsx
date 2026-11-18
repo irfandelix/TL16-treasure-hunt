@@ -157,7 +157,7 @@ export default function UpdatesPage({ onBack }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF6EE] text-stone-900 p-4 md:p-8 font-sans">
+    <div className="min-h-[100dvh] bg-[#FAF6EE] text-stone-900 p-4 sm:p-6 md:p-8 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))] font-sans">
       <div className="max-w-4xl mx-auto">
         <nav aria-label="Navigasi halaman update" className="mb-6 pb-4 border-b border-[#DED6C6] flex flex-wrap items-center justify-between gap-3">
           {onBack ? (

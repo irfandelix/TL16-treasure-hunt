@@ -21,7 +21,7 @@ function ColorSwatches({ label, palette, selected, onSelect }) {
       <span className="block text-xs font-bold text-zinc-700">
         {label}
       </span>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2.5 sm:gap-2">
         {palette.map((item) => {
           const isSelected = selected?.toLowerCase() === item.hex.toLowerCase();
           return (
@@ -32,8 +32,8 @@ function ColorSwatches({ label, palette, selected, onSelect }) {
               aria-label={`${label}: ${item.label}`}
               aria-pressed={isSelected}
               onClick={() => onSelect(item.hex)}
-              className={`w-8 h-8 rounded-lg border-2 border-[#FFFDF9] transition-transform ${
-                isSelected ? 'ring-2 ring-[#14532D] scale-110' : 'ring-1 ring-[#CEC6B6] hover:scale-105'
+              className={`w-11 h-11 md:w-9 md:h-9 rounded-lg border-2 border-[#FFFDF9] transition-transform ${
+                isSelected ? 'ring-2 ring-[#14532D] scale-105' : 'ring-1 ring-[#CEC6B6] hover:scale-105'
               }`}
               style={{ backgroundColor: item.hex }}
             />
@@ -59,7 +59,7 @@ function OptionPills({ label, options, selected, onSelect }) {
               type="button"
               aria-pressed={isSelected}
               onClick={() => onSelect(opt.id)}
-              className={`min-h-[40px] px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+              className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors ${
                 isSelected
                   ? 'bg-[#14532D] text-white border-[#14532D]'
                   : 'bg-[#F8F6F1] text-zinc-800 border-[#DED8CA] hover:bg-[#EFE9DC]'
@@ -127,20 +127,20 @@ export default function AvatarDesigner({
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F6F1] text-zinc-900 p-4 sm:p-6 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-[100dvh] bg-[#F8F6F1] text-zinc-900 p-4 sm:p-6 md:p-8 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="max-w-5xl mx-auto space-y-5 sm:space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#DED8CA] pb-5">
-          <div className="flex items-center gap-4 min-w-0">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <img
               src="/Asset 2.webp"
               alt="Reuni 1 Dekade TL 2016"
               width="112"
               height="44"
               fetchPriority="high"
-              className="w-24 sm:w-28 h-auto shrink-0"
+              className="w-20 sm:w-28 h-auto shrink-0"
             />
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 leading-tight truncate">
+              <h1 className="text-lg sm:text-2xl font-bold text-zinc-900 leading-tight truncate">
                 Desain Karakter {user?.nama || 'Alumni TL 2016'}
               </h1>
               <p className="text-xs sm:text-sm text-zinc-600 mt-0.5">
@@ -160,12 +160,12 @@ export default function AvatarDesigner({
           )}
         </header>
 
-        <section className="bg-[#FFFDF9] border border-[#DED8CA] rounded-2xl p-5 sm:p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 lg:gap-9 items-start">
+        <section className="bg-[#FFFDF9] border border-[#DED8CA] rounded-2xl p-4 sm:p-6 lg:p-8">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-7 lg:gap-9 items-start">
             {/* Left Preview Stage */}
-            <div className="lg:col-span-5 flex flex-col gap-4 lg:sticky lg:top-6">
-              <div className="rounded-2xl bg-[#14532D] p-6 sm:p-8 text-center flex flex-col items-center gap-4 border border-[#0F3F22]">
-                <div className="w-44 h-44 sm:w-52 sm:h-52 rounded-full border-4 border-[#FFFDF9] overflow-hidden flex items-center justify-center bg-[#F1ECE0]">
+            <div className="md:col-span-5 flex flex-col gap-4 md:sticky md:top-6">
+              <div className="rounded-2xl bg-[#14532D] p-5 sm:p-6 lg:p-8 text-center flex flex-col items-center gap-4 border border-[#0F3F22]">
+                <div className="w-36 h-36 sm:w-44 sm:h-44 lg:w-52 lg:h-52 rounded-full border-4 border-[#FFFDF9] overflow-hidden flex items-center justify-center bg-[#F1ECE0]">
                   <PlayerAvatar
                     config={config}
                     seed={user?.nim}
@@ -188,7 +188,7 @@ export default function AvatarDesigner({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-1 xl:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={handleRandomize}
@@ -212,7 +212,7 @@ export default function AvatarDesigner({
             </div>
 
             {/* Right Controls */}
-            <div className="lg:col-span-7 space-y-5">
+            <div className="md:col-span-7 space-y-5">
               <div className="border-b border-[#E5DFD2] pb-4">
                 <h2 className="text-lg sm:text-xl font-bold text-zinc-900">
                   Pilih Gaya &amp; Detail Karakter

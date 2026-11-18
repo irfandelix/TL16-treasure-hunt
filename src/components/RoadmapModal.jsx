@@ -94,15 +94,15 @@ export default function RoadmapModal() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="roadmap-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-[2px] p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-[2px] p-3 sm:p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
         >
-          <div className="bg-white p-6 md:p-8 rounded-2xl w-full max-w-2xl border border-[#DED6C6] shadow-xl relative flex flex-col max-h-[90vh]">
-            <div className="flex items-start justify-between gap-4 mb-6">
+          <div className="bg-white p-5 sm:p-6 md:p-8 rounded-2xl w-full max-w-2xl border border-[#DED6C6] shadow-xl relative flex flex-col max-h-[90dvh]">
+            <div className="flex items-start justify-between gap-4 mb-5 sm:mb-6">
               <div>
-                <h2 id="roadmap-modal-title" className="text-2xl font-bold text-stone-900">
+                <h2 id="roadmap-modal-title" className="text-xl sm:text-2xl font-bold text-stone-900">
                   Rangkaian Perayaan 1 Dekade Sedulur 16
                 </h2>
-                <p className="text-sm text-stone-600 mt-1">
+                <p className="text-xs sm:text-sm text-stone-600 mt-1">
                   Jadwal pembukaan permainan dan puncak reuni angkatan 2016.
                 </p>
               </div>
@@ -110,13 +110,13 @@ export default function RoadmapModal() {
                 type="button"
                 onClick={() => setIsOpen(false)}
                 aria-label="Tutup dialog jadwal acara"
-                className="min-w-[44px] min-h-[44px] rounded-xl bg-[#FAF6EE] border border-[#DED6C6] text-stone-700 hover:bg-[#F3EDE0] font-bold text-lg flex items-center justify-center"
+                className="min-w-[44px] min-h-[44px] rounded-xl bg-[#FAF6EE] border border-[#DED6C6] text-stone-700 hover:bg-[#F3EDE0] font-bold text-lg flex items-center justify-center shrink-0"
               >
                 <span aria-hidden="true">✕</span>
               </button>
             </div>
 
-            <div className="overflow-y-auto rounded-xl border border-[#DED6C6] bg-white flex-1">
+            <div className="overflow-x-auto overflow-y-auto rounded-xl border border-[#DED6C6] bg-white flex-1">
               {isLoading ? (
                 <div className="p-10 text-center text-stone-700 text-sm flex flex-col items-center gap-3">
                   <span

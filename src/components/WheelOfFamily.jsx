@@ -114,24 +114,26 @@ export default function WheelOfFamily() {
               </button>
             </div>
           ) : dataWheel.length > 0 ? (
-            <div className="relative pointer-events-none scale-75 md:scale-100 origin-top">
-              <Wheel
-                mustStartSpinning={mustSpin}
-                prizeNumber={prizeNumber}
-                data={dataWheel}
-                onStopSpinning={handleStopSpinning}
-                outerBorderColor="#1c1917"
-                outerBorderWidth={6}
-                innerBorderColor="#faf6ee"
-                innerBorderWidth={4}
-                radiusLineColor="#faf6ee"
-                radiusLineWidth={1}
-                backgroundColors={['#14532d', '#d97706', '#b91c1c', '#1e3a8a']}
-                textColors={['#faf6ee']}
-                fontSize={15}
-                textDistance={60}
-                spinDuration={0.8}
-              />
+            <div className="w-full overflow-hidden flex justify-center py-2">
+              <div className="relative pointer-events-none scale-[0.72] sm:scale-90 md:scale-100 origin-center -my-12 sm:-my-4 md:my-0">
+                <Wheel
+                  mustStartSpinning={mustSpin}
+                  prizeNumber={prizeNumber}
+                  data={dataWheel}
+                  onStopSpinning={handleStopSpinning}
+                  outerBorderColor="#1c1917"
+                  outerBorderWidth={6}
+                  innerBorderColor="#faf6ee"
+                  innerBorderWidth={4}
+                  radiusLineColor="#faf6ee"
+                  radiusLineWidth={1}
+                  backgroundColors={['#14532d', '#d97706', '#b91c1c', '#1e3a8a']}
+                  textColors={['#faf6ee']}
+                  fontSize={15}
+                  textDistance={60}
+                  spinDuration={0.8}
+                />
+              </div>
             </div>
           ) : (
             <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-[#C7BDA8] bg-[#FAF6EE] rounded-2xl w-full p-6 text-center">
@@ -167,7 +169,7 @@ export default function WheelOfFamily() {
           onClick={() => setShowResult(false)}
         >
           <div
-            className="relative w-full max-w-4xl bg-white border border-[#DED6C6] rounded-2xl p-6 md:p-8 shadow-xl my-8"
+            className="relative w-full max-w-4xl bg-white border border-[#DED6C6] rounded-2xl p-5 sm:p-6 md:p-8 shadow-xl my-4 max-h-[90dvh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <button 

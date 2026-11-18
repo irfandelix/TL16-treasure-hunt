@@ -139,7 +139,7 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
           Belum ada skor permainan yang tercatat. Mainkan salah satu permainan di atas untuk mulai mengumpulkan poin!
         </div>
       ) : (
-        <div className="max-h-[460px] overflow-y-auto overflow-x-auto rounded-xl border border-[#DED8CA] bg-[#FFFDF9]">
+        <div className="max-h-[60dvh] sm:max-h-[460px] overflow-y-auto overflow-x-auto rounded-xl border border-[#DED8CA] bg-[#FFFDF9]">
           <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 bg-[#F1ECE0] z-10 border-b border-[#DED8CA]">
               <tr className="text-zinc-800 font-bold text-xs sm:text-sm">

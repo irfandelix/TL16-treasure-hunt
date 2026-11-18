@@ -356,7 +356,7 @@ export default function GameDashboard() {
 
   if (isChecking) {
     return (
-      <main className="min-h-screen bg-[#F8F6F1] flex justify-center items-center text-zinc-700 font-semibold">
+      <main className="min-h-[100dvh] bg-[#F8F6F1] flex justify-center items-center p-4 text-zinc-700 font-semibold text-center">
         Memuat Portal Perayaan 1 Dekade TL 2016...
       </main>
     );
@@ -381,9 +381,9 @@ export default function GameDashboard() {
   }
 
   const renderSubView = (Component, props = {}) => (
-    <div className="min-h-screen bg-[#F8F6F1] text-zinc-900 p-4 md:p-8">
+    <div className="min-h-[100dvh] bg-[#F8F6F1] text-zinc-900 p-4 sm:p-6 md:p-8 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div className="max-w-5xl mx-auto">
-        <nav aria-label="Navigasi kembali" className="mb-6 pb-4 border-b border-[#DED8CA] flex items-center justify-between gap-3">
+        <nav aria-label="Navigasi kembali" className="mb-5 sm:mb-6 pb-4 border-b border-[#DED8CA] flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setActiveView('dashboard')}
@@ -493,7 +493,7 @@ export default function GameDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F6F1] text-zinc-900 relative pb-14">
+    <div className="min-h-[100dvh] bg-[#F8F6F1] text-zinc-900 relative pb-[max(3.5rem,env(safe-area-inset-bottom))]">
       {showAnniversary && (
         <div
           role="dialog"
@@ -526,7 +526,7 @@ export default function GameDashboard() {
       )}
 
       {/* HEADER NAVIGASI BERSIH */}
-      <header className="sticky top-0 z-30 bg-[#FFFDF9] border-b border-[#DED8CA]">
+      <header className="sticky top-0 z-30 bg-[#FFFDF9] border-b border-[#DED8CA] pt-[env(safe-area-inset-top)]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <PlayerAvatar
@@ -584,12 +584,12 @@ export default function GameDashboard() {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8">
-        <main className="space-y-12">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
+        <main className="space-y-10 sm:space-y-12">
           {/* BAGIAN 1: AGENDA UTAMA & PROFIL + WHEEL OF FAMILY (EDITORIAL 2-KOLOM) */}
           <section aria-labelledby="highlight-heading">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              <article className="lg:col-span-7 bg-[#FFFDF9] p-6 sm:p-8 rounded-2xl border border-[#DED8CA] flex flex-col justify-between gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6 items-stretch">
+              <article className="md:col-span-7 bg-[#FFFDF9] p-5 sm:p-6 lg:p-8 rounded-2xl border border-[#DED8CA] flex flex-col justify-between gap-6">
                 <div className="space-y-4">
                   <img
                     src="/Asset 2.webp"
@@ -624,7 +624,7 @@ export default function GameDashboard() {
                 </div>
               </article>
 
-              <article className="lg:col-span-5 bg-[#F1ECE0] p-6 sm:p-8 rounded-2xl border border-[#DED8CA] flex flex-col justify-between gap-6">
+              <article className="md:col-span-5 bg-[#F1ECE0] p-5 sm:p-6 lg:p-8 rounded-2xl border border-[#DED8CA] flex flex-col justify-between gap-6">
                 <div className="flex items-center justify-between gap-3 pb-5 border-b border-[#D8D0C0]">
                   <div className="flex items-center gap-3 min-w-0">
                     <PlayerAvatar
@@ -648,7 +648,7 @@ export default function GameDashboard() {
                       setIsEditingAvatar(true);
                       setShowAvatarDesigner(true);
                     }}
-                    className="min-h-[40px] px-3.5 py-2 rounded-xl bg-[#FFFDF9] hover:bg-white border border-[#DED8CA] text-zinc-800 text-xs font-bold transition-colors shrink-0"
+                    className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#FFFDF9] hover:bg-white border border-[#DED8CA] text-zinc-800 text-xs font-bold transition-colors shrink-0"
                   >
                     Ubah
                   </button>
@@ -705,7 +705,7 @@ export default function GameDashboard() {
                           <span>:</span>
                         </p>
                       </div>
-                      <div className="grid grid-cols-4 gap-2 text-center">
+                      <div className="grid grid-cols-4 gap-1.5 sm:gap-2 text-center">
                         <div className="bg-[#FFFDF9] border border-[#DED8CA] py-2.5 px-1.5 rounded-xl">
                           <span className="block font-mono font-bold text-lg text-zinc-900">{timeLeft.days}</span>
                           <span className="block text-[11px] text-zinc-600 font-medium">Hari</span>

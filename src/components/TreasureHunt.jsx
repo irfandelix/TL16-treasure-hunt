@@ -258,7 +258,7 @@ export default function TreasureHunt() {
         <p className="text-stone-900 text-base md:text-lg leading-relaxed">{mission?.clue}</p>
       </div>
 
-      <div className="h-[380px] md:h-[500px] w-full rounded-xl overflow-hidden border border-[#DED6C6] relative z-0 mb-6">
+      <div className="h-[46dvh] min-h-[300px] max-h-[500px] md:h-[500px] w-full rounded-xl overflow-hidden border border-[#DED6C6] relative z-0 mb-6">
         <MapContainer 
           center={centerMap} 
           zoom={17} 

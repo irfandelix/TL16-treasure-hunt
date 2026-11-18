@@ -72,7 +72,7 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-    <main className="min-h-screen bg-[#F8F6F1] flex justify-center items-center p-4 sm:p-6">
+    <main className="min-h-[100dvh] bg-[#F8F6F1] flex justify-center items-center p-4 sm:p-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
       <div className="bg-[#FFFDF9] p-6 sm:p-10 rounded-2xl border border-[#DED8CA] w-full max-w-md relative">
         <header className="text-center mb-8 flex flex-col items-center border-b border-[#E5DFD2] pb-6">
           <h1 className="w-full flex justify-center">

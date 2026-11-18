@@ -1201,7 +1201,7 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
             </button>
           </div>
 
-          <div className={isBoardZoomed ? 'overflow-x-auto pb-2 rounded-2xl' : ''}>
+          <div className={isBoardZoomed ? 'overflow-x-auto pb-2 rounded-2xl touch-pan-x touch-pan-y' : ''}>
             <div className={`relative aspect-square bg-[#E7DFCE] p-1.5 rounded-2xl border border-[#C7BDA8] ${isBoardZoomed ? 'min-w-[700px] w-[700px]' : 'w-full'}`}>
 
               <div className="grid grid-cols-11 grid-rows-11 h-full w-full gap-[2px]">
@@ -1479,7 +1479,7 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
               value={tileSearch}
               onChange={(e) => setTileSearch(e.target.value)}
               placeholder="Cari nama petak..."
-              className="w-full min-h-[40px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3 py-1.5 text-xs text-stone-900 placeholder:text-stone-400 focus:border-green-800 mb-2.5 shrink-0"
+              className="w-full min-h-[44px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl px-3 py-2 text-base sm:text-xs text-stone-900 placeholder:text-stone-400 focus:border-green-800 mb-2.5 shrink-0"
             />
             <div className="max-h-[260px] lg:max-h-none lg:flex-1 overflow-y-auto divide-y divide-[#EDE6D8] border border-[#DED6C6] rounded-xl bg-[#FAF6EE]">
               {BOARD_DATA.filter((t) =>
