@@ -156,7 +156,6 @@ export default function RoadmapModal() {
                           {!isAdmin && item.status !== 'released' ? (
                             <span className="text-stone-700">
                               <RedactedText revealed={false} widthClass={item.redactedWidth || 'w-28'} />
-                              {item.suffix || ''}
                             </span>
                           ) : (
                             <span className="text-stone-900">{item.game}</span>

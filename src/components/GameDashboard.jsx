@@ -404,6 +404,13 @@ export default function GameDashboard() {
     );
   }
 
+  const redactedDetail = (
+    <span className="inline-flex flex-wrap items-center gap-1.5 pt-0.5">
+      <RedactedText revealed={false} widthClass="w-52" srLabel="detail permainan dirahasiakan" />
+      <RedactedText revealed={false} widthClass="w-32" srLabel="" />
+    </span>
+  );
+
   const multiplayerGames = [];
   if (isMonopoliUnlocked || monopoliApproaching) {
     multiplayerGames.push({
@@ -420,7 +427,7 @@ export default function GameDashboard() {
       icon: <IconBoard />,
       description: isMonopoliUnlocked
         ? 'Kelilingi petak kampus memakai bidak karaktermu, beli properti kontrakan, dan jawab tantangan Truth or Dare.'
-        : 'Permainan papan rahasia untuk angkatan TL 2016 ini akan segera dibuka sesuai jadwal perayaan.',
+        : redactedDetail,
       ctaLabel: 'Buka Papan Monopoli',
       onClick: () => setActiveView('monopoli')
     });
@@ -437,7 +444,7 @@ export default function GameDashboard() {
       icon: <IconClass />,
       description: isWerewolfUnlocked
         ? 'Permainan tebak peran ala kelas kuliah: temukan siapa Dosen Killer sebelum satu kelas kena remedial.'
-        : 'Permainan kelompok rahasia untuk angkatan TL 2016 ini sedang disiapkan untuk sesi kumpul angkatan.',
+        : redactedDetail,
       ctaLabel: 'Masuk Ruang Kelas',
       onClick: () => setActiveView('dosenkiller')
     });
@@ -454,7 +461,7 @@ export default function GameDashboard() {
       icon: <IconCards />,
       description: isUnoUnlocked
         ? 'Buka meja kartu bersama teman-teman angkatan dengan aturan tumpuk kartu yang meriah.'
-        : 'Sesi permainan bersama edisi reuni 1 Dekade akan segera dibuka sesuai jadwal perayaan.',
+        : redactedDetail,
       ctaLabel: 'Gabung Meja Kartu',
       onClick: () => setActiveView('unobrutal')
     });
@@ -572,9 +579,9 @@ export default function GameDashboard() {
                       Kapsul Waktu 2016 ke 2026
                     </h2>
                     <p className="text-zinc-600 text-sm sm:text-base mt-2 leading-relaxed max-w-xl">
-                      Unggah satu foto terbaikmu di tahun 2026 beserta pesan hangat atau cerita lucu masa kuliah untuk diputar bersama pada puncak acara{' '}
-                      <RedactedText revealed={Boolean(user.is_admin || wheelUnlocked)} widthClass="w-28">
-                        Wheel of Family
+                      Unggah satu foto terbaikmu di tahun 2026 beserta pesan hangat atau cerita lucu masa kuliah untuk{' '}
+                      <RedactedText revealed={Boolean(user.is_admin || wheelUnlocked)} widthClass="w-48">
+                        diputar bersama pada puncak acara Wheel of Family
                       </RedactedText>
                       .
                     </p>
@@ -642,15 +649,21 @@ export default function GameDashboard() {
                       </button>
                     </>
                   ) : !targetDate ? (
-                    <div>
-                      <h3 className="text-lg font-bold text-zinc-900 mb-1.5">
+                    <div className="space-y-2.5">
+                      <h3 className="text-lg font-bold text-zinc-900">
                         <RedactedText revealed={false} widthClass="w-32">
                           Wheel of Family
                         </RedactedText>
                       </h3>
-                      <p className="text-zinc-700 text-sm leading-relaxed">
-                        Jadwal pemutaran kapsul kenangan akan diumumkan oleh panitia. Pastikan kamu sudah mengisi Kapsul Waktu!
-                      </p>
+                      <div className="space-y-1.5 text-sm leading-relaxed">
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          <RedactedText revealed={false} widthClass="w-44" srLabel="detail agenda puncak dirahasiakan" />
+                          <RedactedText revealed={false} widthClass="w-20" srLabel="" />
+                        </span>
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          <RedactedText revealed={false} widthClass="w-36" srLabel="" />
+                        </span>
+                      </div>
                     </div>
                   ) : !wheelUnlocked && timeLeft ? (
                     <div className="space-y-3">
@@ -661,8 +674,10 @@ export default function GameDashboard() {
                           </RedactedText>{' '}
                           Segera Dibuka
                         </h3>
-                        <p className="text-zinc-600 text-xs mt-0.5">
-                          Hitung mundur pembukaan foto &amp; pesan angkatan:
+                        <p className="text-zinc-600 text-xs mt-1 flex items-center gap-1">
+                          <span>Hitung mundur</span>
+                          <RedactedText revealed={false} widthClass="w-36" srLabel="detail agenda puncak dirahasiakan" />
+                          <span>:</span>
                         </p>
                       </div>
                       <div className="grid grid-cols-4 gap-2 text-center">

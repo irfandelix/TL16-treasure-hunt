@@ -8,24 +8,24 @@ const SECRET_MODE_RULES = [
     key: 'monopoli',
     widthClass: 'w-20',
     pattern:
-      'bidak Monopoli(?: TL16)?|papan Monopoli(?: TL16)?|Monopoli TL16|MonopoliBoard(?:\\.jsx)?|MonopoliDice|monopoli_room_\\{nim\\}|monopoli_rooms|monopoli_players|monopoli_properties|monopoli_users|skor_monopoli|\\bMonopoli\\b',
+      'bidak Monopoli(?: TL16)?|papan Monopoli(?: TL16)?|Monopoli TL16|MonopoliBoard(?:\\.jsx)?|MonopoliDice|monopoli_room_\\{nim\\}|monopoli_rooms|monopoli_players|monopoli_properties|monopoli_users|skor_monopoli|\\bMonopoli\\b|Daftar Petak(?: Papan)?|Detail Petak|kotak angka dadu|2 Dadu Bergoyang|kocokan dadu|petak tujuan|TELEPORT/MUNDUR|bonus START|properti kontrakan|Truth or Dare|uang sewa',
   },
   {
     key: 'werewolf',
     widthClass: 'w-24',
     pattern:
-      'Sidang Dosen Killer|Dosen Killer|DosenKillerGame(?:\\.jsx)?|DosenKiller|LayarDiskusi(?:\\.jsx)?|LayarMalam(?:\\.jsx)?|LayarVoting(?:\\.jsx)?|LayarEksekusi(?:\\.jsx)?|dk_room_\\{nim\\}|skor_werewolf|\\bwerewolf\\b',
+      'Sidang Dosen Killer|Dosen Killer|DosenKillerGame(?:\\.jsx)?|DosenKiller|LayarDiskusi(?:\\.jsx)?|LayarMalam(?:\\.jsx)?|LayarVoting(?:\\.jsx)?|LayarEksekusi(?:\\.jsx)?|dk_room_\\{nim\\}|skor_werewolf|\\bwerewolf\\b|kebocoran chat|petunjuk Intel|catatan Intel|kekebalan Uptodate',
   },
   {
     key: 'uno',
     widthClass: 'w-20',
     pattern:
-      'UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|\\bUNO\\b',
+      'UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|\\bUNO\\b|top_card|current_turn|tumpuk kartu|meja kartu|kartu Skip dan \\+2',
   },
   {
     key: 'wheel',
     widthClass: 'w-24',
-    pattern: 'Wheel of Family|WheelOfFamily(?:\\.jsx)?|Roda Putar|Roda Kenangan',
+    pattern: 'Wheel of Family|WheelOfFamily(?:\\.jsx)?|Roda Putar|Roda Kenangan|pemutaran kapsul kenangan',
   },
   {
     key: 'athlete',
