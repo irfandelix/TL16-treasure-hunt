@@ -1,5 +1,33 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-017',
+    date: '18 November 2026',
+    version: 'v2.5.0',
+    category: 'Desain & UI',
+    title: 'Perombakan UI Modern Bento & Studio Kustomisasi Karakter Alumni',
+    commit: '8a6c0eb',
+    summary: 'Merombak antarmuka portal menjadi gaya Modern Bento yang lebih bersih dan menambahkan studio desain karakter interaktif (@opeepsfun + opsi Hijab) saat memasuki dashboard.',
+    changes: [
+      'Menambahkan halaman AvatarDesigner sebelum masuk ke Beranda pada setiap login atau sesi baru, lengkap dengan pilihan kulit, latar, 9 gaya rambut/hijab (termasuk Hijab model pashmina lebar bahu), 3 model baju, kacamata, mata, 8 ekspresi mulut, serta tombol Acak Karakter.',
+      'Menyimpan detail kustomisasi karakter ke localStorage dan kolom avatar_config di Supabase (alumni & monopoli_users) agar tersinkron antarpemain dan perangkat.',
+      'Merombak tampilan Login, Beranda Perayaan (GameDashboard), dan Papan Klasemen (ScoreBoard) ke tata letak Modern Bento yang responsif di HP dan laptop.',
+      'Mengintegrasikan karakter kustom ke kartu profil Beranda, tombol Edit Karakter, daftar pemain Klasemen, lobi Monopoli, serta bidak berbingkai warna langsung di atas papan Monopoli TL16.'
+    ],
+    docs: {
+      files: [
+        'src/lib/avatarHelper.js',
+        'src/components/PlayerAvatar.jsx',
+        'src/components/AvatarDesigner.jsx',
+        'src/components/GameDashboard.jsx',
+        'src/components/Login.jsx',
+        'src/components/MonopoliBoard.jsx',
+        'src/components/ScoreBoard.jsx',
+        'src/data/avatar_schema.sql'
+      ],
+      notes: 'Menggunakan @opeepsfun/avatar-illustration-system dengan size=380 dan ID mask unik agar tidak terpotong saat dirender responsif, serta overlay vektor custom-hijab agar leher dan bahu tertutup rapi.'
+    }
+  },
+  {
     id: 'upd-016',
     date: '17 November 2026',
     version: 'v2.4.7',
