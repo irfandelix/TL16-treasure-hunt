@@ -115,6 +115,19 @@
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
   }
+
+  .avatar-photo-lock,
+  .avatar-photo-lock img {
+    color-scheme: only light;
+    forced-color-adjust: none;
+    isolation: isolate;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .avatar-photo-lock {
+      box-shadow: 0 0 0 1.5px rgba(255, 253, 249, 0.35);
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

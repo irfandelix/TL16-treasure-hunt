@@ -247,6 +247,17 @@ export function renderOpeepsSvg(config, uniqueHint = '') {
   }
 
   const uid = `opeeps_mask_${uniqueHint ? uniqueHint.replace(/[^a-zA-Z0-9_-]/g, '') : ++svgMaskCounter}`;
+  const bgGradId = `${uid}_bg`;
+  const bgLight = shadeHex(cfg.circleBg, 6);
+  const bgDeep = shadeHex(cfg.circleBg, -18);
+
+  // Replace only the first background circle with an opaque gradient rect so
+  // mobile Force Dark classifiers see an opaque portrait rather than an icon.
+  raw = raw.replace(
+    /<circle cx="190" cy="190" r="190" fill="[^"]*"\s*\/>/,
+    `<defs><radialGradient id="${bgGradId}" cx="42%" cy="34%" r="68%"><stop offset="0%" stop-color="${bgLight}"/><stop offset="100%" stop-color="${bgDeep}"/></radialGradient></defs><rect width="380" height="380" fill="url(#${bgGradId})"/>`
+  );
+
   return raw.replaceAll('mask0_65_1039', uid);
 }
 
