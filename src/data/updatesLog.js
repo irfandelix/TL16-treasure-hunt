@@ -1,5 +1,24 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-027',
+    date: '19 November 2026',
+    version: 'v2.7.3',
+    category: 'Desain & UI',
+    title: 'Penyesuaian Proporsi Tangga Podium 3 Besar Klasemen',
+    commit: 'latest',
+    summary: 'Memastikan kartu peringkat #1 pada papan klasemen selalu lebih tinggi dan menonjol dibanding #2 dan #3 walaupun panjang nama peserta berbeda baris.',
+    changes: [
+      'Menetapkan tinggi minimum bertingkat pada kartu podium desktop (#1 tertinggi, disusul #2 lalu #3) serta memperbesar avatar dan ukuran skor peringkat #1.',
+      'Menyamakan ruang blok nama (min-h-[2.75rem]) dan meratakan tengah rincian poin di kartu podium ScoreBoard.jsx agar tata letak tetap simetris saat nama panjang membungkus ke 2 baris.'
+    ],
+    docs: {
+      files: [
+        'src/components/ScoreBoard.jsx'
+      ],
+      notes: 'Tinggi minimum hanya berlaku pada breakpoint md ke atas sehingga kartu podium di layar HP tetap ringkas mengikuti isi.'
+    }
+  },
+  {
     id: 'upd-026',
     date: '19 November 2026',
     version: 'v2.7.2',

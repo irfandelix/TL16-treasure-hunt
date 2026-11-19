@@ -272,32 +272,32 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
   const getPodiumTone = (rank) => {
     if (rank === 1) {
       return {
-        card: 'bg-[#FEF7E6] border-[#D97706] md:-mt-3 md:pb-6 shadow-[0_8px_22px_-12px_rgba(180,83,9,0.28)]',
+        card: 'bg-[#FEF7E6] border-[#D97706] md:min-h-[380px] md:py-7 shadow-[0_8px_22px_-12px_rgba(180,83,9,0.28)]',
         rankBadge: 'bg-[#B45309] text-white',
-        scoreText: 'text-[#14532D]',
-        avatarSize: 'w-16 h-16 sm:w-20 sm:h-20 border-2 border-[#D97706]',
+        scoreText: 'text-[#14532D] text-3xl sm:text-4xl',
+        avatarSize: 'w-20 h-20 sm:w-24 sm:h-24 border-2 border-[#D97706]',
         label: 'Peringkat #1'
       };
     }
     if (rank === 2) {
       return {
-        card: 'bg-[#F6F4EE] border-[#C7BDA8]',
+        card: 'bg-[#F6F4EE] border-[#C7BDA8] md:min-h-[344px]',
         rankBadge: 'bg-zinc-700 text-white',
-        scoreText: 'text-zinc-900',
+        scoreText: 'text-zinc-900 text-2xl sm:text-3xl',
         avatarSize: 'w-14 h-14 sm:w-16 sm:h-16 border-2 border-[#C7BDA8]',
         label: 'Peringkat #2'
       };
     }
     return {
-      card: 'bg-[#FAF3EC] border-[#D8C5B4]',
+      card: 'bg-[#FAF3EC] border-[#D8C5B4] md:min-h-[318px]',
       rankBadge: 'bg-[#9A3412] text-white',
-      scoreText: 'text-zinc-900',
+      scoreText: 'text-zinc-900 text-2xl sm:text-3xl',
       avatarSize: 'w-14 h-14 sm:w-16 sm:h-16 border-2 border-[#D8C5B4]',
       label: 'Peringkat #3'
     };
   };
 
-  const renderScoreBreakdown = (person) => {
+  const renderScoreBreakdown = (person, centered = false) => {
     const items = [
       { key: 'peta', label: 'Peta', value: person.skor_peta || 0 },
       { key: 'muka', label: 'Foto', value: person.skor_muka || 0 }
@@ -310,7 +310,7 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
     }
 
     return (
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600">
+      <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600 ${centered ? 'justify-center' : ''}`}>
         {items.map((item) => {
           const isSorted = sortBy === item.key;
           return (
@@ -335,8 +335,8 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
     const revealedName = person.nama;
 
     return (
-      <div className="min-w-0">
-        <div className={`flex flex-wrap items-center gap-1.5 ${compact ? 'justify-center' : ''}`}>
+      <div className={`min-w-0 ${compact ? 'w-full' : ''}`}>
+        <div className={`flex flex-wrap items-center gap-1.5 ${compact ? 'justify-center min-h-[2.75rem]' : ''}`}>
           {shouldReveal ? (
             <span className="font-bold text-zinc-900 text-sm sm:text-base leading-snug break-words">
               {revealedName}
@@ -561,7 +561,7 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
                   return (
                     <article
                       key={person.nim}
-                      className={`${placementClass} rounded-2xl border p-5 flex flex-col items-center text-center gap-3 transition-transform duration-200 ${tone.card} ${
+                      className={`${placementClass} rounded-2xl border p-5 flex flex-col justify-between items-center text-center gap-3 transition-transform duration-200 ${tone.card} ${
                         isMe ? 'ring-2 ring-[#14532D] ring-offset-2 ring-offset-[#FFFDF9]' : ''
                       }`}
                     >
@@ -575,24 +575,26 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
                         </span>
                       </div>
 
-                      <PlayerAvatar
-                        config={resolveAvatar(person)}
-                        seed={person.nim}
-                        className={tone.avatarSize}
-                        alt={shouldReveal ? person.nama : 'Peserta dirahasiakan'}
-                      />
+                      <div className="flex flex-col items-center gap-3 w-full">
+                        <PlayerAvatar
+                          config={resolveAvatar(person)}
+                          seed={person.nim}
+                          className={tone.avatarSize}
+                          alt={shouldReveal ? person.nama : 'Peserta dirahasiakan'}
+                        />
 
-                      {renderParticipantIdentity(person, isMe, true)}
+                        {renderParticipantIdentity(person, isMe, true)}
+                      </div>
 
                       <div className="w-full pt-3 mt-1 border-t border-[#DED8CA]/80 flex flex-col items-center gap-1.5">
-                        <div className={`font-mono font-bold text-2xl sm:text-3xl leading-none ${tone.scoreText}`}>
+                        <div className={`font-mono font-bold leading-none ${tone.scoreText}`}>
                           {person._activeScore}
                         </div>
                         <div className="text-[11px] font-medium text-zinc-600">
                           {sortBy === 'total' ? 'Total Poin' : `Poin ${activeCategoryLabel}`}
                         </div>
-                        <div className="pt-1 flex justify-center">
-                          {renderScoreBreakdown(person)}
+                        <div className="pt-1 w-full">
+                          {renderScoreBreakdown(person, true)}
                         </div>
                       </div>
                     </article>
