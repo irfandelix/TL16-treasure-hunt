@@ -1,18 +1,17 @@
 export const UPDATES_LOG = [
   {
     id: 'upd-022',
-    requiresMode: 'adminOnly',
     date: '19 November 2026',
     version: 'v2.6.1',
     category: 'Perbaikan Bug',
-    title: 'Audit Mekanik Game Rahasia & Penambahan Magical Athlete ke Beranda',
+    title: 'Audit Mekanik & Integrasi Mode Terjadwal ke Arena Main Bareng',
     commit: '2707592',
-    summary: 'Menutup celah aturan permainan pada mode terjadwal setelah audit logika dan menambahkan Magical Athlete TL16 ke daftar Arena Main Bareng khusus admin.',
+    summary: 'Menutup celah aturan permainan pada mode Dosen Killer, Monopoli TL16, UNO Seru TL16, Wheel of Family, dan Magical Athlete TL16 serta menampilkan mode keempat di Arena Main Bareng.',
     changes: [
       'Dosen Killer & LayarVoting: mengecek kemenangan segera setelah fase malam, menandai pemain telat masuk sebagai penonton, memblokir vote ke NIM sendiri, dan membuka tombol mulai untuk koordinator pengganti.',
       'Monopoli TL16: menambah jeda 6 detik antar lemparan dadu, mengunci lemparan saat modal aksi masih terbuka, mencegah bonus ganda START saat kartu KE_START keluar, serta memakai compare-and-swap untuk kas sewa dan skor.',
       'UNO Seru TL16 & Magical Athlete: menambah pemilih 4 warna untuk kartu Titip Absen, memindahkan giliran otomatis saat pemain keluar meja, membaca ref terbaru selama animasi langkah, dan membatasi giliran bonus beruntun.',
-      'Wheel of Family & GameDashboard: menyaring alumni yang sudah pernah menang dari putaran berikutnya dan menampilkan Magical Athlete TL16 di baris #04 Arena Main Bareng khusus sesi admin.'
+      'Wheel of Family & GameDashboard: menyaring alumni yang sudah pernah menang dari putaran berikutnya dan menampilkan Magical Athlete TL16 di baris #04 Arena Main Bareng.'
     ],
     docs: {
       files: [
@@ -24,7 +23,7 @@ export const UPDATES_LOG = [
         'src/components/WheelOfFamily.jsx',
         'src/components/GameDashboard.jsx'
       ],
-      notes: 'Entri ini bertanda adminOnly agar rincian mode yang belum rilis tidak muncul di halaman publik /updates.'
+      notes: 'Perbaikan ini menjaga alur permainan Dosen Killer, Monopoli TL16, UNO Seru TL16, Wheel of Family, dan Magical Athlete TL16 tetap konsisten di semua kondisi koneksi.'
     }
   },
   {

@@ -9,19 +9,19 @@ const SECRET_MODE_RULES = [
     key: 'monopoli',
     widthClass: 'w-20',
     pattern:
-      'bidak Monopoli(?: TL16)?|bidak[^,.]*|papan Monopoli(?: TL16)?|Monopoli TL16|MonopoliBoard(?:\\.jsx)?|MonopoliDice|monopoli_room_\\{nim\\}|monopoli_rooms|monopoli_players|monopoli_properties|monopoli_users|skor_monopoli|\\bMonopoli\\b|Daftar Petak(?: Papan)?|Detail Petak|kotak angka dadu|2 Dadu Bergoyang|kocokan dadu|petak tujuan|petak 11x11|papan 11x11|perbesar papan[^,.]*|TELEPORT/MUNDUR|bonus START|properti kontrakan|Truth or Dare|uang sewa|IconBoard|\\blobi\\b',
+      'bidak Monopoli(?: TL16)?|bidak[^,.]*|papan Monopoli(?: TL16)?|Monopoli TL16|MonopoliBoard(?:\\.jsx)?|MonopoliDice|monopoli_room_\\{nim\\}|monopoli_rooms|monopoli_players|monopoli_properties|monopoli_users|skor_monopoli|\\bMonopoli\\b|Daftar Petak(?: Papan)?|Detail Petak|kotak angka dadu|2 Dadu Bergoyang|kocokan dadu|lemparan dadu|petak tujuan|petak 11x11|papan 11x11|perbesar papan[^,.]*|TELEPORT/MUNDUR|bonus START|\\bKE_START\\b|\\bSTART\\b|properti kontrakan|Truth or Dare|uang sewa|kas sewa|IconBoard|\\blobi\\b',
   },
   {
     key: 'werewolf',
     widthClass: 'w-24',
     pattern:
-      'Sidang Dosen Killer|Dosen Killer|DosenKillerGame(?:\\.jsx)?|DosenKiller|LayarDiskusi(?:\\.jsx)?|LayarMalam(?:\\.jsx)?|LayarVoting(?:\\.jsx)?|LayarEksekusi(?:\\.jsx)?|dk_room_\\{nim\\}|skor_werewolf|\\bwerewolf\\b|kebocoran chat|petunjuk Intel|catatan Intel|kekebalan Uptodate|IconClass|remedial',
+      'Sidang Dosen Killer|Dosen Killer|DosenKillerGame(?:\\.jsx)?|DosenKiller|LayarDiskusi(?:\\.jsx)?|LayarMalam(?:\\.jsx)?|LayarVoting(?:\\.jsx)?|LayarEksekusi(?:\\.jsx)?|dk_room_\\{nim\\}|skor_werewolf|\\bwerewolf\\b|fase malam|kebocoran chat|petunjuk Intel|catatan Intel|kekebalan Uptodate|IconClass|remedial',
   },
   {
     key: 'uno',
     widthClass: 'w-20',
     pattern:
-      'UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|\\bUNO\\b|top_card|current_turn|tumpuk kartu|meja kartu|kartu Skip dan \\+2|IconCards',
+      'UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|\\bUNO\\b|Titip Absen|4 warna|top_card|current_turn|tumpuk kartu|meja kartu|keluar meja|kartu Skip dan \\+2|IconCards',
   },
   {
     key: 'wheel',
@@ -33,7 +33,7 @@ const SECRET_MODE_RULES = [
     key: 'athlete',
     widthClass: 'w-24',
     pattern:
-      'src/pages/lock/magical-athlete\\.astro|/lock/magical-athlete|magical-athlete|Magical Athlete|MagicalAthleteGame(?:\\.jsx)?|athlete_rooms|athlete_players|athlete_schema\\.sql|athleteCharacters\\.js|\\b5 Permainan\\b|hak Host [^,.]*',
+      'src/pages/lock/magical-athlete\\.astro|/lock/magical-athlete|magical-athlete|Magical Athlete TL16|Magical Athlete|MagicalAthleteGame(?:\\.jsx)?|athlete_rooms|athlete_players|athlete_schema\\.sql|athleteCharacters\\.js|\\b5 Permainan\\b|hak Host [^,.]*',
   },
 ];
 
@@ -283,16 +283,27 @@ export default function UpdatesPage({ onBack }) {
                       <div>
                         <p className="font-bold text-stone-900 mb-1.5">File Terkait:</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {item.docs.files
-                            .filter((filePath) => !isPathLocked(filePath, unlockedModes))
-                            .map((filePath) => (
+                          {item.docs.files.map((filePath, fIdx) =>
+                            isPathLocked(filePath, unlockedModes) ? (
+                              <code
+                                key={`locked-${fIdx}`}
+                                className="font-mono bg-white border border-[#DED6C6] px-2 py-0.5 rounded-md inline-flex items-center"
+                              >
+                                <RedactedText
+                                  revealed={false}
+                                  widthClass="w-28"
+                                  srLabel="nama file dirahasiakan"
+                                />
+                              </code>
+                            ) : (
                               <code
                                 key={filePath}
                                 className="font-mono bg-white border border-[#DED6C6] text-green-900 px-2 py-0.5 rounded-md"
                               >
-                                {renderRedactedText(filePath, unlockedModes)}
+                                {filePath}
                               </code>
-                            ))}
+                            )
+                          )}
                         </div>
                       </div>
                     </div>
