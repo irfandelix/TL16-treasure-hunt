@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { UPDATES_LOG } from '../data/updatesLog';
 import {
   extractEarlyAccessConfig,
   filterVisiblePatchNotes,
@@ -228,47 +229,135 @@ export default function AdminDashboard({ onBack }) {
   }
 
   if (secretMode) {
+    const latestVersion = UPDATES_LOG[0]?.version || 'v2.8.2';
+    const moduleSpecs = [
+      {
+        title: 'Kuis Solo: Napak Tilas Peta & Tebak Muka Blur',
+        tone: 'text-[#14532D]',
+        status: 'Terbuka Publik',
+        detail:
+          '20 lokasi kampus/Jogja dan 20 foto maba 2016. Skor tertinggi dijaga dengan Math.max, progres serta sisa timer foto tersimpan di localStorage, dan layar selesai menyediakan poster IG Story 9:16 lengkap dengan tetangga peringkat.'
+      },
+      {
+        title: 'Monopoli TL16',
+        tone: 'text-[#B45309]',
+        status: monoData.status === 'released' ? 'Terbuka' : monoData.status === 'upcoming' ? 'Terjadwal' : 'Rahasia',
+        detail:
+          'Papan kampus real-time dengan kartu Dana Umum, Kesempatan, dan Truth or Dare. Dilengkapi jeda 6 detik antar lemparan dadu, kunci lemparan saat modal terbuka, compare-and-swap kas serta skor, dan poster hasil sesi.'
+      },
+      {
+        title: 'Sidang Dosen Killer',
+        tone: 'text-[#14532D]',
+        status: wolfData.status === 'released' ? 'Terbuka' : wolfData.status === 'upcoming' ? 'Terjadwal' : 'Rahasia',
+        detail:
+          'Rasio peran otomatis (Dosen Killer, Intel, Ahli, Uptodate, Mahasiswa). Pengecekan menang berjalan langsung setelah fase malam, vote ke NIM sendiri diblokir, pemain telat masuk menjadi penonton, dan layar akhir memberi tombol kembali serta poster hasil sidang.'
+      },
+      {
+        title: 'UNO Sedulur 16',
+        tone: 'text-[#B45309]',
+        status: unoData.status === 'released' ? 'Terbuka' : unoData.status === 'upcoming' ? 'Terjadwal' : 'Rahasia',
+        detail:
+          'Permainan kartu meja real-time dengan kartu +2, Skip, dan Titip Absen (pemilih 4 warna). Giliran otomatis berpindah bila pemain keluar meja, dilengkapi poster hasil meja untuk IG Story.'
+      },
+      {
+        title: 'Magical Athlete TL16',
+        tone: 'text-[#14532D]',
+        status: 'Khusus Panitia & Early Access',
+        detail:
+          'Fase Snake Draft dan balapan 4 ronde dengan skill karakter unik serta batas giliran bonus beruntun. Mendukung bot simulasi dan poster hasil turnamen.'
+      },
+      {
+        title: 'Kapsul Waktu, Wheel of Family, & Klasemen',
+        tone: 'text-[#B45309]',
+        status: wheelData.status === 'released' ? 'Wheel Terbuka' : 'Kapsul Aktif',
+        detail:
+          'Unggah foto 2026 terkompresi beserta pesan, roda undian yang menyaring pemenang sebelumnya, papan klasemen podium 3 besar dengan tab kategori, avatar Canvas2D anti-inversi dark mode HP, serta poster IG Story dengan sensor blok hitam.'
+      },
+      {
+        title: 'Ketahanan Koneksi, Bot Cadangan, & Early Access',
+        tone: 'text-[#14532D]',
+        status: earlyAccessStatus === 'active' ? 'Early Access Aktif' : 'Siaga',
+        detail:
+          'Hook useRoomConnection memakai Supabase Presence dan polling 5 detik untuk mengalihkan kendali koordinator bila host terputus, menjalankan bot sementara saat pemain offline (otomatis mati begitu pemain aktif lagi), serta mengecualikan skor sesi uji coba Admin dan Early Access dari database klasemen.'
+      },
+      {
+        title: 'Navigasi Back HP & Privasi Panitia',
+        tone: 'text-zinc-900',
+        status: 'Aktif Global',
+        detail:
+          'Seluruh perpindahan menu tersinkron dengan Browser History API agar tombol Back HP kembali ke beranda aplikasi. Jadwal, catatan pembaruan publik, dan poster Story menyensor mode belum rilis dengan blok hitam detektif, sementara data Tombol Misteri hanya tampil di Ruang Panitia.'
+      }
+    ];
+
     return (
-      <div className="min-h-screen bg-[#FAF6EE] p-4 md:p-8 font-sans text-stone-800 pb-20">
-        <div className="max-w-4xl mx-auto">
-          
-          <div className="border-b border-[#DED6C6] pb-6 mb-8 flex flex-wrap justify-between items-center gap-4">
+      <div className="min-h-[100dvh] bg-[#F8F6F1] p-4 sm:p-6 md:p-8 font-sans text-zinc-900 pb-20">
+        <div className="max-w-5xl mx-auto space-y-6">
+          <header className="border-b border-[#DED8CA] pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-mono text-amber-700 uppercase font-bold mb-1">Dokumentasi Internal Panitia</p>
-              <h1 className="text-2xl md:text-3xl font-bold text-stone-900">
-                Catatan Pengembang & Panitia
+              <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight">
+                Catatan Pengembang &amp; Panitia
               </h1>
+              <p className="text-sm text-zinc-600 mt-1 max-w-2xl">
+                Dokumentasi teknis internal seluruh modul aktif, mekanik ketahanan koneksi, dan riwayat catatan kerja panitia.
+              </p>
             </div>
-            <button 
+            <button
               type="button"
               onClick={() => setSecretMode(false)}
-              className="text-xs bg-white hover:bg-[#F3EDE0] text-stone-800 px-4 py-2.5 min-h-[44px] rounded-xl border border-[#C7BDA8] font-bold transition-colors"
+              className="self-start sm:self-auto text-xs sm:text-sm bg-[#FFFDF9] hover:bg-[#F1ECE0] text-[#14532D] px-4 py-2.5 min-h-[44px] rounded-xl border border-[#DED8CA] font-bold transition-colors shrink-0"
             >
-              Kembali ke Ruang Panitia
+              &larr; Kembali ke Ruang Panitia
             </button>
+          </header>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-[#FFFDF9] border border-[#DED8CA] rounded-xl px-4 py-3">
+              <span className="block text-xs text-zinc-600">Versi Rilis</span>
+              <span className="block font-mono font-bold text-base text-[#14532D] mt-0.5">{latestVersion}</span>
+            </div>
+            <div className="bg-[#FFFDF9] border border-[#DED8CA] rounded-xl px-4 py-3">
+              <span className="block text-xs text-zinc-600">Data Alumni</span>
+              <span className="block font-mono font-bold text-base text-zinc-900 mt-0.5">{alumniRoster.length} orang</span>
+            </div>
+            <div className="bg-[#FFFDF9] border border-[#DED8CA] rounded-xl px-4 py-3">
+              <span className="block text-xs text-zinc-600">Early Access</span>
+              <span className="block font-mono font-bold text-base text-[#B45309] mt-0.5">
+                {earlyAccessStatus === 'active'
+                  ? `Aktif (${earlyAccessNims.length})`
+                  : earlyAccessStatus === 'scheduled'
+                    ? `Terjadwal (${earlyAccessNims.length})`
+                    : 'Nonaktif'}
+              </span>
+            </div>
+            <div className="bg-[#FFFDF9] border border-[#DED8CA] rounded-xl px-4 py-3">
+              <span className="block text-xs text-zinc-600">Catatan Internal</span>
+              <span className="block font-mono font-bold text-base text-zinc-900 mt-0.5">{patchNotes.length} entri</span>
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 space-y-6">
-              
-              <div className="bg-white border border-[#DED6C6] rounded-2xl p-5 shadow-md">
-                <h2 className="text-amber-700 font-bold mb-4 text-base">
-                  Tambah Catatan Pembaruan
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="lg:col-span-5 space-y-6">
+              <section className="bg-[#FFFDF9] border border-[#DED8CA] rounded-2xl p-5">
+                <h2 className="text-zinc-900 font-bold mb-1 text-base">
+                  Tambah Catatan Internal
                 </h2>
+                <p className="text-xs text-zinc-600 mb-4">
+                  Tersimpan di database panitia dan tidak tampil di halaman pembaruan peserta.
+                </p>
                 <form onSubmit={handleAddNote} className="flex flex-col gap-3">
                   {noteError && (
-                    <div role="alert" className="p-3 rounded-xl bg-rose-50 border border-rose-500/40 text-rose-200 text-xs font-medium">
+                    <div role="alert" className="p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-medium">
                       {noteError}
                     </div>
                   )}
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex flex-col sm:flex-row gap-2.5">
                     <div>
                       <label htmlFor="note-tag-select" className="sr-only">Kategori Catatan</label>
-                      <select 
+                      <select
                         id="note-tag-select"
                         value={newNoteTag}
                         onChange={(e) => setNewNoteTag(e.target.value)}
-                        className="w-full sm:w-auto min-h-[44px] bg-[#FAF6EE] border border-[#C7BDA8] text-stone-800 rounded-xl px-3 py-2 text-xs font-mono"
+                        className="w-full sm:w-auto min-h-[44px] bg-[#F8F6F1] border border-[#C7BDA8] text-zinc-900 rounded-xl px-3 py-2 text-xs font-mono font-semibold"
                       >
                         <option value="[SYS]">[SYS] Sistem</option>
                         <option value="[UI]">[UI] Tampilan</option>
@@ -277,105 +366,112 @@ export default function AdminDashboard({ onBack }) {
                         <option value="[NEW]">[NEW] Fitur Baru</option>
                       </select>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <label htmlFor="note-text-input" className="sr-only">Isi Catatan</label>
-                      <input 
+                      <input
                         id="note-text-input"
                         type="text"
                         value={newNoteText}
                         onChange={(e) => setNewNoteText(e.target.value)}
-                        placeholder="Tulis rincian pembaruan di sini..."
-                        className="w-full min-h-[44px] bg-[#FAF6EE] border border-[#C7BDA8] text-stone-900 rounded-xl px-3.5 py-2 text-sm placeholder:text-stone-500"
+                        placeholder="Tulis rincian catatan panitia..."
+                        className="w-full min-h-[44px] bg-[#F8F6F1] border border-[#C7BDA8] text-zinc-900 rounded-xl px-3.5 py-2 text-sm placeholder:text-zinc-500"
                       />
                     </div>
                   </div>
-                  <button 
+                  <button
                     type="submit"
                     disabled={isSubmittingNote || !newNoteText.trim()}
-                    className="min-h-[44px] bg-amber-400 hover:bg-amber-300 text-slate-950 disabled:bg-[#E7DFCE] disabled:text-stone-500 py-2.5 px-4 rounded-xl text-sm font-bold transition-colors"
+                    className="min-h-[44px] bg-[#14532D] hover:bg-[#166534] text-white disabled:bg-[#E5DFD2] disabled:text-zinc-600 py-2.5 px-4 rounded-xl text-sm font-bold transition-colors"
                   >
                     {isSubmittingNote ? 'Menyimpan Catatan...' : 'Simpan Catatan'}
                   </button>
                 </form>
-              </div>
+              </section>
 
-              <div className="space-y-4">
-                <h2 className="text-stone-800 font-bold text-base border-b border-[#DED6C6] pb-2">
-                  Riwayat Catatan Sistem
-                </h2>
+              <section className="bg-[#FFFDF9] border border-[#DED8CA] rounded-2xl overflow-hidden">
+                <div className="px-5 py-3.5 bg-[#F1ECE0] border-b border-[#DED8CA] flex items-center justify-between gap-2">
+                  <h2 className="text-zinc-900 font-bold text-sm">
+                    Riwayat Catatan Sistem
+                  </h2>
+                  <span className="font-mono text-xs text-zinc-600">{patchNotes.length}</span>
+                </div>
+
                 {patchNotes.length === 0 ? (
-                  <p className="text-stone-600 text-sm bg-white p-4 rounded-xl border border-[#DED6C6]">
-                    Belum ada catatan sistem yang ditambahkan.
+                  <p className="text-zinc-600 text-sm p-5">
+                    Belum ada catatan internal yang ditambahkan. Gunakan formulir di atas untuk mencatat hasil uji coba atau pengingat panitia.
                   </p>
                 ) : (
-                  patchNotes.map((note) => (
-                    <div key={note.id} className="bg-white p-4 rounded-xl border border-[#DED6C6]">
-                      <div className="flex justify-between items-center gap-2 mb-2">
-                        <span className="text-xs font-mono text-stone-600">{note.date}</span>
-                        {confirmDeleteId === note.id ? (
-                          <div className="flex items-center gap-2">
+                  <div className="divide-y divide-[#E5DFD2]">
+                    {patchNotes.map((note) => (
+                      <div key={note.id} className="p-4 space-y-2">
+                        <div className="flex justify-between items-center gap-2">
+                          <span className="text-xs font-mono text-zinc-600">{note.date}</span>
+                          {confirmDeleteId === note.id ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteNote(note.id)}
+                                className="text-xs font-bold text-white bg-rose-700 hover:bg-rose-600 px-3 py-1.5 min-h-[44px] rounded-lg transition-colors"
+                              >
+                                Ya, Hapus
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="text-xs font-bold text-zinc-800 bg-[#F1ECE0] hover:bg-[#E5DFD2] px-3 py-1.5 min-h-[44px] rounded-lg transition-colors"
+                              >
+                                Batal
+                              </button>
+                            </div>
+                          ) : (
                             <button
                               type="button"
-                              onClick={() => handleDeleteNote(note.id)}
-                              className="text-xs font-bold text-white bg-rose-700 hover:bg-rose-600 px-3 py-1.5 min-h-[44px] rounded-lg transition-colors"
+                              onClick={() => setConfirmDeleteId(note.id)}
+                              aria-label={`Hapus catatan ${note.text}`}
+                              className="text-xs font-bold text-rose-700 hover:text-white bg-rose-50 hover:bg-rose-700 border border-rose-300 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-lg transition-colors"
                             >
-                              Ya, Hapus
+                              Hapus
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => setConfirmDeleteId(null)}
-                              className="text-xs font-bold text-stone-800 bg-[#E7DFCE] hover:bg-[#E7DFCE] px-3 py-1.5 min-h-[44px] rounded-lg transition-colors"
-                            >
-                              Batal
-                            </button>
-                          </div>
-                        ) : (
-                          <button 
-                            type="button"
-                            onClick={() => setConfirmDeleteId(note.id)}
-                            aria-label={`Hapus catatan ${note.text}`}
-                            className="text-xs font-bold text-rose-700 hover:text-white bg-rose-50 hover:bg-rose-700 border border-rose-500/30 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-lg transition-colors"
-                          >
-                            Hapus
-                          </button>
-                        )}
+                          )}
+                        </div>
+                        <p className="text-sm text-zinc-900 leading-relaxed">
+                          <span className="font-mono font-bold text-[#B45309] mr-2">{note.tag}</span>
+                          {note.text}
+                        </p>
                       </div>
-                      <p className="text-sm text-stone-900 leading-relaxed">
-                        <span className="font-mono font-bold text-amber-700 mr-2">{note.tag}</span>
-                        {note.text}
-                      </p>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
-              </div>
+              </section>
             </div>
 
-            <div className="space-y-4">
-              <section className="bg-white p-5 rounded-xl border border-[#DED6C6]">
-                <h3 className="text-amber-700 font-bold mb-2 text-sm">Modul Monopoli TL16</h3>
-                <p className="text-stone-600 text-xs leading-relaxed">
-                  Seluruh pemain bergerak serentak di satu papan virtual dengan mekanik UKT dan kartu Tantangan Jujur atau Berani.
+            <section className="lg:col-span-7 bg-[#FFFDF9] border border-[#DED8CA] rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 bg-[#F1ECE0] border-b border-[#DED8CA]">
+                <h2 className="text-zinc-900 font-bold text-base">
+                  Ringkasan Modul &amp; Panduan Operasional Terbaru
+                </h2>
+                <p className="text-xs text-zinc-600 mt-0.5">
+                  Acuan mekanik seluruh permainan, ketahanan koneksi ruangan, dan proteksi sesi uji coba.
                 </p>
-              </section>
-              <section className="bg-white p-5 rounded-xl border border-[#DED6C6]">
-                <h3 className="text-green-800 font-bold mb-2 text-sm">Modul Sidang Dosen Killer</h3>
-                <p className="text-stone-600 text-xs leading-relaxed">
-                  Rasio peran otomatis menyesuaikan jumlah pemain (Dosen Killer, Intel Kampus, dan Mahasiswa Kura-Kura).
-                </p>
-              </section>
-              <section className="bg-white p-5 rounded-xl border border-[#DED6C6]">
-                <h3 className="text-amber-700 font-bold mb-2 text-sm">Modul UNO Sedulur 16</h3>
-                <p className="text-stone-600 text-xs leading-relaxed">
-                  Mendukung tumpukan kartu hukuman (+2 dan +4) serta sinkronisasi kartu meja secara langsung via Supabase.
-                </p>
-              </section>
-              <section className="bg-white p-5 rounded-xl border border-amber-400/40">
-                <h3 className="text-amber-700 font-bold mb-2 text-sm">Panduan Host Ruangan</h3>
-                <p className="text-stone-600 text-xs leading-relaxed">
-                  Pastikan perangkat Host memiliki koneksi stabil dan layar tetap menyala selama memandu sesi permainan bersama.
-                </p>
-              </section>
-            </div>
+              </div>
+              <div className="divide-y divide-[#E5DFD2]">
+                {moduleSpecs.map((item) => (
+                  <article key={item.title} className="p-5 space-y-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className={`font-bold text-sm sm:text-base ${item.tone}`}>
+                        {item.title}
+                      </h3>
+                      <span className="text-[11px] font-mono font-semibold text-zinc-700 bg-[#F8F6F1] border border-[#DED8CA] px-2.5 py-0.5 rounded-md">
+                        {item.status}
+                      </span>
+                    </div>
+                    <p className="text-zinc-600 text-xs sm:text-sm leading-relaxed">
+                      {item.detail}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </section>
           </div>
         </div>
       </div>
