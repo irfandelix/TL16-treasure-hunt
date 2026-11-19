@@ -19,6 +19,7 @@ export default function AdminDashboard({ onBack }) {
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
   const [noteError, setNoteError] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [mysteryCoords, setMysteryCoords] = useState([]);
 
   const fetchSettings = async () => {
     setIsLoading(true);
@@ -31,6 +32,15 @@ export default function AdminDashboard({ onBack }) {
         .single();
 
       if (error) throw error;
+
+      const { data: alumniCoords, error: coordsErr } = await supabase
+        .from('alumni')
+        .select('nim, nama, mystery_location')
+        .not('mystery_location', 'is', null)
+        .order('nama', { ascending: true });
+      if (!coordsErr && alumniCoords) {
+        setMysteryCoords(alumniCoords);
+      }
 
       if (data) {
         setShowScoreboard(data.show_scoreboard);
@@ -557,6 +567,74 @@ export default function AdminDashboard({ onBack }) {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          <div className="bg-[#FAF6EE] p-6 rounded-xl border border-[#DED6C6] w-full mb-8">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-stone-900">
+                  Data Koordinat Tombol Misteri ({mysteryCoords.length} Peserta)
+                </h2>
+                <p className="text-xs text-stone-600 mt-0.5">
+                  Hanya tampil di Ruang Panitia. Setiap peserta hanya bisa menekan tombol ini satu kali.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={fetchSettings}
+                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-white hover:bg-[#F3EDE0] border border-[#DED6C6] text-xs font-bold text-stone-800 transition-colors"
+              >
+                Segarkan
+              </button>
+            </div>
+
+            {mysteryCoords.length === 0 ? (
+              <p className="text-xs text-stone-600 bg-white border border-[#DED6C6] rounded-xl p-4">
+                Belum ada peserta yang menekan Tombol Misteri (atau kolom mystery_location belum dibuat di Supabase).
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-[#DED6C6] bg-white">
+                <table className="w-full text-left text-xs sm:text-sm text-stone-800">
+                  <thead className="bg-[#F3EDE0] text-xs font-bold text-stone-700 border-b border-[#DED6C6]">
+                    <tr>
+                      <th className="px-4 py-3">Peserta</th>
+                      <th className="px-4 py-3">Koordinat</th>
+                      <th className="px-4 py-3">Akurasi</th>
+                      <th className="px-4 py-3">Peta</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#EDE6D8]">
+                    {mysteryCoords.map((item) => {
+                      const loc = item.mystery_location || {};
+                      return (
+                        <tr key={item.nim} className="hover:bg-[#FAF6EE]">
+                          <td className="px-4 py-3">
+                            <div className="font-bold text-stone-900">{item.nama}</div>
+                            <div className="font-mono text-xs text-stone-500">{item.nim}</div>
+                          </td>
+                          <td className="px-4 py-3 font-mono text-xs text-stone-800">
+                            {loc.lat}, {loc.lng}
+                          </td>
+                          <td className="px-4 py-3 font-mono text-xs text-stone-600">
+                            {loc.accuracy_m ? `±${loc.accuracy_m}m` : '-'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <a
+                              href={`https://maps.google.com/?q=${loc.lat},${loc.lng}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-bold text-green-900 underline"
+                            >
+                              Buka Peta
+                            </a>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 flex justify-center">

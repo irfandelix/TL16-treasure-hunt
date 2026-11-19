@@ -19,6 +19,13 @@ export default function Login({ onLoginSuccess }) {
     } else {
       localStorage.removeItem(`avatar_saved_${data.nim}`);
     }
+    if ('mystery_location' in data) {
+      if (data.mystery_location) {
+        localStorage.setItem(`mystery_location_${data.nim}`, 'locked');
+      } else {
+        localStorage.removeItem(`mystery_location_${data.nim}`);
+      }
+    }
 
     setLoading(false);
     onLoginSuccess({ ...data, is_admin: Boolean(data.is_admin) });

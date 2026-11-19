@@ -101,6 +101,11 @@ export default function GameDashboard() {
   const [unoApproaching, setUnoApproaching] = useState(false);
   const [gameDates, setGameDates] = useState(null);
 
+  const [mysteryLocked, setMysteryLocked] = useState(false);
+  const [showMysteryConfirm, setShowMysteryConfirm] = useState(false);
+  const [mysteryBusy, setMysteryBusy] = useState(false);
+  const [mysteryNotice, setMysteryNotice] = useState({ type: '', text: '' });
+
   useEffect(() => {
     let active = true;
 
@@ -155,10 +160,125 @@ export default function GameDashboard() {
         setAvatarConfig(loaded);
       }
     });
+
+    if (localStorage.getItem(`mystery_location_${user.nim}`) === 'locked') {
+      setMysteryLocked(true);
+    }
+
+    supabase
+      .from('alumni')
+      .select('mystery_location')
+      .eq('nim', user.nim)
+      .single()
+      .then(({ data, error }) => {
+        if (!active || error || !data || !('mystery_location' in data)) return;
+        if (data.mystery_location) {
+          localStorage.setItem(`mystery_location_${user.nim}`, 'locked');
+          setMysteryLocked(true);
+        } else {
+          localStorage.removeItem(`mystery_location_${user.nim}`);
+          setMysteryLocked(false);
+        }
+      });
+
     return () => {
       active = false;
     };
   }, [user?.nim]);
+
+  useEffect(() => {
+    if (!showMysteryConfirm) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !mysteryBusy) {
+        setShowMysteryConfirm(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showMysteryConfirm, mysteryBusy]);
+
+  const handleActivateMystery = async () => {
+    if (mysteryLocked || mysteryBusy || !user?.nim) return;
+    setMysteryBusy(true);
+    setMysteryNotice({ type: '', text: '' });
+
+    try {
+      const { data: existing, error: checkErr } = await supabase
+        .from('alumni')
+        .select('mystery_location')
+        .eq('nim', user.nim)
+        .single();
+
+      if (!checkErr && existing?.mystery_location) {
+        localStorage.setItem(`mystery_location_${user.nim}`, 'locked');
+        setMysteryLocked(true);
+        setShowMysteryConfirm(false);
+        setMysteryBusy(false);
+        return;
+      }
+
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        setShowMysteryConfirm(false);
+        setMysteryNotice({
+          type: 'error',
+          text: 'Peramban tidak mendukung layanan lokasi. Tombol belum terkunci.'
+        });
+        setMysteryBusy(false);
+        return;
+      }
+
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        });
+      });
+
+      const payload = {
+        lat: Number(pos.coords.latitude.toFixed(6)),
+        lng: Number(pos.coords.longitude.toFixed(6)),
+        accuracy_m: Math.round(pos.coords.accuracy || 0),
+        recorded_at: new Date().toISOString()
+      };
+
+      const { error: saveErr } = await supabase
+        .from('alumni')
+        .update({ mystery_location: payload })
+        .eq('nim', user.nim)
+        .is('mystery_location', null);
+
+      if (saveErr) throw saveErr;
+
+      localStorage.setItem(`mystery_location_${user.nim}`, 'locked');
+      setMysteryLocked(true);
+      setShowMysteryConfirm(false);
+      setMysteryNotice({
+        type: 'success',
+        text: 'Berhasil! Tombol misteri sudah digunakan dan terkunci permanen.'
+      });
+    } catch (err) {
+      setShowMysteryConfirm(false);
+      if (err?.code === 1) {
+        setMysteryNotice({
+          type: 'error',
+          text: 'Izin lokasi ditolak. Tombol belum terpakai, aktifkan izin lokasi lalu coba lagi.'
+        });
+      } else if (err?.code === 2 || err?.code === 3) {
+        setMysteryNotice({
+          type: 'error',
+          text: 'Koordinat lokasi belum terbaca. Coba lagi di tempat dengan sinyal lebih baik.'
+        });
+      } else {
+        setMysteryNotice({
+          type: 'error',
+          text: 'Gagal menyimpan ke server, tombol belum terkunci. Silakan coba lagi.'
+        });
+      }
+    } finally {
+      setMysteryBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!user?.nim) return;
@@ -525,6 +645,52 @@ export default function GameDashboard() {
         </div>
       )}
 
+      {showMysteryConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mystery-confirm-title"
+          className="fixed inset-0 z-50 bg-zinc-950/60 flex items-center justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+        >
+          <div className="bg-[#FFFDF9] border border-[#DED8CA] p-6 sm:p-8 rounded-2xl max-w-md w-full shadow-xl space-y-5">
+            <div className="space-y-2">
+              <h2 id="mystery-confirm-title" className="text-xl font-bold text-zinc-900">
+                Peringatan Tombol Misteri
+              </h2>
+              <p className="text-sm text-zinc-700 leading-relaxed">
+                Tombol ini hanya dapat digunakan <strong>1 kali</strong> dan hasilnya tidak dapat diubah atau diulang kembali.
+              </p>
+              <p className="text-sm text-zinc-700 leading-relaxed">
+                Saat kamu melanjutkan, peramban akan meminta izin akses lokasi untuk mencatat titik koordinat keberadaanmu sekarang. Tujuan penggunaannya tetap dirahasiakan sebagai kejutan acara.
+              </p>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5 pt-1">
+              <button
+                type="button"
+                disabled={mysteryBusy}
+                onClick={() => setShowMysteryConfirm(false)}
+                className="sm:w-1/3 min-h-[46px] px-4 py-2.5 rounded-xl bg-[#F1ECE0] hover:bg-[#E5DFD2] border border-[#DED8CA] text-zinc-900 font-bold text-sm transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={mysteryBusy}
+                onClick={handleActivateMystery}
+                className={`sm:flex-1 min-h-[46px] px-5 py-2.5 rounded-xl font-bold text-sm transition-colors ${
+                  mysteryBusy
+                    ? 'bg-[#E5DFD2] text-zinc-800'
+                    : 'bg-[#14532D] hover:bg-[#166534] text-white'
+                }`}
+              >
+                {mysteryBusy ? 'Mengambil Titik Lokasi...' : 'Ya, Aktifkan Sekarang'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* HEADER NAVIGASI BERSIH */}
       <header className="sticky top-0 z-30 bg-[#FFFDF9] border-b border-[#DED8CA] pt-[env(safe-area-inset-top)]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
@@ -744,6 +910,46 @@ export default function GameDashboard() {
                 </div>
               </article>
             </div>
+          </section>
+
+          {/* TOMBOL MISTERI SEKALI PAKAI */}
+          <section aria-labelledby="mystery-button-heading" className="bg-[#FFFDF9] border border-[#DED8CA] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h2 id="mystery-button-heading" className="text-lg font-bold text-zinc-900">
+                Tombol Misteri
+              </h2>
+              <p className="text-sm text-zinc-600 leading-relaxed">
+                {mysteryLocked
+                  ? 'Tombol ini sudah digunakan satu kali dan kini terkunci permanen di akunmu.'
+                  : 'Hanya dapat ditekan 1 kali seumur hidup akunmu dan tidak dapat diubah kembali setelah aktif.'}
+              </p>
+              {mysteryNotice.text && (
+                <p
+                  role="alert"
+                  className={`text-xs font-semibold pt-1 ${
+                    mysteryNotice.type === 'success' ? 'text-[#14532D]' : 'text-rose-800'
+                  }`}
+                >
+                  {mysteryNotice.text}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="button"
+              disabled={mysteryLocked}
+              onClick={() => {
+                setMysteryNotice({ type: '', text: '' });
+                setShowMysteryConfirm(true);
+              }}
+              className={`w-full sm:w-auto shrink-0 min-h-[48px] px-6 py-3 rounded-xl font-bold text-sm transition-colors ${
+                mysteryLocked
+                  ? 'bg-[#E5DFD2] text-zinc-800 cursor-not-allowed'
+                  : 'bg-zinc-900 hover:bg-zinc-800 text-white'
+              }`}
+            >
+              {mysteryLocked ? 'Sudah Digunakan & Terkunci' : 'Buka Tombol Misteri'}
+            </button>
           </section>
 
           {/* BAGIAN 2: KUIS KENANGAN KAMPUS (PEMBAGIAN 2-KOLOM DALAM SATU LEMBAR) */}
