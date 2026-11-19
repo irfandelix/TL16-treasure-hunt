@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { isAdminSession } from '../lib/adminAuth';
+import { useRoomConnection, pickActiveCoordinator, shouldBotControlPlayer } from '../lib/useRoomConnection';
 
 import LayarMalam from './LayarMalam';
 import LayarDiskusi from './LayarDiskusi';
@@ -78,6 +79,46 @@ export default function DosenKillerGame() {
     }
   }, []);
 
+  const syncDkRoom = useCallback(async () => {
+    if (!isInRoom || !roomCode) return;
+    const { data: stateData } = await supabase
+      .from('dosen_killer_state')
+      .select('*')
+      .eq('room_code', roomCode)
+      .single();
+    if (stateData) {
+      setFaseGame(stateData.fase_game);
+      dbStateRef.current = stateData;
+    }
+
+    const { data: pemainData } = await supabase
+      .from('mahasiswa_roles')
+      .select('*')
+      .eq('room_code', roomCode);
+    if (pemainData) {
+      setPemain(pemainData);
+      const dataKu = pemainData.find((p) => p.nim === currentUser.nim);
+      if (dataKu) {
+        setPeranKu(dataKu.peran);
+        setIsHidup(dataKu.is_hidup);
+      }
+    }
+  }, [isInRoom, roomCode, currentUser.nim]);
+
+  const { onlineNims, onlineMetaMap, connectionStatus } = useRoomConnection({
+    channelName: roomCode ? `dk_presence:${roomCode}` : '',
+    nim: currentUser.nim,
+    meta: { isAdmin: currentUser.isAdmin },
+    enabled: Boolean(isInRoom && roomCode && currentUser.nim),
+    onSync: syncDkRoom
+  });
+
+  const onlineAdminNim = Object.keys(onlineMetaMap).find((k) => onlineMetaMap[k]?.isAdmin) || null;
+  const actingCoordinatorNim = pickActiveCoordinator(pemain, onlineNims, onlineAdminNim);
+  const isPhaseCoordinator = Boolean(
+    actingCoordinatorNim ? actingCoordinatorNim === currentUser.nim : currentUser.isAdmin
+  );
+
   useEffect(() => {
     if (!isInRoom || !roomCode) return;
     if (currentUser.nim) {
@@ -95,21 +136,7 @@ export default function DosenKillerGame() {
         nama: currentUser.nama
       }]);
 
-      const { data: stateData } = await supabase.from('dosen_killer_state').select('*').eq('room_code', roomCode).single();
-      if (stateData) {
-        setFaseGame(stateData.fase_game);
-        dbStateRef.current = stateData;
-      }
-
-      const { data: pemainData } = await supabase.from('mahasiswa_roles').select('*').eq('room_code', roomCode);
-      if (pemainData) {
-        setPemain(pemainData);
-        const dataKu = pemainData.find(p => p.nim === currentUser.nim);
-        if (dataKu) {
-          setPeranKu(dataKu.peran);
-          setIsHidup(dataKu.is_hidup);
-        }
-      }
+      await syncDkRoom();
     };
 
     initLobbyRoom();
@@ -122,22 +149,14 @@ export default function DosenKillerGame() {
 
     const pemainSub = supabase.channel(`players:${roomCode}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mahasiswa_roles', filter: `room_code=eq.${roomCode}` }, async () => {
-        const { data } = await supabase.from('mahasiswa_roles').select('*').eq('room_code', roomCode);
-        if (data) {
-          setPemain(data);
-          const dataKu = data.find(p => p.nim === currentUser.nim);
-          if (dataKu) {
-            setPeranKu(dataKu.peran);
-            setIsHidup(dataKu.is_hidup);
-          }
-        }
+        await syncDkRoom();
       }).subscribe();
 
     return () => {
       supabase.removeChannel(stateSub);
       supabase.removeChannel(pemainSub);
     };
-  }, [isInRoom, roomCode]);
+  }, [isInRoom, roomCode, syncDkRoom]);
 
   useEffect(() => {
     let chatSub = null;
@@ -197,7 +216,7 @@ export default function DosenKillerGame() {
   }, [faseGame, peranKu, pemain, isHidup, intelSuspects.length]);
 
   useEffect(() => {
-    if (!currentUser.isAdmin || !isInRoom || !roomCode) return;
+    if (!isPhaseCoordinator || !isInRoom || !roomCode) return;
 
     const engineInterval = setInterval(async () => {
       const state = dbStateRef.current;
@@ -319,14 +338,64 @@ export default function DosenKillerGame() {
           fase_game: nextFase,
           waktu_berakhir: nextEndTime,
           pesan_pengumuman: pesanBaru || state.pesan_pengumuman
-        }).eq('room_code', roomCode);
+        }).eq('room_code', roomCode).eq('fase_game', currentFase);
 
         setTimeout(() => { isProcessingRef.current = false; }, 2000);
       }
     }, 1000);
 
     return () => clearInterval(engineInterval);
-  }, [isInRoom, roomCode, currentUser.isAdmin]);
+  }, [isInRoom, roomCode, isPhaseCoordinator]);
+
+  // Auto-bot fills actions for disconnected living players after a 6s grace delay, stopping automatically if they reconnect.
+  useEffect(() => {
+    if (!isPhaseCoordinator || !isInRoom || !roomCode) return;
+    if (faseGame !== 'MALAM' && faseGame !== 'VOTING') return;
+
+    const alivePlayers = pemain.filter((p) => p.is_hidup);
+    const offlineNeedsAction = alivePlayers.filter((p) => {
+      if (!shouldBotControlPlayer(p, onlineNims)) return false;
+      if (faseGame === 'MALAM') {
+        return (p.peran === 'DOSEN_KILLER' || p.peran === 'AHLI') && !p.target_malam;
+      }
+      return !p.target_voting;
+    });
+
+    if (offlineNeedsAction.length === 0) return;
+
+    const timer = setTimeout(async () => {
+      await Promise.all(
+        offlineNeedsAction.map((actor) => {
+          if (faseGame === 'MALAM') {
+            const validTargets =
+              actor.peran === 'DOSEN_KILLER'
+                ? alivePlayers.filter((t) => t.peran !== 'DOSEN_KILLER')
+                : alivePlayers.filter((t) => t.nim !== actor.nim);
+            const pool = validTargets.length > 0 ? validTargets : alivePlayers;
+            const picked = pool[Math.floor(Math.random() * pool.length)];
+            if (!picked) return Promise.resolve();
+            return supabase
+              .from('mahasiswa_roles')
+              .update({ target_malam: picked.nim })
+              .match({ room_code: roomCode, nim: actor.nim })
+              .is('target_malam', null);
+          }
+
+          const candidates = alivePlayers.filter((t) => t.nim !== actor.nim);
+          const pool = candidates.length > 0 ? candidates : alivePlayers;
+          const picked = pool[Math.floor(Math.random() * pool.length)];
+          if (!picked) return Promise.resolve();
+          return supabase
+            .from('mahasiswa_roles')
+            .update({ target_voting: picked.nim })
+            .match({ room_code: roomCode, nim: actor.nim })
+            .is('target_voting', null);
+        })
+      );
+    }, 6000);
+
+    return () => clearTimeout(timer);
+  }, [isPhaseCoordinator, isInRoom, roomCode, faseGame, pemain, onlineNims]);
 
   useEffect(() => {
     if (!isInRoom || !roomCode || faseGame === 'LOBBY' || faseGame === 'SELESAI') return;
@@ -729,6 +798,14 @@ export default function DosenKillerGame() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {connectionStatus !== 'online' && (
+        <div role="status" className="mb-3 px-4 py-2 rounded-xl bg-amber-100 border border-amber-300 text-amber-950 text-xs font-mono font-bold text-center">
+          {connectionStatus === 'offline'
+            ? 'Koneksi terputus. Sesi kelas akan otomatis tersinkron saat internet kembali.'
+            : 'Sedang menyinkronkan ulang status kelas...'}
         </div>
       )}
 

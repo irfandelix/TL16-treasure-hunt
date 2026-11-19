@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useRoomConnection, pickActiveCoordinator, shouldBotControlPlayer } from '../lib/useRoomConnection';
 
 const CARD_COLORS = [
   { name: 'Merah', bg: 'bg-rose-700', border: 'border-rose-400', text: 'text-stone-900' },
@@ -14,6 +15,19 @@ const generateRandomCard = () => {
   const color = CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)];
   const value = CARD_VALUES[Math.floor(Math.random() * CARD_VALUES.length)];
   return { id: `${Date.now()}-${Math.random()}`, color, value };
+};
+
+const pickFairUnoCard = (hand = [], topCard) => {
+  if (!Array.isArray(hand) || !topCard) return null;
+  const playable = hand.filter(
+    (card) =>
+      card?.color?.name === topCard?.color?.name ||
+      card?.value === topCard?.value ||
+      card?.value === 'Titip Absen'
+  );
+  if (playable.length === 0) return null;
+  const regularCard = playable.find((c) => c.value !== '+2' && c.value !== 'Skip' && c.value !== 'Titip Absen');
+  return regularCard || playable[0];
 };
 
 export default function UnoBrutalGame() {
@@ -54,35 +68,44 @@ export default function UnoBrutalGame() {
     }
   }, []);
 
+  const fetchRoomState = useCallback(async () => {
+    if (!currentRoom) return;
+    const { data: pData } = await supabase
+      .from('uno_players')
+      .select('*')
+      .eq('room_code', currentRoom)
+      .order('joined_at', { ascending: true });
+    if (pData) {
+      setPlayers(pData);
+      const me = pData.find((p) => p.nim === (user?.nim || localStorage.getItem('user_nim')));
+      if (me && Array.isArray(me.hand)) {
+        setMyHand(me.hand);
+      }
+    }
+
+    const { data: rData } = await supabase
+      .from('uno_rooms')
+      .select('status, top_card, current_turn, direction')
+      .eq('room_code', currentRoom)
+      .single();
+    if (rData) {
+      if (rData.status) setRoomStatus(rData.status);
+      if (rData.top_card) setTopCard(rData.top_card);
+      setCurrentTurn(rData.current_turn || null);
+      if (rData.direction) setDirection(rData.direction);
+    }
+  }, [currentRoom, user?.nim]);
+
+  const { onlineNims, connectionStatus } = useRoomConnection({
+    channelName: currentRoom ? `uno_presence:${currentRoom}` : '',
+    nim: user?.nim,
+    enabled: Boolean(currentRoom && user?.nim),
+    onSync: fetchRoomState
+  });
+
   useEffect(() => {
     if (!currentRoom) return;
 
-    const fetchRoomState = async () => {
-      const { data: pData } = await supabase
-        .from('uno_players')
-        .select('*')
-        .eq('room_code', currentRoom)
-        .order('joined_at', { ascending: true });
-      if (pData) {
-        setPlayers(pData);
-        const me = pData.find((p) => p.nim === (user?.nim || localStorage.getItem('user_nim')));
-        if (me && Array.isArray(me.hand)) {
-          setMyHand(me.hand);
-        }
-      }
-
-      const { data: rData } = await supabase
-        .from('uno_rooms')
-        .select('status, top_card, current_turn, direction')
-        .eq('room_code', currentRoom)
-        .single();
-      if (rData) {
-        if (rData.status) setRoomStatus(rData.status);
-        if (rData.top_card) setTopCard(rData.top_card);
-        setCurrentTurn(rData.current_turn || null);
-        if (rData.direction) setDirection(rData.direction);
-      }
-    };
     fetchRoomState();
 
     const playerSubscription = supabase
@@ -117,7 +140,7 @@ export default function UnoBrutalGame() {
       supabase.removeChannel(playerSubscription);
       supabase.removeChannel(roomSubscription);
     };
-  }, [currentRoom, user?.nim]);
+  }, [currentRoom, fetchRoomState]);
 
   const createRoom = async () => {
     if (!user) return;
@@ -452,17 +475,125 @@ export default function UnoBrutalGame() {
     );
   }
 
-  const isHost = players.find(p => p.nim === user?.nim)?.is_host;
+  const handleSkipDisconnectedTurn = async () => {
+    if (roomStatus !== 'playing' || !currentTurn || !currentRoom) return;
+    if (onlineNims.size === 0 || onlineNims.has(currentTurn)) return;
+
+    const onlineIdx = players.findIndex((p) => p.nim !== currentTurn && onlineNims.has(p.nim));
+    const fallbackNext = onlineIdx >= 0 ? players[onlineIdx].nim : getNextPlayerNim(1);
+    const nextTurnNim = getNextPlayerNim(1);
+    const resolvedNext = onlineNims.has(nextTurnNim) ? nextTurnNim : fallbackNext;
+
+    const skippedPlayer = players.find((p) => p.nim === currentTurn);
+    setCurrentTurn(resolvedNext);
+    setStatusNotice(
+      `Giliran ${skippedPlayer?.nama?.split(' ')[0] || 'pemain'} dilewati karena koneksi terputus.`
+    );
+
+    await supabase
+      .from('uno_rooms')
+      .update({ current_turn: resolvedNext })
+      .eq('room_code', currentRoom)
+      .eq('current_turn', currentTurn);
+  };
+
+  const originalHostNim = players.find(p => p.is_host)?.nim;
+  const actingHostNim = pickActiveCoordinator(players, onlineNims, originalHostNim);
+  const isHost = Boolean(
+    actingHostNim
+      ? actingHostNim === user?.nim
+      : players.find(p => p.nim === user?.nim)?.is_host
+  );
+
+  // Auto-bot plays a fair single move when the turn owner is offline, and cancels automatically once they return online.
+  useEffect(() => {
+    if (roomStatus !== 'playing' || !currentRoom || !currentTurn || actingHostNim !== user?.nim) return;
+    const turnPlayer = players.find((p) => p.nim === currentTurn);
+    if (!turnPlayer || turnPlayer.nim === user?.nim || !shouldBotControlPlayer(turnPlayer, onlineNims)) return;
+
+    const timer = setTimeout(async () => {
+      const targetHand = Array.isArray(turnPlayer.hand) ? turnPlayer.hand : [];
+      const chosenCard = pickFairUnoCard(targetHand, topCard);
+
+      if (!chosenCard) {
+        const drawnCard = generateRandomCard();
+        const nextTurnNim = getNextPlayerNim(1);
+        await supabase
+          .from('uno_players')
+          .update({ hand: [...targetHand, drawnCard] })
+          .match({ room_code: currentRoom, nim: turnPlayer.nim });
+        await supabase
+          .from('uno_rooms')
+          .update({ current_turn: nextTurnNim })
+          .eq('room_code', currentRoom)
+          .eq('current_turn', currentTurn);
+        setStatusNotice(`Bot mengambil 1 kartu sementara untuk ${turnPlayer.nama.split(' ')[0]} yang terputus.`);
+        return;
+      }
+
+      const remaining = targetHand.filter((c) => c.id !== chosenCard.id);
+      await supabase
+        .from('uno_players')
+        .update({ hand: remaining })
+        .match({ room_code: currentRoom, nim: turnPlayer.nim });
+
+      if (remaining.length === 0) {
+        await supabase
+          .from('uno_rooms')
+          .update({ top_card: chosenCard, status: 'finished', current_turn: turnPlayer.nim })
+          .eq('room_code', currentRoom)
+          .eq('current_turn', currentTurn);
+        return;
+      }
+
+      let nextTurnNim = getNextPlayerNim(1);
+      if (chosenCard.value === 'Skip') {
+        nextTurnNim = getNextPlayerNim(2);
+      } else if (chosenCard.value === '+2') {
+        const victim = players.find((p) => p.nim === nextTurnNim);
+        if (victim) {
+          const victimHand = Array.isArray(victim.hand) ? victim.hand : [];
+          await supabase
+            .from('uno_players')
+            .update({ hand: [...victimHand, generateRandomCard(), generateRandomCard()] })
+            .match({ room_code: currentRoom, nim: victim.nim });
+          nextTurnNim = getNextPlayerNim(2);
+        }
+      }
+
+      await supabase
+        .from('uno_rooms')
+        .update({ top_card: chosenCard, current_turn: nextTurnNim })
+        .eq('room_code', currentRoom)
+        .eq('current_turn', currentTurn);
+      setStatusNotice(
+        `Bot sementara memainkan ${chosenCard.color.name} (${chosenCard.value}) menggantikan ${turnPlayer.nama.split(' ')[0]}.`
+      );
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [roomStatus, currentRoom, currentTurn, actingHostNim, user?.nim, players, topCard, direction, onlineNims]);
+  const isCurrentTurnOffline =
+    roomStatus === 'playing' &&
+    Boolean(currentTurn) &&
+    currentTurn !== user?.nim &&
+    onlineNims.size > 0 &&
+    !onlineNims.has(currentTurn);
 
   return (
     <div className="max-w-5xl mx-auto min-h-[75vh] flex flex-col bg-white border border-[#DED6C6] rounded-2xl overflow-hidden shadow-md relative">
       
       <div className="bg-[#FAF6EE] p-4 border-b border-[#DED6C6] flex flex-wrap justify-between items-center gap-3 z-20">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <span className="text-amber-700 font-bold text-lg">UNO Sedulur 16</span>
           <span className="bg-white text-stone-800 px-3 py-1 rounded-lg font-mono text-sm font-bold border border-[#DED6C6]">
             Meja: <span className="text-amber-700">{currentRoom}</span>
           </span>
+          {connectionStatus !== 'online' && (
+            <span className="px-2.5 py-1 rounded-lg bg-amber-100 border border-amber-300 text-amber-900 text-xs font-mono font-bold">
+              {connectionStatus === 'offline' ? 'Koneksi terputus' : 'Menyinkronkan...'}
+            </span>
+          )}
         </div>
         <button
           type="button"
@@ -484,6 +615,7 @@ export default function UnoBrutalGame() {
         <div className="flex flex-wrap gap-3">
           {players.map((p) => {
             const isPlayerTurn = roomStatus === 'playing' && currentTurn === p.nim;
+            const isDisconnected = onlineNims.size > 0 && !onlineNims.has(p.nim);
             const cardCount = Array.isArray(p.hand) ? p.hand.length : 0;
             return (
               <div
@@ -494,6 +626,7 @@ export default function UnoBrutalGame() {
               >
                 <span className="text-xs font-mono text-amber-700 mb-0.5">
                   {p.is_host ? 'Host Meja' : 'Pemain'}
+                  {isDisconnected ? ' (Terputus)' : ''}
                 </span>
                 <span className="font-bold text-stone-900 text-sm truncate max-w-[140px]">
                   {p.nama.split(' ')[0]} {p.nim === user?.nim ? '(Kamu)' : ''}
@@ -545,6 +678,15 @@ export default function UnoBrutalGame() {
             <p className="mt-4 text-sm text-amber-800 font-medium text-center bg-white border border-[#DED6C6] px-4 py-2 rounded-xl">
               {statusNotice}
             </p>
+          )}
+          {isCurrentTurnOffline && (
+            <button
+              type="button"
+              onClick={handleSkipDisconnectedTurn}
+              className="mt-3 min-h-[44px] px-4 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 font-bold text-xs transition-colors"
+            >
+              Pemain Sedang Terputus: Lewati Giliran
+            </button>
           )}
         </div>
 

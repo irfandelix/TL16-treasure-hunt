@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useRoomConnection } from '../lib/useRoomConnection';
 import PlayerAvatar from './PlayerAvatar';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
@@ -460,6 +461,13 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
     }
     if (prop && !isTransacting.current) setProperties(prop);
   }, [currentRoom, appState, currentUser.nim]);
+
+  const { connectionStatus } = useRoomConnection({
+    channelName: currentRoom?.id ? `monopoli_presence:${currentRoom.id}` : '',
+    nim: currentUser.nim,
+    enabled: Boolean(appState !== 'lobby' && currentRoom?.id && currentUser.nim),
+    onSync: loadGameData
+  });
 
   useEffect(() => {
     if (appState === 'lobby' || !currentRoom) return;
@@ -1143,6 +1151,13 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
 
   return (
     <div className="w-full max-w-6xl mx-auto bg-[#F8F6F1] text-zinc-900 pb-16">
+      {connectionStatus !== 'online' && (
+        <div role="status" className="mb-3 px-4 py-2.5 rounded-xl bg-amber-100 border border-amber-300 text-amber-950 text-xs font-mono font-bold text-center">
+          {connectionStatus === 'offline'
+            ? 'Koneksi terputus. Data papan akan otomatis disinkronkan saat internet kembali.'
+            : 'Sedang menyinkronkan ulang data papan...'}
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start lg:items-stretch">
 
         {/* KOLOM KIRI (DESKTOP): PAPAN MONOPOLI BESAR */}

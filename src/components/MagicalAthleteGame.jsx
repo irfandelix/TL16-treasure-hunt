@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { isAdminSession, verifyAdminPassword, setAdminSessionVerified } from '../lib/adminAuth';
+import { useRoomConnection, pickActiveCoordinator, shouldBotControlPlayer } from '../lib/useRoomConnection';
 import { ATHLETE_CHARACTERS, TRACK_TILES, PLAYER_COLORS } from '../data/athleteCharacters';
 import confetti from 'canvas-confetti';
 
@@ -271,24 +272,32 @@ export default function MagicalAthleteGame() {
     setIsInRoom(true);
   };
 
+  const loadGameData = useCallback(async () => {
+    if (!isInRoom || !roomCode) return;
+    const { data: room } = await supabase
+      .from('athlete_rooms')
+      .select('*')
+      .eq('room_code', roomCode)
+      .single();
+    if (room) setRoomData(room);
+
+    const { data: plyrs } = await supabase
+      .from('athlete_players')
+      .select('*')
+      .eq('room_code', roomCode)
+      .order('slot_number', { ascending: true });
+    if (plyrs) setPlayers(plyrs);
+  }, [isInRoom, roomCode]);
+
+  const { onlineNims, connectionStatus } = useRoomConnection({
+    channelName: roomCode ? `athlete_presence:${roomCode}` : '',
+    nim: currentUser.nim,
+    enabled: Boolean(isInRoom && roomCode && currentUser.nim),
+    onSync: loadGameData
+  });
+
   useEffect(() => {
     if (!isInRoom || !roomCode) return;
-
-    const loadGameData = async () => {
-      const { data: room } = await supabase
-        .from('athlete_rooms')
-        .select('*')
-        .eq('room_code', roomCode)
-        .single();
-      if (room) setRoomData(room);
-
-      const { data: plyrs } = await supabase
-        .from('athlete_players')
-        .select('*')
-        .eq('room_code', roomCode)
-        .order('slot_number', { ascending: true });
-      if (plyrs) setPlayers(plyrs);
-    };
 
     loadGameData();
 
@@ -323,7 +332,7 @@ export default function MagicalAthleteGame() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isInRoom, roomCode]);
+  }, [isInRoom, roomCode, loadGameData]);
 
   const myPlayer = players.find(p => p.nim === currentUser.nim);
   const mySlot = myPlayer?.slot_number;
@@ -449,7 +458,14 @@ export default function MagicalAthleteGame() {
     }).eq('room_code', roomCode);
   };
 
-  const isHost = roomData?.admin_nim === currentUser.nim || currentUser.isAdmin || mySlot === 1;
+  const preferredHostNim =
+    roomData?.admin_nim || players.find(p => !p.is_bot && p.slot_number === 1)?.nim;
+  const actingCoordinatorNim = pickActiveCoordinator(players, onlineNims, preferredHostNim);
+  const isHost = Boolean(
+    actingCoordinatorNim
+      ? actingCoordinatorNim === currentUser.nim
+      : roomData?.admin_nim === currentUser.nim || currentUser.isAdmin || mySlot === 1
+  );
 
   const handleDraftPick = async (charId) => {
     const currentR = roomDataRef.current || roomData;
@@ -461,7 +477,8 @@ export default function MagicalAthleteGame() {
 
     if (!currentDraftPlayer) return;
 
-    if (currentDraftPlayer.nim !== currentUser.nim && !currentDraftPlayer.is_bot) {
+    const canBotDrive = isHost && shouldBotControlPlayer(currentDraftPlayer, onlineNims);
+    if (currentDraftPlayer.nim !== currentUser.nim && !canBotDrive) {
       alert('Bukan giliran Anda memilih!');
       return;
     }
@@ -513,8 +530,9 @@ export default function MagicalAthleteGame() {
       const currentDraftSlot = roomData.draft_order?.[roomData.draft_turn_index];
       const currentDraftPlayer = players.find(p => p.slot_number === currentDraftSlot);
 
-      if (currentDraftPlayer?.is_bot && !isBotThinkingRef.current) {
+      if (shouldBotControlPlayer(currentDraftPlayer, onlineNims) && !isBotThinkingRef.current) {
         isBotThinkingRef.current = true;
+        const delayMs = currentDraftPlayer.is_bot ? 1000 : 4500;
         const timer = setTimeout(async () => {
           try {
             const currentR = roomDataRef.current || roomData;
@@ -528,7 +546,7 @@ export default function MagicalAthleteGame() {
           } finally {
             isBotThinkingRef.current = false;
           }
-        }, 1000);
+        }, delayMs);
 
         return () => {
           clearTimeout(timer);
@@ -538,9 +556,12 @@ export default function MagicalAthleteGame() {
     }
 
     if (roomData.status === 'RACE_SELECT') {
-      const botWaiting = players.find(p => p.is_bot && !p.active_character_id);
+      const botWaiting = players.find(
+        p => shouldBotControlPlayer(p, onlineNims) && !p.active_character_id
+      );
       if (botWaiting && !isBotThinkingRef.current) {
         isBotThinkingRef.current = true;
+        const delayMs = botWaiting.is_bot ? 800 : 4500;
         const timer = setTimeout(async () => {
           try {
             const unused = (botWaiting.drafted_characters || []).filter(
@@ -558,7 +579,7 @@ export default function MagicalAthleteGame() {
           } finally {
             isBotThinkingRef.current = false;
           }
-        }, 800);
+        }, delayMs);
 
         return () => {
           clearTimeout(timer);
@@ -571,8 +592,9 @@ export default function MagicalAthleteGame() {
       const activeSlot = roomData.current_turn_slot;
       const activePlayer = players.find(p => p.slot_number === activeSlot);
 
-      if (activePlayer?.is_bot && !isBotThinkingRef.current && !diceRolling) {
+      if (shouldBotControlPlayer(activePlayer, onlineNims) && !isBotThinkingRef.current && !diceRolling) {
         isBotThinkingRef.current = true;
+        const delayMs = activePlayer.is_bot ? 1200 : 4500;
         const timer = setTimeout(async () => {
           try {
             await executePlayerMove(activePlayer, null);
@@ -581,7 +603,7 @@ export default function MagicalAthleteGame() {
           } finally {
             isBotThinkingRef.current = false;
           }
-        }, 1200);
+        }, delayMs);
 
         return () => {
           clearTimeout(timer);
@@ -589,7 +611,7 @@ export default function MagicalAthleteGame() {
         };
       }
     }
-  }, [roomData, players, isHost, diceRolling]);
+  }, [roomData, players, isHost, diceRolling, onlineNims]);
 
   const handleLockInCharacter = async () => {
     if (!myPlayer || !secretSelectedChar) return;
@@ -1073,6 +1095,11 @@ export default function MagicalAthleteGame() {
           </div>
 
           <div className="flex items-center gap-3">
+            {connectionStatus !== 'online' && (
+              <span className="px-2.5 py-1 rounded-lg bg-amber-100 border border-amber-300 text-amber-900 text-xs font-mono font-bold">
+                {connectionStatus === 'offline' ? 'Koneksi terputus' : 'Menyinkronkan...'}
+              </span>
+            )}
             {currentUser.isAdmin && (
               <button
                 type="button"
