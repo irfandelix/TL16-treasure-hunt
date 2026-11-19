@@ -130,11 +130,20 @@ export default function DosenKillerGame() {
     }
 
     const initLobbyRoom = async () => {
-      await supabase.from('mahasiswa_roles').upsert([{ 
-        room_code: roomCode,
-        nim: currentUser.nim, 
-        nama: currentUser.nama
-      }]);
+      const [{ data: stateData }, { data: existingPlayer }] = await Promise.all([
+        supabase.from('dosen_killer_state').select('fase_game').eq('room_code', roomCode).single(),
+        supabase.from('mahasiswa_roles').select('nim').match({ room_code: roomCode, nim: currentUser.nim }).maybeSingle()
+      ]);
+
+      if (!existingPlayer) {
+        const isLateJoiner = Boolean(stateData?.fase_game && stateData.fase_game !== 'LOBBY');
+        await supabase.from('mahasiswa_roles').upsert([{
+          room_code: roomCode,
+          nim: currentUser.nim,
+          nama: currentUser.nama,
+          ...(isLateJoiner ? { is_hidup: false, peran: 'PENONTON' } : {})
+        }]);
+      }
 
       await syncDkRoom();
     };
@@ -239,6 +248,33 @@ export default function DosenKillerGame() {
         let durasiNext = 0;
         let pesanBaru = '';
 
+        const bagikanPoin = async (daftarPemenang) => {
+          await Promise.all(daftarPemenang.map(async (p) => {
+            const { data: userData } = await supabase.from('alumni').select('skor_werewolf').eq('nim', p.nim).single();
+            if (userData) {
+              await supabase.from('alumni').update({ skor_werewolf: (userData.skor_werewolf || 0) + 3000 }).eq('nim', p.nim);
+            }
+          }));
+        };
+
+        const checkOutcome = async (freshList) => {
+          const validLive = (freshList || []).filter((p) => p.is_hidup && p.peran && p.peran !== 'PENONTON');
+          const dosenLive = validLive.filter((p) => p.peran === 'DOSEN_KILLER').length;
+          const wargaLive = validLive.length - dosenLive;
+
+          if (dosenLive === 0) {
+            const wargaMenang = (freshList || []).filter((p) => p.peran && p.peran !== 'DOSEN_KILLER' && p.peran !== 'PENONTON');
+            await bagikanPoin(wargaMenang);
+            return 'MAHASISWA MENANG! Semua Dosen Killer berhasil ditemukan. Tim Mahasiswa mendapatkan 3000 Poin!';
+          }
+          if (dosenLive >= wargaLive) {
+            const dosenMenang = (freshList || []).filter((p) => p.peran === 'DOSEN_KILLER');
+            await bagikanPoin(dosenMenang);
+            return 'DOSEN KILLER MENANG! Kelas dikuasai Dosen Killer dan mendapatkan 3000 Poin!';
+          }
+          return null;
+        };
+
         if (currentFase === 'MALAM') {
           let votesDosen = {}; let votesAhli = {};
           players.forEach(p => {
@@ -267,7 +303,15 @@ export default function DosenKillerGame() {
             }
           }
           await supabase.from('mahasiswa_roles').update({ target_malam: null }).eq('room_code', roomCode);
-          nextFase = 'PAGI'; durasiNext = 6;
+
+          const { data: freshAfterNight } = await supabase.from('mahasiswa_roles').select('*').eq('room_code', roomCode);
+          const nightWinText = await checkOutcome(freshAfterNight);
+          if (nightWinText) {
+            nextFase = 'SELESAI'; durasiNext = 999;
+            pesanBaru = `${pesanBaru} ${nightWinText}`;
+          } else {
+            nextFase = 'PAGI'; durasiNext = 6;
+          }
         }
         else if (currentFase === 'PAGI') {
           nextFase = 'DISKUSI'; durasiNext = 60 + (players.length * 2); 
@@ -303,29 +347,10 @@ export default function DosenKillerGame() {
         }
         else if (currentFase === 'EKSEKUSI') {
           const { data: freshPlayers } = await supabase.from('mahasiswa_roles').select('*').eq('room_code', roomCode);
-          const mhsLive = freshPlayers.filter(p => p.is_hidup);
-          const dosenLive = mhsLive.filter(p => p.peran === 'DOSEN_KILLER').length;
-          const wargLive = mhsLive.length - dosenLive;
-
-          const bagikanPoin = async (daftarPemenang) => {
-            await Promise.all(daftarPemenang.map(async (p) => {
-              const { data: userData } = await supabase.from('alumni').select('skor_werewolf').eq('nim', p.nim).single();
-              if (userData) {
-                await supabase.from('alumni').update({ skor_werewolf: userData.skor_werewolf + 3000 }).eq('nim', p.nim);
-              }
-            }));
-          };
-
-          if (dosenLive === 0) {
+          const winText = await checkOutcome(freshPlayers);
+          if (winText) {
             nextFase = 'SELESAI'; durasiNext = 999;
-            pesanBaru = "MAHASISWA MENANG! Semua Dosen Killer berhasil ditemukan. Tim Mahasiswa mendapatkan 3000 Poin!";
-            const wargaMenang = freshPlayers.filter(p => p.peran !== 'DOSEN_KILLER');
-            await bagikanPoin(wargaMenang);
-          } else if (dosenLive >= wargLive) {
-            nextFase = 'SELESAI'; durasiNext = 999;
-            pesanBaru = "DOSEN KILLER MENANG! Kelas dikuasai Dosen Killer dan mendapatkan 3000 Poin!";
-            const dosenMenang = freshPlayers.filter(p => p.peran === 'DOSEN_KILLER');
-            await bagikanPoin(dosenMenang);
+            pesanBaru = winText;
           } else {
             nextFase = 'MALAM'; durasiNext = 30;
             pesanBaru = "";
@@ -662,8 +687,8 @@ export default function DosenKillerGame() {
             </div>
           </div>
 
-          {currentUser.isAdmin && (
-            <button
+          {(currentUser.isAdmin || isPhaseCoordinator) && (
+            <button 
               type="button"
               onClick={mulaiGame}
               className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-4 px-6 rounded-xl transition-colors shadow-md text-base"

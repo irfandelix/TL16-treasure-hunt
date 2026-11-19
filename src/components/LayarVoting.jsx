@@ -8,7 +8,7 @@ export default function LayarVoting({ pemain, isHidup, currentUser }) {
   const kandidatPemain = pemain.filter(p => p.is_hidup);
 
   const handleVote = async (targetNim) => {
-    if (sudahVote || !isHidup) return;
+    if (sudahVote || !isHidup || targetNim === currentUser.nim) return;
 
     setVotedNim(targetNim);
     setSudahVote(true);
@@ -52,10 +52,11 @@ export default function LayarVoting({ pemain, isHidup, currentUser }) {
               <button
                 key={k.nim}
                 type="button"
+                disabled={k.nim === currentUser.nim}
                 onClick={() => handleVote(k.nim)}
                 className={`w-full min-h-[48px] font-bold py-3 px-4 rounded-xl text-sm text-left transition-colors border flex justify-between items-center ${
                   k.nim === currentUser.nim
-                    ? 'bg-[#FAF6EE] border-dashed border-[#C7BDA8] text-stone-500'
+                    ? 'bg-[#FAF6EE] border-dashed border-[#C7BDA8] text-stone-500 cursor-not-allowed'
                     : 'bg-[#FAF6EE] hover:bg-[#F3EDE0] text-stone-900 border-[#DED6C6] hover:border-green-800'
                 }`}
               >

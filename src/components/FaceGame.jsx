@@ -69,6 +69,11 @@ export default function FaceGame() {
         setList(sessionData.list);
         setCurrentIndex(sessionData.currentIndex);
         setScore(sessionData.score);
+        if (typeof sessionData.timeLeft === 'number') setTimeLeft(sessionData.timeLeft);
+        if (sessionData.isRevealed) setIsRevealed(true);
+        if (sessionData.selectedAnswer) setSelectedAnswer(sessionData.selectedAnswer);
+        if (typeof sessionData.lastPoints === 'number') setLastPoints(sessionData.lastPoints);
+        setTimerActive(!sessionData.isRevealed && (typeof sessionData.timeLeft !== 'number' || sessionData.timeLeft > 0));
       } else {
         const { data, error } = await supabase
           .from('alumni')
@@ -83,10 +88,10 @@ export default function FaceGame() {
           }));
           
           setList(selected20);
-          updateLocalSession(selected20, 0, 0);
+          updateLocalSession(selected20, 0, 0, { timeLeft: 60, isRevealed: false, selectedAnswer: null, lastPoints: 0 });
         }
+        setTimerActive(true);
       }
-      setTimerActive(true);
     } catch (err) {
       console.error("Gagal memuat kuis foto:", err.message);
       setErrorMsg('Gagal memuat data foto alumni. Periksa koneksi internet dan coba lagi.');
@@ -134,23 +139,49 @@ export default function FaceGame() {
       
       const userNim = localStorage.getItem('user_nim');
       if (userNim && userNim !== 'guest') {
-        await supabase.from('alumni').update({ skor_muka: newScore }).eq('nim', userNim);
+        const { data: existing } = await supabase
+          .from('alumni')
+          .select('skor_muka')
+          .eq('nim', userNim)
+          .single();
+        const bestScore = Math.max(existing?.skor_muka || 0, newScore);
+        await supabase.from('alumni').update({ skor_muka: bestScore }).eq('nim', userNim);
       }
+      updateLocalSession(list, currentIndex, newScore, {
+        timeLeft,
+        isRevealed: true,
+        selectedAnswer: guessName,
+        lastPoints: pointsEarned
+      });
     } else {
       setLastPoints(0); 
+      updateLocalSession(list, currentIndex, newScore, {
+        timeLeft,
+        isRevealed: true,
+        selectedAnswer: guessName,
+        lastPoints: 0
+      });
     }
-    
-    updateLocalSession(list, currentIndex, newScore);
   };
 
-  const updateLocalSession = (currentList, idx, scr) => {
+  const updateLocalSession = (currentList, idx, scr, extra = {}) => {
     const userNim = localStorage.getItem('user_nim');
+    if (!userNim) return;
     localStorage.setItem(`session_face_${userNim}`, JSON.stringify({
       list: currentList,
       currentIndex: idx,
-      score: scr
+      score: scr,
+      timeLeft: typeof extra.timeLeft === 'number' ? extra.timeLeft : timeLeft,
+      isRevealed: typeof extra.isRevealed === 'boolean' ? extra.isRevealed : isRevealed,
+      selectedAnswer: extra.selectedAnswer !== undefined ? extra.selectedAnswer : selectedAnswer,
+      lastPoints: typeof extra.lastPoints === 'number' ? extra.lastPoints : lastPoints
     }));
   };
+
+  useEffect(() => {
+    if (loading || list.length === 0 || currentIndex >= 20) return;
+    updateLocalSession(list, currentIndex, score);
+  }, [timeLeft, isRevealed]);
 
   const nextPerson = () => {
     const nextIdx = currentIndex + 1;
@@ -160,7 +191,12 @@ export default function FaceGame() {
     setTimeLeft(60); 
     setTimerActive(true); 
     setLastPoints(0); 
-    updateLocalSession(list, nextIdx, score);
+    updateLocalSession(list, nextIdx, score, {
+      timeLeft: 60,
+      isRevealed: false,
+      selectedAnswer: null,
+      lastPoints: 0
+    });
   };
 
   if (loading) {

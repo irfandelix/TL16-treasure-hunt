@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 
 export default function WheelOfFamily() {
   const [peserta, setPeserta] = useState([]);
-  const [dataWheel, setDataWheel] = useState([]);
+  const [usedWinnerNims, setUsedWinnerNims] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   
@@ -13,6 +13,11 @@ export default function WheelOfFamily() {
   const [prizeNumber, setPrizeNumber] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [pemenang, setPemenang] = useState(null);
+
+  const availablePeserta = peserta.filter((item) => !usedWinnerNims.includes(item.nim));
+  const dataWheel = availablePeserta.map((item) => ({
+    option: item.nama.substring(0, 15) + (item.nama.length > 15 ? '...' : '')
+  }));
 
   const fetchPeserta = async () => {
     setIsLoading(true);
@@ -27,13 +32,8 @@ export default function WheelOfFamily() {
 
       if (data && data.length > 0) {
         setPeserta(data);
-        const formatWheel = data.map((item) => ({
-          option: item.nama.substring(0, 15) + (item.nama.length > 15 ? '...' : '')
-        }));
-        setDataWheel(formatWheel);
       } else {
         setPeserta([]);
-        setDataWheel([]);
       }
     } catch (error) {
       console.error("Gagal tarik data peserta:", error.message);
@@ -69,7 +69,10 @@ export default function WheelOfFamily() {
 
   const handleStopSpinning = () => {
     setMustSpin(false);
-    setPemenang(peserta[prizeNumber]);
+    const chosen = availablePeserta[prizeNumber];
+    if (!chosen) return;
+    setPemenang(chosen);
+    setUsedWinnerNims((prev) => (prev.includes(chosen.nim) ? prev : [...prev, chosen.nim]));
     setShowResult(true);
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -134,6 +137,20 @@ export default function WheelOfFamily() {
                   spinDuration={0.8}
                 />
               </div>
+            </div>
+          ) : peserta.length > 0 ? (
+            <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-[#C7BDA8] bg-[#FAF6EE] rounded-2xl w-full p-6 text-center space-y-3">
+              <p className="text-stone-900 font-bold text-base">Semua Nama Sudah Pernah Diputar</p>
+              <p className="text-stone-600 text-sm max-w-md">
+                Seluruh {peserta.length} alumni sudah mendapat giliran terpilih. Reset daftar jika ingin memulai putaran baru.
+              </p>
+              <button
+                type="button"
+                onClick={() => setUsedWinnerNims([])}
+                className="min-h-[44px] px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold text-sm transition-colors"
+              >
+                Reset Daftar Putaran
+              </button>
             </div>
           ) : (
             <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-[#C7BDA8] bg-[#FAF6EE] rounded-2xl w-full p-6 text-center">

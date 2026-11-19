@@ -98,10 +98,6 @@ export default function TreasureHunt() {
       return;
     }
 
-    if (userNim !== 'guest') {
-      await supabase.from('alumni').update({ skor_peta: 0 }).eq('nim', userNim);
-    }
-
     const shuffled = [...dbLocations].sort(() => 0.5 - Math.random());
     const selected20 = shuffled.slice(0, 20);
     
@@ -128,9 +124,8 @@ export default function TreasureHunt() {
   };
 
   const handleKunciJawaban = async () => {
-    if (!userGuess) return;
-
     const mission = myMissions[currentIdx];
+    if (!userGuess || !mission) return;
     const distanceMeters = getDistance(userGuess.lat, userGuess.lng, mission.kordinat[0], mission.kordinat[1]);
     
     let points = 0;
@@ -154,7 +149,13 @@ export default function TreasureHunt() {
 
     const userNim = localStorage.getItem('user_nim');
     if (userNim && userNim !== 'guest') {
-      await supabase.from('alumni').update({ skor_peta: newScore }).eq('nim', userNim);
+      const { data: existing } = await supabase
+        .from('alumni')
+        .select('skor_peta')
+        .eq('nim', userNim)
+        .single();
+      const bestScore = Math.max(existing?.skor_peta || 0, newScore);
+      await supabase.from('alumni').update({ skor_peta: bestScore }).eq('nim', userNim);
     }
   };
 

@@ -157,6 +157,13 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
   const [activeRooms, setActiveRooms] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [tileSearch, setTileSearch] = useState('');
+  const [rollCooldownSec, setRollCooldownSec] = useState(0);
+
+  useEffect(() => {
+    if (rollCooldownSec <= 0) return;
+    const t = setTimeout(() => setRollCooldownSec((prev) => Math.max(0, prev - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [rollCooldownSec]);
 
   useEffect(() => {
     const nims = players.map(p => p.nim).filter(Boolean);
@@ -536,16 +543,30 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
 
   const givePoints = async (nim, amount) => {
     const TABEL_ALUMNI = 'alumni';
-    const { data: u } = await supabase.from(TABEL_ALUMNI).select('skor_monopoli').eq('nim', nim).single();
-    const updatedScore = (u?.skor_monopoli || 0) + amount;
-    await supabase.from(TABEL_ALUMNI)
-      .update({ skor_monopoli: updatedScore })
-      .eq('nim', nim);
-    await supabase.from('monopoli_users')
-      .update({ points: updatedScore })
-      .eq('nim', nim);
-    if (nim === currentUser.nim) {
-      setCurrentUser(prev => ({ ...prev, points: updatedScore }));
+    let updatedScore = null;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const { data: u } = await supabase.from(TABEL_ALUMNI).select('skor_monopoli').eq('nim', nim).single();
+      const currentScore = u?.skor_monopoli ?? 0;
+      const nextScore = currentScore + amount;
+      const { data: saved } = await supabase
+        .from(TABEL_ALUMNI)
+        .update({ skor_monopoli: nextScore })
+        .eq('nim', nim)
+        .eq('skor_monopoli', currentScore)
+        .select('skor_monopoli');
+
+      if (saved && saved.length > 0) {
+        updatedScore = nextScore;
+        break;
+      }
+    }
+
+    if (updatedScore !== null) {
+      await supabase.from('monopoli_users').update({ points: updatedScore }).eq('nim', nim);
+      if (nim === currentUser.nim) {
+        setCurrentUser(prev => ({ ...prev, points: updatedScore }));
+      }
     }
   };
 
@@ -680,8 +701,10 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
   };
   const stopSpin = () => { clearInterval(intervalRef.current); setIsSpinning(false); setTodQuestion(spinningText); };
 
+  const hasPendingActionModal = showBuyModal || showUpgradeModal || showEventCard || showToD || showColorModal;
+
   const rollDice = async () => {
-    if (isRolling || isAnimating || !myState || myState.is_bankrupt) return;
+    if (isRolling || isAnimating || !myState || myState.is_bankrupt || rollCooldownSec > 0 || hasPendingActionModal) return;
 
     if (myState.skip_turn > 0) {
       const sisaHukuman = myState.skip_turn - 1;
@@ -737,27 +760,40 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
         const rent = Math.floor(tile.rent * mult);
         cashAfter -= rent;
 
-        const { data: ownerData } = await supabase
-          .from('monopoli_players')
-          .select('cash, nama')
-          .match({ nim: ownerRecord.owner_nim, room_id: currentRoom.id })
-          .single();
+        let creditedOwnerName = 'pemilik';
+        let ownerNewCash = null;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          const { data: ownerData } = await supabase
+            .from('monopoli_players')
+            .select('cash, nama')
+            .match({ nim: ownerRecord.owner_nim, room_id: currentRoom.id })
+            .single();
 
-        if (ownerData) {
-          const ownerNewCash = (ownerData.cash || 0) + rent;
-          await supabase
+          if (!ownerData) break;
+          creditedOwnerName = ownerData.nama?.split(' ')[0] || 'pemilik';
+          const prevCash = ownerData.cash ?? 0;
+          const nextOwnerCash = prevCash + rent;
+          const { data: updatedOwner } = await supabase
             .from('monopoli_players')
             .update({
-              cash: ownerNewCash,
+              cash: nextOwnerCash,
               last_message: `Terima sewa ${tile.name} Rp ${rent}k dari ${currentUser.nama.split(' ')[0]}!`
             })
-            .match({ nim: ownerRecord.owner_nim, room_id: currentRoom.id });
+            .match({ nim: ownerRecord.owner_nim, room_id: currentRoom.id })
+            .eq('cash', prevCash)
+            .select('cash');
 
+          if (updatedOwner && updatedOwner.length > 0) {
+            ownerNewCash = nextOwnerCash;
+            break;
+          }
+        }
+
+        if (ownerNewCash !== null) {
           setPlayers(prev => prev.map(p => p.nim === ownerRecord.owner_nim ? { ...p, cash: ownerNewCash } : p));
         }
 
-        const ownerFirstName = ownerData?.nama?.split(' ')[0] || 'pemilik';
-        messages.push(`Bayar sewa ${tile.name} Rp ${rent}k ke ${ownerFirstName}!`);
+        messages.push(`Bayar sewa ${tile.name} Rp ${rent}k ke ${creditedOwnerName}!`);
       }
     }
 
@@ -791,7 +827,8 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
     const messages = [];
 
     // Bonus melewati atau berhenti di START setelah menyelesaikan satu putaran penuh
-    if (startPos + totalSteps >= 40) {
+    let startBonusPaidThisTurn = startPos + totalSteps >= 40;
+    if (startBonusPaidThisTurn) {
       newCash += 200;
       messages.push('KRS-an cair +Rp 200k!');
     }
@@ -829,8 +866,13 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
           case 'KE_START':
             finalPos = 0;
             setMyAnimPos(0);
-            newCash += 200;
-            messages.push('Kembali ke START (+Rp 200k)!');
+            if (!startBonusPaidThisTurn) {
+              newCash += 200;
+              startBonusPaidThisTurn = true;
+              messages.push('Kembali ke START (+Rp 200k)!');
+            } else {
+              messages.push('Kembali ke START!');
+            }
             break;
           case 'TELEPORT':
             finalPos = card.action_value;
@@ -874,6 +916,7 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
     setMyState(prev => ({ ...prev, pos: finalPos, cash: newCash, last_message: finalMessage }));
     await supabase.from('monopoli_players').update({ pos: finalPos, cash: newCash, last_message: finalMessage }).match({ nim: currentUser.nim, room_id: currentRoom.id });
     updateRoomActivity();
+    setRollCooldownSec(6);
     setIsAnimating(false);
     isAnimatingRef.current = false;
   };
@@ -1463,9 +1506,9 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
           <button
             type="button"
             onClick={rollDice}
-            disabled={isRolling||isAnimating||myState?.is_bankrupt}
+            disabled={isRolling || isAnimating || myState?.is_bankrupt || rollCooldownSec > 0 || hasPendingActionModal}
             className={`w-full min-h-[52px] font-bold py-4 rounded-xl transition-colors text-base ${
-              isRolling || isAnimating || myState?.is_bankrupt
+              isRolling || isAnimating || myState?.is_bankrupt || rollCooldownSec > 0 || hasPendingActionModal
                 ? 'bg-[#E5DFD2] text-zinc-700 cursor-not-allowed'
                 : 'bg-[#14532D] hover:bg-[#166534] text-white'
             }`}
@@ -1474,6 +1517,10 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
               ? 'Mengocok Dadu...'
               : isAnimating
               ? `Dadu: ${dice[0]} + ${dice[1]} = ${dice[0]+dice[1]} Langkah`
+              : hasPendingActionModal
+              ? 'Selesaikan Aksi Petak Dahulu'
+              : rollCooldownSec > 0
+              ? `Tunggu Jeda Giliran (${rollCooldownSec}d)`
               : 'Lempar Dadu Sekarang'}
           </button>
 

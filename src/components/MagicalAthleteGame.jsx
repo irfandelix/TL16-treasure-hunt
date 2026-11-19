@@ -68,6 +68,7 @@ export default function MagicalAthleteGame() {
   const roomDataRef = useRef(null);
   const playersRef = useRef([]);
   const isBotThinkingRef = useRef(false);
+  const bonusRollsRef = useRef({ slot: null, count: 0 });
 
   useEffect(() => {
     roomDataRef.current = roomData;
@@ -779,7 +780,8 @@ export default function MagicalAthleteGame() {
       }
     }
 
-    const acidPlayer = players.find(p => p.active_character_id === 'acid_mine' && p.id !== playerToMove.id);
+    const livePlayersBeforeEnd = playersRef.current.length > 0 ? playersRef.current : players;
+    const acidPlayer = livePlayersBeforeEnd.find(p => p.active_character_id === 'acid_mine' && p.id !== playerToMove.id);
     if (acidPlayer && acidPlayer.position === currentPos && currentPos < 24) {
       skillNote += ` [Terpental Corrosive Leach mundur 3 petak!]`;
       setToastMessage(`${playerToMove.nama} mendarat di petak Acid Mine! Terpental mundur 3 petak!`);
@@ -794,7 +796,7 @@ export default function MagicalAthleteGame() {
       position: currentPos
     }).eq('id', playerToMove.id);
 
-    const gwPlayer = players.find(p => p.active_character_id === 'groundwater' && p.id !== playerToMove.id);
+    const gwPlayer = livePlayersBeforeEnd.find(p => p.active_character_id === 'groundwater' && p.id !== playerToMove.id);
     if (gwPlayer && playerToMove.position < gwPlayer.position && currentPos > gwPlayer.position) {
       let gwPos = gwPlayer.position;
       setToastMessage(`${gwPlayer.nama} terseret Subsurface Surge maju +2 petak!`);
@@ -810,6 +812,7 @@ export default function MagicalAthleteGame() {
     }
 
     if (currentPos >= 24) {
+      bonusRollsRef.current = { slot: null, count: 0 };
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (!prefersReducedMotion) {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
@@ -819,16 +822,24 @@ export default function MagicalAthleteGame() {
       return;
     }
 
-    const currentSlotIdx = players.findIndex(p => p.slot_number === roomData.current_turn_slot);
-    const nextSlotIdx = (currentSlotIdx + 1) % players.length;
-    const nextSlot = players[nextSlotIdx].slot_number;
-    const nextPlayer = players[nextSlotIdx];
+    const latestPlayers = playersRef.current.length > 0 ? playersRef.current : players;
+    const latestRoom = roomDataRef.current || roomData;
+    const currentSlotIdx = latestPlayers.findIndex(p => p.slot_number === latestRoom.current_turn_slot);
+    const safeIdx = currentSlotIdx >= 0 ? currentSlotIdx : 0;
+    const nextSlotIdx = (safeIdx + 1) % latestPlayers.length;
+    const nextSlot = latestPlayers[nextSlotIdx].slot_number;
+    const nextPlayer = latestPlayers[nextSlotIdx];
 
-    if (charData?.id === 'compost_nutrient' && roll === 6) {
+    const sameSlotBonusCount =
+      bonusRollsRef.current.slot === playerToMove.slot_number ? bonusRollsRef.current.count : 0;
+
+    if (charData?.id === 'compost_nutrient' && roll === 6 && sameSlotBonusCount < 2) {
+      bonusRollsRef.current = { slot: playerToMove.slot_number, count: sameSlotBonusCount + 1 };
       await supabase.from('athlete_rooms').update({
-        last_action: `${playerToMove.nama} dapat angka 6! Bio-Enrichment memberi giliran tambahan!`
+        last_action: `${playerToMove.nama} dapat angka 6! Bio-Enrichment memberi giliran tambahan (${sameSlotBonusCount + 1}/2)!`
       }).eq('room_code', roomCode);
     } else {
+      bonusRollsRef.current = { slot: null, count: 0 };
       await supabase.from('athlete_rooms').update({
         current_turn_slot: nextSlot,
         last_action: `${playerToMove.nama} melangkah ${steps} petak (ke petak ${currentPos}).${skillNote} Giliran: ${nextPlayer.nama}.`
@@ -839,25 +850,27 @@ export default function MagicalAthleteGame() {
   };
 
   const handleFinishRound = async (finisher, victoryText) => {
-    const multiplier = roomData.current_round === 4 ? 2 : 1;
+    const latestRoom = roomDataRef.current || roomData;
+    const latestPlayers = playersRef.current.length > 0 ? playersRef.current : players;
+    const multiplier = latestRoom.current_round === 4 ? 2 : 1;
     const pointsAwarded = 5 * multiplier;
 
-    await supabase.from('athlete_players').update({
-      score: (finisher.score || 0) + pointsAwarded
-    }).eq('id', finisher.id);
+    await Promise.all([
+      supabase.from('athlete_players').update({
+        score: (finisher.score || 0) + pointsAwarded
+      }).eq('id', finisher.id),
+      ...latestPlayers
+        .filter((p) => p.active_character_id)
+        .map((p) =>
+          supabase.from('athlete_players').update({
+            used_characters: [...(p.used_characters || []), p.active_character_id],
+            active_character_id: null,
+            position: 0
+          }).eq('id', p.id)
+        )
+    ]);
 
-    for (const p of players) {
-      if (p.active_character_id) {
-        const updatedUsed = [...(p.used_characters || []), p.active_character_id];
-        await supabase.from('athlete_players').update({
-          used_characters: updatedUsed,
-          active_character_id: null,
-          position: 0
-        }).eq('id', p.id);
-      }
-    }
-
-    if (roomData.current_round >= 4) {
+    if (latestRoom.current_round >= 4) {
       await supabase.from('athlete_rooms').update({
         status: 'GAME_OVER',
         last_action: `TURNAMEN SELESAI! ${victoryText} Selamat kepada para juara!`
