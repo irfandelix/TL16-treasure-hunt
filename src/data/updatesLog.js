@@ -1,5 +1,63 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-022',
+    requiresMode: 'adminOnly',
+    date: '19 November 2026',
+    version: 'v2.6.1',
+    category: 'Perbaikan Bug',
+    title: 'Audit Mekanik Game Rahasia & Penambahan Magical Athlete ke Beranda',
+    commit: '2707592',
+    summary: 'Menutup celah aturan permainan pada mode terjadwal setelah audit logika dan menambahkan Magical Athlete TL16 ke daftar Arena Main Bareng khusus admin.',
+    changes: [
+      'Dosen Killer & LayarVoting: mengecek kemenangan segera setelah fase malam, menandai pemain telat masuk sebagai penonton, memblokir vote ke NIM sendiri, dan membuka tombol mulai untuk koordinator pengganti.',
+      'Monopoli TL16: menambah jeda 6 detik antar lemparan dadu, mengunci lemparan saat modal aksi masih terbuka, mencegah bonus ganda START saat kartu KE_START keluar, serta memakai compare-and-swap untuk kas sewa dan skor.',
+      'UNO Seru TL16 & Magical Athlete: menambah pemilih 4 warna untuk kartu Titip Absen, memindahkan giliran otomatis saat pemain keluar meja, membaca ref terbaru selama animasi langkah, dan membatasi giliran bonus beruntun.',
+      'Wheel of Family & GameDashboard: menyaring alumni yang sudah pernah menang dari putaran berikutnya dan menampilkan Magical Athlete TL16 di baris #04 Arena Main Bareng khusus sesi admin.'
+    ],
+    docs: {
+      files: [
+        'src/components/DosenKillerGame.jsx',
+        'src/components/LayarVoting.jsx',
+        'src/components/MonopoliBoard.jsx',
+        'src/components/UnoBrutalGame.jsx',
+        'src/components/MagicalAthleteGame.jsx',
+        'src/components/WheelOfFamily.jsx',
+        'src/components/GameDashboard.jsx'
+      ],
+      notes: 'Entri ini bertanda adminOnly agar rincian mode yang belum rilis tidak muncul di halaman publik /updates.'
+    }
+  },
+  {
+    id: 'upd-021',
+    date: '19 November 2026',
+    version: 'v2.6.0',
+    category: 'Perbaikan Bug',
+    title: 'Ketahanan Koneksi Ruangan & Perbaikan Audit Logika Permainan',
+    commit: 'f473a70',
+    summary: 'Memasang pengalihan kendali otomatis ketika pembuat ruangan terputus, bot cadangan sementara bagi pemain offline, serta perbaikan penyimpanan skor dan timer kuis.',
+    changes: [
+      'Menambahkan hook useRoomConnection dengan Supabase Realtime Presence, sinkronisasi ulang otomatis saat jaringan pulih atau tab dibuka kembali, serta polling cadangan tiap 5 detik.',
+      'Menambahkan pengambilan alih giliran sementara oleh bot bila pemain terputus beberapa detik, dan menghentikan bot secara otomatis begitu pemain tersebut aktif lagi.',
+      'Menjaga skor tertinggi pada FaceGame.jsx dan TreasureHunt.jsx dengan Math.max agar main ulang tidak menghapus nilai sebelumnya di klasemen.',
+      'Menyimpan sisa waktu, status terungkap, dan jawaban aktif pada FaceGame.jsx ke localStorage supaya muat ulang halaman tidak mengulang timer ke 60 detik.'
+    ],
+    docs: {
+      files: [
+        'src/lib/useRoomConnection.js',
+        'src/components/FaceGame.jsx',
+        'src/components/TreasureHunt.jsx',
+        'src/components/GameDashboard.jsx',
+        'src/components/DosenKillerGame.jsx',
+        'src/components/LayarVoting.jsx',
+        'src/components/MonopoliBoard.jsx',
+        'src/components/UnoBrutalGame.jsx',
+        'src/components/MagicalAthleteGame.jsx',
+        'src/components/WheelOfFamily.jsx'
+      ],
+      notes: 'Pemilihan pengendali pengganti memakai fungsi deterministik pickActiveCoordinator agar seluruh perangkat di ruangan memilih koordinator yang sama tanpa bentrok.'
+    }
+  },
+  {
     id: 'upd-020',
     date: '18 November 2026',
     version: 'v2.5.3',

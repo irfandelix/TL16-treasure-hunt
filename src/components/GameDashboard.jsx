@@ -25,6 +25,7 @@ const WheelOfFamily = lazy(() => import('./WheelOfFamily'));
 const MonopoliBoard = lazy(() => import('./MonopoliBoard'));
 const DosenKillerGame = lazy(() => import('./DosenKillerGame'));
 const UnoBrutalGame = lazy(() => import('./UnoBrutalGame'));
+const MagicalAthleteGame = lazy(() => import('./MagicalAthleteGame'));
 const UpdatesPage = lazy(() => import('./UpdatesPage'));
 
 const LoadingScreen = ({ label = 'Memuat halaman permainan...' }) => (
@@ -78,6 +79,13 @@ const IconCards = () => (
   </svg>
 );
 
+const IconFlag = () => (
+  <svg aria-hidden="true" className="w-5 h-5 text-[#B45309] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 22V4" />
+    <path d="M4 5h12l-2 4 2 4H4" />
+  </svg>
+);
+
 export default function GameDashboard() {
   const [user, setUser] = useState(null);
   const [isChecking, setIsChecking] = useState(true);
@@ -128,9 +136,9 @@ export default function GameDashboard() {
         setAvatarConfig(getLocalAvatarConfig(savedNim) || generateSeedAvatarConfig(savedNim));
 
         const savedView = localStorage.getItem(`active_view_${savedNim}`);
-        const allowedViews = ['dashboard', 'map', 'face', 'kapsul', 'wheel', 'monopoli', 'dosenkiller', 'unobrutal', 'updates', 'admin'];
+        const allowedViews = ['dashboard', 'map', 'face', 'kapsul', 'wheel', 'monopoli', 'dosenkiller', 'unobrutal', 'athlete', 'updates', 'admin'];
         let resolvedView = 'dashboard';
-        if (savedView && allowedViews.includes(savedView) && (savedView !== 'admin' || isAdmin)) {
+        if (savedView && allowedViews.includes(savedView) && ((savedView !== 'admin' && savedView !== 'athlete') || isAdmin)) {
           resolvedView = savedView;
           setActiveView(savedView);
         }
@@ -532,6 +540,7 @@ export default function GameDashboard() {
   if (activeView === 'monopoli') return renderSubView(MonopoliBoard, { myAvatarConfig: avatarConfig });
   if (activeView === 'dosenkiller') return renderSubView(DosenKillerGame);
   if (activeView === 'unobrutal') return renderSubView(UnoBrutalGame);
+  if (activeView === 'athlete' && user.is_admin) return renderSubView(MagicalAthleteGame);
 
   if (activeView === 'updates') {
     return (
@@ -609,6 +618,18 @@ export default function GameDashboard() {
         : redactedDetail,
       ctaLabel: 'Gabung Meja Kartu',
       onClick: () => setActiveView('unobrutal')
+    });
+  }
+  if (user.is_admin) {
+    multiplayerGames.push({
+      id: 'athlete',
+      title: 'Magical Athlete TL16',
+      unlocked: true,
+      icon: <IconFlag />,
+      description:
+        'Bursa draft atlet berkarakter dan balapan 4 ronde lintas petak bersama teman atau bot.',
+      ctaLabel: 'Masuk Arena Balap',
+      onClick: () => setActiveView('athlete')
     });
   }
 
