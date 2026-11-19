@@ -1,5 +1,25 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-029',
+    date: '19 November 2026',
+    version: 'v2.8.1',
+    category: 'Desain & UI',
+    title: 'Sensor Mode Belum Rilis & Rincian 2 Baris pada Poster IG Story',
+    commit: 'latest',
+    summary: 'Memastikan poster IG Story selalu menyensor mode yang belum memasuki jadwal rilis publik (termasuk saat dibagikan oleh akun admin) dan menyusun rincian skor ke 2 baris agar tidak terpotong titik-titik.',
+    changes: [
+      'Memisahkan status pembukaan jadwal publik di ScoreBoard.jsx agar poster IG Story selalu menampilkan blok hitam detektif pada mode yang belum dirilis meski dibuat dari sesi admin.',
+      'Menambahkan tata letak rincian skor 2 baris terpusat di storyCardGenerator.js sehingga 4 rincian permainan tampil utuh tanpa terpotong elipsis (...).'
+    ],
+    docs: {
+      files: [
+        'src/lib/storyCardGenerator.js',
+        'src/components/ScoreBoard.jsx'
+      ],
+      notes: 'Poster IG Story selalu mengikuti jadwal rilis publik dan visibilitas papan klasemen agar tangkapan layar atau unduhan Story dari perangkat panitia tetap aman dibagikan ke media sosial.'
+    }
+  },
+  {
     id: 'upd-028',
     date: '19 November 2026',
     version: 'v2.8.0',

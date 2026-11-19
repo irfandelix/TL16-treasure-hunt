@@ -94,6 +94,8 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
   const [isRevealed, setIsRevealed] = useState(false);
   const [isMonopoliUnlocked, setIsMonopoliUnlocked] = useState(false);
   const [isWerewolfUnlocked, setIsWerewolfUnlocked] = useState(false);
+  const [isPublicMonopoliUnlocked, setIsPublicMonopoliUnlocked] = useState(false);
+  const [isPublicWerewolfUnlocked, setIsPublicWerewolfUnlocked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [sortBy, setSortBy] = useState('total');
@@ -117,18 +119,18 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
       if (settings) {
         setIsRevealed(Boolean(settings.show_scoreboard));
         const now = Date.now();
+        const publicMonopoliBuka = Boolean(
+          settings.monopoli_unlock_date && now >= new Date(settings.monopoli_unlock_date).getTime()
+        );
+        const publicWerewolfBuka = Boolean(
+          settings.werewolf_unlock_date && now >= new Date(settings.werewolf_unlock_date).getTime()
+        );
 
-        if (checkAdmin) {
-          monopoliBuka = true;
-          werewolfBuka = true;
-        } else {
-          if (settings.monopoli_unlock_date) {
-            monopoliBuka = now >= new Date(settings.monopoli_unlock_date).getTime();
-          }
-          if (settings.werewolf_unlock_date) {
-            werewolfBuka = now >= new Date(settings.werewolf_unlock_date).getTime();
-          }
-        }
+        monopoliBuka = checkAdmin || publicMonopoliBuka;
+        werewolfBuka = checkAdmin || publicWerewolfBuka;
+
+        setIsPublicMonopoliUnlocked(publicMonopoliBuka);
+        setIsPublicWerewolfUnlocked(publicWerewolfBuka);
         setIsMonopoliUnlocked(monopoliBuka);
         setIsWerewolfUnlocked(werewolfBuka);
       }
@@ -492,37 +494,44 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
                         nama: p.nama,
                         score: p._activeScore
                       }));
-                      const ladder = buildNeighborsLadder(rankedForCard, currentUserEntry.nim, shouldReveal);
-                      const breakdownParts = [
-                        `Peta: ${currentUserEntry.skor_peta || 0}`,
-                        `Foto: ${currentUserEntry.skor_muka || 0}`
+                      const ladder = buildNeighborsLadder(rankedForCard, currentUserEntry.nim, isRevealed);
+                      const breakdownItems = [
+                        { label: 'Peta', value: currentUserEntry.skor_peta || 0 },
+                        { label: 'Foto', value: currentUserEntry.skor_muka || 0 },
+                        isPublicMonopoliUnlocked
+                          ? { label: 'Monopoli', value: currentUserEntry.skor_monopoli || 0 }
+                          : { redacted: true, width: 170 },
+                        isPublicWerewolfUnlocked
+                          ? { label: 'Dosen Killer', value: currentUserEntry.skor_werewolf || 0 }
+                          : { redacted: true, width: 190 }
                       ];
-                      if (isMonopoliUnlocked) {
-                        breakdownParts.push(`Monopoli: ${currentUserEntry.skor_monopoli || 0}`);
-                      }
-                      if (isWerewolfUnlocked) {
-                        breakdownParts.push(`Dosen Killer: ${currentUserEntry.skor_werewolf || 0}`);
-                      }
-                      const isTop1 = shouldReveal && currentUserEntry._rank === 1;
+                      const isLockedSort =
+                        (sortBy === 'monopoli' && !isPublicMonopoliUnlocked) ||
+                        (sortBy === 'werewolf' && !isPublicWerewolfUnlocked);
+                      const publicScoreLabel =
+                        sortBy === 'total' || isLockedSort
+                          ? 'TOTAL POIN KENANGAN'
+                          : `POIN ${activeCategoryLabel.toUpperCase()}`;
+                      const isTop1 = isRevealed && currentUserEntry._rank === 1;
                       return {
                         variant: 'ladder',
-                        badge: `KLASEMEN SEDULUR 16`,
+                        badge: 'KLASEMEN SEDULUR 16',
                         name: currentUserEntry.nama,
                         subtitle: `NIM ${currentUserEntry.nim}`,
                         nim: currentUserEntry.nim,
                         avatarConfig: resolveAvatar(currentUserEntry),
                         rankText: `PERINGKAT #${currentUserEntry._rank} DARI ${rankedAlumni.length}`,
-                        redactedRank: !shouldReveal,
+                        redactedRank: !isRevealed,
                         accent: isTop1 ? '#B45309' : '#14532D',
                         ringColor: isTop1 ? '#D97706' : '#14532D',
                         scoreText: String(currentUserEntry._activeScore),
-                        scoreLabel: sortBy === 'total' ? 'TOTAL POIN KENANGAN' : `POIN ${activeCategoryLabel.toUpperCase()}`,
-                        breakdownLine: breakdownParts.join('  |  '),
+                        scoreLabel: publicScoreLabel,
+                        breakdownItems,
                         neighborsTitle: ladder.title,
                         neighbors: ladder.rows,
                         filename: `klasemen-sedulur16-${currentUserEntry.nim}.png`,
                         shareTitle: 'Klasemen 1 Dekade Sedulur 16',
-                        shareText: `Skor ${activeCategoryLabel} saya di 1 Dekade TL 2016: ${currentUserEntry._activeScore} poin!`
+                        shareText: `Skor kenangan saya di 1 Dekade TL 2016: ${currentUserEntry._activeScore} poin!`
                       };
                     }}
                   />

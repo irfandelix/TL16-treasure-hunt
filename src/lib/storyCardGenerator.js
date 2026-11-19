@@ -1,5 +1,4 @@
 import { supabase } from './supabaseClient';
-import { isAdminSession } from './adminAuth';
 import { renderAvatarCanvas } from './avatarCanvas';
 import { getLocalAvatarConfig } from './avatarHelper';
 
@@ -111,7 +110,6 @@ export function buildNeighborsLadder(rankedList, currentNim, revealNames) {
 export async function fetchSoloQuizStoryContext(scoreColumn, currentNim, fallbackScore) {
   const myNama = localStorage.getItem('user_nama') || 'Alumni TL 2016';
   const myAvatar = getLocalAvatarConfig(currentNim);
-  const admin = isAdminSession();
 
   try {
     const [{ data: settings }, { data: alumniData }] = await Promise.all([
@@ -119,7 +117,8 @@ export async function fetchSoloQuizStoryContext(scoreColumn, currentNim, fallbac
       supabase.from('alumni').select('nim, nama, skor_peta, skor_muka')
     ]);
 
-    const revealNames = admin || Boolean(settings?.show_scoreboard);
+    // Story posters are shared publicly on social media, so always follow public reveal state.
+    const revealNames = Boolean(settings?.show_scoreboard);
     if (!Array.isArray(alumniData) || alumniData.length === 0) {
       return {
         nama: myNama,
@@ -164,13 +163,63 @@ export async function fetchSoloQuizStoryContext(scoreColumn, currentNim, fallbac
     return {
       nama: myNama,
       avatarConfig: myAvatar,
-      revealNames: admin,
+      revealNames: false,
       neighborsTitle: '',
       neighbors: [],
       myRank: null,
       totalCount: 0
     };
   }
+}
+
+function drawBreakdownRows(ctx, items, centerX, startY) {
+  const rows = [];
+  for (let i = 0; i < items.length; i += 2) {
+    rows.push(items.slice(i, i + 2));
+  }
+
+  ctx.font = '700 25px "JetBrains Mono", ui-monospace, monospace';
+  const sepText = '  |  ';
+  const sepW = ctx.measureText(sepText).width;
+  const lineHeight = 42;
+
+  rows.forEach((row, rowIdx) => {
+    const y = startY + rowIdx * lineHeight;
+    const measured = row.map((item) => {
+      if (item.redacted) {
+        return { redacted: true, width: item.width || 160 };
+      }
+      const text = `${item.label}: ${item.value}`;
+      return { redacted: false, text, width: ctx.measureText(text).width };
+    });
+
+    const totalW =
+      measured.reduce((sum, part) => sum + part.width, 0) +
+      Math.max(0, measured.length - 1) * sepW;
+
+    let cursorX = centerX - totalW / 2;
+    ctx.textAlign = 'left';
+
+    measured.forEach((part, idx) => {
+      if (idx > 0) {
+        ctx.fillStyle = '#A1998A';
+        ctx.fillText(sepText, cursorX, y);
+        cursorX += sepW;
+      }
+
+      if (part.redacted) {
+        drawRoundedRect(ctx, cursorX, y - 22, part.width, 26, 6);
+        ctx.fillStyle = '#09090B';
+        ctx.fill();
+      } else {
+        ctx.fillStyle = '#52525B';
+        ctx.fillText(part.text, cursorX, y);
+      }
+      cursorX += part.width;
+    });
+  });
+
+  ctx.textAlign = 'center';
 }
 
 /**
@@ -191,6 +240,7 @@ export async function generateStoryCardBlob(options) {
     scoreText = '0',
     scoreLabel = 'TOTAL POIN',
     breakdownLine = '',
+    breakdownItems = [],
     neighborsTitle = 'PERSAINGAN TERDEKAT',
     neighbors = [],
     sessionTitle = 'PESERTA SESI INI',
@@ -397,24 +447,28 @@ export async function generateStoryCardBlob(options) {
     }
 
     // Focal score number
+    const hasTwoBreakdownRows = breakdownItems.length > 2;
     ctx.fillStyle = '#14532D';
-    ctx.font = '800 132px "JetBrains Mono", ui-monospace, monospace';
-    ctx.fillText(String(scoreText), STORY_W / 2, 988);
+    ctx.font = '800 126px "JetBrains Mono", ui-monospace, monospace';
+    ctx.fillText(String(scoreText), STORY_W / 2, 976);
 
     ctx.fillStyle = '#52525B';
-    ctx.font = '700 25px system-ui, sans-serif';
-    ctx.fillText(scoreLabel.toUpperCase(), STORY_W / 2, 1034);
+    ctx.font = '700 24px system-ui, sans-serif';
+    ctx.fillText(scoreLabel.toUpperCase(), STORY_W / 2, 1020);
 
-    if (breakdownLine) {
+    if (breakdownItems.length > 0) {
+      drawBreakdownRows(ctx, breakdownItems, STORY_W / 2, hasTwoBreakdownRows ? 1072 : 1084);
+    } else if (breakdownLine) {
       ctx.fillStyle = '#52525B';
       ctx.font = '700 25px "JetBrains Mono", ui-monospace, monospace';
-      ctx.fillText(truncateText(ctx, breakdownLine, STORY_W - 180), STORY_W / 2, 1090);
+      ctx.fillText(truncateText(ctx, breakdownLine, STORY_W - 180), STORY_W / 2, 1084);
     }
 
     // Hairline divider
+    const dividerY = hasTwoBreakdownRows ? 1146 : 1136;
     ctx.beginPath();
-    ctx.moveTo(124, 1136);
-    ctx.lineTo(STORY_W - 124, 1136);
+    ctx.moveTo(124, dividerY);
+    ctx.lineTo(STORY_W - 124, dividerY);
     ctx.strokeStyle = '#E5DFD2';
     ctx.lineWidth = 3;
     ctx.stroke();
@@ -423,13 +477,13 @@ export async function generateStoryCardBlob(options) {
       ctx.fillStyle = '#52525B';
       ctx.font = '700 23px "JetBrains Mono", ui-monospace, monospace';
       ctx.textAlign = 'left';
-      ctx.fillText(neighborsTitle.toUpperCase(), 124, 1188);
+      ctx.fillText(neighborsTitle.toUpperCase(), 124, dividerY + 48);
 
       const rowX = 124;
       const rowW = STORY_W - 248;
-      const rowH = 124;
-      const rowGap = 20;
-      const startY = 1218;
+      const rowH = hasTwoBreakdownRows ? 120 : 124;
+      const rowGap = hasTwoBreakdownRows ? 18 : 20;
+      const startY = dividerY + 76;
 
       neighbors.slice(0, 3).forEach((row, idx) => {
         const y = startY + idx * (rowH + rowGap);
