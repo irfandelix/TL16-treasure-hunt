@@ -226,12 +226,12 @@ export function renderOpeepsSvg(config, uniqueHint = '') {
     nose: 'Round',
     ear: 'Attached',
     color: {
-      outlineColor: '#171921',
+      outlineColor: '#111318',
       skinColor: cfg.skinColor,
       topColor: cfg.topColor,
       shirtColor: cfg.shirtColor,
       collarColor: '#FFFFFF',
-      glassFrameColor: '#171921'
+      glassFrameColor: '#111318'
     }
   });
 
@@ -241,7 +241,7 @@ export function renderOpeepsSvg(config, uniqueHint = '') {
     if (shirtIdx !== -1) {
       const shirtEnd = raw.indexOf('</g>', shirtIdx);
       if (shirtEnd !== -1) {
-        raw = raw.slice(0, shirtEnd + 4) + '\n' + drawCustomHijab(cfg.topColor, '#171921') + raw.slice(shirtEnd + 4);
+        raw = raw.slice(0, shirtEnd + 4) + '\n' + drawCustomHijab(cfg.topColor, '#111318') + raw.slice(shirtEnd + 4);
       }
     }
   }

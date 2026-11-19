@@ -1,46 +1,67 @@
-import React, { useMemo, useId, useState, useEffect } from 'react';
+import React, { useMemo, useId, useRef, useEffect } from 'react';
 import {
   renderOpeepsSvg,
   generateSeedAvatarConfig,
   normalizeAvatarConfig
 } from '../lib/avatarHelper';
 
-const AVATAR_RASTER_SIZE = 256;
-const MAX_RASTER_CACHE = 120;
-const avatarRasterCache = new Map();
+const AVATAR_CANVAS_SIZE = 320;
+const MAX_CANVAS_CACHE = 120;
+const avatarCanvasCache = new Map();
+const pendingRenders = new Map();
 
-function rasterizeSvgToOpaqueJpeg(svgDataUri, fallbackBg) {
-  return new Promise((resolve) => {
+function getOrRenderAvatarCanvas(cacheKey, svgDataUri, fallbackBg) {
+  const existing = avatarCanvasCache.get(cacheKey);
+  if (existing) return Promise.resolve(existing);
+
+  const inflight = pendingRenders.get(cacheKey);
+  if (inflight) return inflight;
+
+  const task = new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       try {
-        const canvas = document.createElement('canvas');
-        canvas.width = AVATAR_RASTER_SIZE;
-        canvas.height = AVATAR_RASTER_SIZE;
-        const ctx = canvas.getContext('2d', { alpha: false });
+        const offscreen = document.createElement('canvas');
+        offscreen.width = AVATAR_CANVAS_SIZE;
+        offscreen.height = AVATAR_CANVAS_SIZE;
+        const ctx = offscreen.getContext('2d', { alpha: false });
         if (!ctx) {
-          resolve(svgDataUri);
+          resolve(null);
           return;
         }
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.fillStyle = fallbackBg || '#D1FAE5';
-        ctx.fillRect(0, 0, AVATAR_RASTER_SIZE, AVATAR_RASTER_SIZE);
-        ctx.drawImage(img, 0, 0, AVATAR_RASTER_SIZE, AVATAR_RASTER_SIZE);
-        resolve(canvas.toDataURL('image/jpeg', 0.92));
+        ctx.fillRect(0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
+        ctx.drawImage(img, 0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
+
+        if (avatarCanvasCache.size >= MAX_CANVAS_CACHE) {
+          const oldestKey = avatarCanvasCache.keys().next().value;
+          if (oldestKey !== undefined) avatarCanvasCache.delete(oldestKey);
+        }
+        avatarCanvasCache.set(cacheKey, offscreen);
+        resolve(offscreen);
       } catch {
-        resolve(svgDataUri);
+        resolve(null);
       }
     };
-    img.onerror = () => resolve(svgDataUri);
+    img.onerror = () => resolve(null);
     img.src = svgDataUri;
+  }).finally(() => {
+    pendingRenders.delete(cacheKey);
   });
+
+  pendingRenders.set(cacheKey, task);
+  return task;
 }
 
 /**
- * Open Peeps avatar rasterized to an opaque JPEG portrait in the browser so
- * mobile Force Dark engines treat it as a photo and keep facial ink intact.
+ * Open Peeps avatar drawn directly onto a 2D canvas element so mobile
+ * Force Dark image classifiers (which invert <img>/<svg>) preserve true colors.
  */
 export default function PlayerAvatar({ config, seed = '', className = 'w-12 h-12', alt = 'Karakter Pemain' }) {
   const reactId = useId();
+  const canvasRef = useRef(null);
 
   const { cacheKey, svgDataUri, bgHex } = useMemo(() => {
     const resolved = config ? normalizeAvatarConfig(config) : generateSeedAvatarConfig(seed || reactId);
@@ -53,28 +74,27 @@ export default function PlayerAvatar({ config, seed = '', className = 'w-12 h-12
     };
   }, [config, seed, reactId]);
 
-  const [rasterSrc, setRasterSrc] = useState(() => avatarRasterCache.get(cacheKey) || '');
-
   useEffect(() => {
-    const cached = avatarRasterCache.get(cacheKey);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { alpha: false });
+    if (!ctx) return;
+
+    const cached = avatarCanvasCache.get(cacheKey);
     if (cached) {
-      setRasterSrc(cached);
+      ctx.drawImage(cached, 0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
       return;
     }
 
-    let cancelled = false;
-    setRasterSrc('');
+    ctx.fillStyle = bgHex || '#D1FAE5';
+    ctx.fillRect(0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
 
-    rasterizeSvgToOpaqueJpeg(svgDataUri, bgHex).then((jpegUrl) => {
-      if (cancelled) return;
-      if (jpegUrl.startsWith('data:image/jpeg')) {
-        if (avatarRasterCache.size >= MAX_RASTER_CACHE) {
-          const oldestKey = avatarRasterCache.keys().next().value;
-          if (oldestKey !== undefined) avatarRasterCache.delete(oldestKey);
-        }
-        avatarRasterCache.set(cacheKey, jpegUrl);
-      }
-      setRasterSrc(jpegUrl);
+    let cancelled = false;
+    getOrRenderAvatarCanvas(cacheKey, svgDataUri, bgHex).then((offscreen) => {
+      if (cancelled || !offscreen || !canvasRef.current) return;
+      const targetCtx = canvasRef.current.getContext('2d', { alpha: false });
+      if (!targetCtx) return;
+      targetCtx.drawImage(offscreen, 0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
     });
 
     return () => {
@@ -86,13 +106,13 @@ export default function PlayerAvatar({ config, seed = '', className = 'w-12 h-12
     <div
       className={`avatar-photo-lock inline-flex items-center justify-center rounded-full overflow-hidden shrink-0 ${className}`}
     >
-      <img
-        src={rasterSrc || svgDataUri}
-        alt={alt}
-        width="380"
-        height="380"
-        draggable={false}
-        className="w-full h-full block object-cover select-none"
+      <canvas
+        ref={canvasRef}
+        width={AVATAR_CANVAS_SIZE}
+        height={AVATAR_CANVAS_SIZE}
+        role="img"
+        aria-label={alt}
+        className="w-full h-full block select-none"
       />
     </div>
   );

@@ -117,7 +117,8 @@
   }
 
   .avatar-photo-lock,
-  .avatar-photo-lock img {
+  .avatar-photo-lock img,
+  .avatar-photo-lock canvas {
     color-scheme: only light;
     forced-color-adjust: none;
     isolation: isolate;
