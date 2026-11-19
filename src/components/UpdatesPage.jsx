@@ -171,6 +171,10 @@ export default function UpdatesPage({ onBack }) {
           ) : (
             <a
               href="/"
+              onClick={() => {
+                const nim = localStorage.getItem('user_nim');
+                if (nim) localStorage.removeItem(`active_view_${nim}`);
+              }}
               className="inline-flex items-center min-h-[44px] px-4 py-2.5 rounded-xl bg-white border border-[#DED6C6] text-green-900 hover:bg-[#F3EDE0] font-bold text-sm transition-colors"
             >
               &larr; Kembali ke Beranda Perayaan

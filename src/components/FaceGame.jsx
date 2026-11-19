@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import confetti from 'canvas-confetti';
 
-export default function FaceGame() {
+export default function FaceGame({ onBack }) {
   const [list, setList] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
@@ -88,6 +88,12 @@ export default function FaceGame() {
           }));
           
           setList(selected20);
+          setCurrentIndex(0);
+          setScore(0);
+          setIsRevealed(false);
+          setSelectedAnswer(null);
+          setTimeLeft(60);
+          setLastPoints(0);
           updateLocalSession(selected20, 0, 0, { timeLeft: 60, isRevealed: false, selectedAnswer: null, lastPoints: 0 });
         }
         setTimerActive(true);
@@ -224,6 +230,22 @@ export default function FaceGame() {
     );
   }
   
+  const handleGoHome = () => {
+    const userNim = localStorage.getItem('user_nim');
+    if (userNim) localStorage.removeItem(`active_view_${userNim}`);
+    if (onBack) {
+      onBack();
+    } else {
+      window.location.href = '/';
+    }
+  };
+
+  const handleRestartQuiz = () => {
+    const userNim = localStorage.getItem('user_nim');
+    if (userNim) localStorage.removeItem(`session_face_${userNim}`);
+    initGame();
+  };
+
   if (currentIndex >= 20) {
     return (
       <div className="text-center p-8 md:p-10 bg-white rounded-2xl border border-[#DED6C6] max-w-md mx-auto">
@@ -235,19 +257,19 @@ export default function FaceGame() {
         <div className="flex flex-col gap-3">
           <button 
             type="button"
-            onClick={() => {
-              const userNim = localStorage.getItem('user_nim');
-              localStorage.removeItem(`session_face_${userNim}`); 
-              window.location.reload(); 
-            }} 
+            onClick={handleRestartQuiz} 
             className="bg-green-900 hover:bg-green-800 text-white px-8 py-3.5 min-h-[48px] rounded-xl font-bold transition-colors"
           >
             Main Ulang Kuis Foto
           </button>
 
-          <a href="/" className="inline-flex items-center justify-center bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#DED6C6] px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-stone-800 transition-colors">
+          <button
+            type="button"
+            onClick={handleGoHome}
+            className="inline-flex items-center justify-center bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#DED6C6] px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-stone-800 transition-colors"
+          >
             Kembali ke Beranda
-          </a>
+          </button>
         </div>
       </div>
     );
@@ -264,11 +286,7 @@ export default function FaceGame() {
         </p>
         <button 
           type="button"
-          onClick={() => {
-            const userNim = localStorage.getItem('user_nim');
-            localStorage.removeItem(`session_face_${userNim}`);
-            window.location.reload();
-          }} 
+          onClick={handleRestartQuiz} 
           className="bg-green-900 hover:bg-green-800 text-white px-6 py-3.5 min-h-[48px] rounded-xl font-bold transition-colors w-full"
         >
           Muat Ulang Sesi

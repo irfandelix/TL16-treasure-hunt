@@ -1,5 +1,30 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-026',
+    date: '19 November 2026',
+    version: 'v2.7.2',
+    category: 'Perbaikan Bug',
+    title: 'Perbaikan Tombol Kembali ke Beranda & Audit Navigasi Seluruh Permainan',
+    commit: 'latest',
+    summary: 'Memperbaiki tombol Kembali ke Beranda yang sebelumnya kembali masuk ke halaman kuis terakhir karena active_view di localStorage tidak dibersihkan, serta melengkapi tombol keluar pada layar selesai.',
+    changes: [
+      'Menyalurkan prop onBack dari GameDashboard.jsx ke seluruh sub-tampilan permainan agar tombol kembali langsung menutup permainan dan mengosongkan active_view tanpa muat ulang penuh.',
+      'Memperbaiki tombol Kembali ke Beranda dan Main Ulang pada FaceGame.jsx serta TreasureHunt.jsx agar kembali ke beranda dengan bersih dan mengulang kuis tanpa reload halaman.',
+      'Memperbaiki tautan kembali pada UpdatesPage.jsx dan Magical Athlete TL16 agar menghapus active_view tersimpan, serta menambahkan tombol Kembali ke Beranda bagi semua peserta di layar selesai Dosen Killer.'
+    ],
+    docs: {
+      files: [
+        'src/components/GameDashboard.jsx',
+        'src/components/FaceGame.jsx',
+        'src/components/TreasureHunt.jsx',
+        'src/components/DosenKillerGame.jsx',
+        'src/components/MagicalAthleteGame.jsx',
+        'src/components/UpdatesPage.jsx'
+      ],
+      notes: 'Seluruh tombol tanpa handler dan tautan <a href="/"> pada komponen telah diaudit agar tidak terjebak pada active_view sebelumnya.'
+    }
+  },
+  {
     id: 'upd-025',
     date: '19 November 2026',
     version: 'v2.7.1',

@@ -36,7 +36,7 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
   return R * c; 
 };
 
-export default function TreasureHunt() {
+export default function TreasureHunt({ onBack }) {
   const [myMissions, setMyMissions] = useState([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
@@ -104,6 +104,9 @@ export default function TreasureHunt() {
     setMyMissions(selected20);
     setCurrentIdx(0);
     setTotalScore(0);
+    setUserGuess(null);
+    setIsRevealed(false);
+    setResult({ distance: 0, points: 0 });
     saveHuntSession(selected20, 0, 0);
     setLoading(false);
   };
@@ -203,6 +206,16 @@ export default function TreasureHunt() {
     );
   }
   
+  const handleGoHome = () => {
+    const userNim = localStorage.getItem('user_nim');
+    if (userNim) localStorage.removeItem(`active_view_${userNim}`);
+    if (onBack) {
+      onBack();
+    } else {
+      window.location.href = '/';
+    }
+  };
+
   if (currentIdx >= 20) {
     return (
       <div className="max-w-xl mx-auto p-8 md:p-10 bg-white rounded-2xl border border-[#DED6C6] text-center">
@@ -227,9 +240,13 @@ export default function TreasureHunt() {
           >
             Main Ulang Napak Tilas
           </button>
-          <a href="/" className="inline-flex items-center justify-center bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#DED6C6] px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-stone-800 transition-colors">
+          <button
+            type="button"
+            onClick={handleGoHome}
+            className="inline-flex items-center justify-center bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#DED6C6] px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-stone-800 transition-colors"
+          >
             Kembali ke Beranda
-          </a>
+          </button>
         </div>
       </div>
     );

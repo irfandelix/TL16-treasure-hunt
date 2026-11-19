@@ -526,7 +526,7 @@ export default function GameDashboard() {
         </nav>
         <main>
           <Suspense fallback={<LoadingScreen />}>
-            <Component {...props} />
+            <Component onBack={() => setActiveView('dashboard')} {...props} />
           </Suspense>
         </main>
       </div>

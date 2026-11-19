@@ -33,7 +33,7 @@ const TRACK_LOOP_COORDS = {
   24: { col: 1, row: 1, dir: 'Finish' },
 };
 
-export default function MagicalAthleteGame() {
+export default function MagicalAthleteGame({ onBack }) {
   const [currentUser, setCurrentUser] = useState({
     nim: '',
     nama: '',
@@ -1077,7 +1077,26 @@ export default function MagicalAthleteGame() {
 
           <div className="mt-8 pt-4 border-t border-[#DED6C6] flex items-center justify-center gap-2 text-xs text-stone-600">
             <span>Kembali ke</span>
-            <a href="/" className="text-amber-700 font-bold hover:underline">Beranda Utama</a>
+            {onBack ? (
+              <button
+                type="button"
+                onClick={onBack}
+                className="min-h-[44px] px-2 text-amber-700 font-bold hover:underline"
+              >
+                Beranda Utama
+              </button>
+            ) : (
+              <a
+                href="/"
+                onClick={() => {
+                  const nim = localStorage.getItem('user_nim');
+                  if (nim) localStorage.removeItem(`active_view_${nim}`);
+                }}
+                className="inline-flex items-center min-h-[44px] px-2 text-amber-700 font-bold hover:underline"
+              >
+                Beranda Utama
+              </a>
+            )}
           </div>
         </div>
       </div>

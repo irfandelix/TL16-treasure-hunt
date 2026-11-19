@@ -8,7 +8,7 @@ import LayarDiskusi from './LayarDiskusi';
 import LayarVoting from './LayarVoting';
 import LayarEksekusi from './LayarEksekusi';
 
-export default function DosenKillerGame() {
+export default function DosenKillerGame({ onBack }) {
   const [roomCode, setRoomCode] = useState(''); 
   const [inputRoomCode, setInputRoomCode] = useState('');
   const [isInRoom, setIsInRoom] = useState(false);
@@ -722,15 +722,29 @@ export default function DosenKillerGame() {
         </h2>
         <p className="text-stone-800 text-sm max-w-md leading-relaxed">{pesanLayar}</p>
 
-        {currentUser.isAdmin && (
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          {(currentUser.isAdmin || isPhaseCoordinator) && (
+            <button
+              type="button"
+              onClick={async () => await supabase.from('dosen_killer_state').update({ fase_game: 'LOBBY' }).eq('room_code', roomCode)}
+              className="min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 px-8 py-3 rounded-xl transition-colors font-bold text-sm"
+            >
+              Kembali ke Ruang Tunggu
+            </button>
+          )}
           <button
             type="button"
-            onClick={async () => await supabase.from('dosen_killer_state').update({ fase_game: 'LOBBY' }).eq('room_code', roomCode)}
-            className="mt-10 min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 px-8 py-3 rounded-xl transition-colors font-bold text-sm"
+            onClick={() => {
+              setIsInRoom(false);
+              setRoomCode('');
+              setFaseGame('LOBBY');
+              if (onBack) onBack();
+            }}
+            className="min-h-[48px] bg-white hover:bg-[#F3EDE0] border border-[#DED6C6] text-stone-800 px-8 py-3 rounded-xl transition-colors font-bold text-sm"
           >
-            Kembali ke Ruang Tunggu
+            Kembali ke Beranda
           </button>
-        )}
+        </div>
       </div>
     );
   }
