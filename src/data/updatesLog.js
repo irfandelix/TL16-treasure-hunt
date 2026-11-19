@@ -1,5 +1,71 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-025',
+    date: '19 November 2026',
+    version: 'v2.7.1',
+    category: 'Perbaikan Bug',
+    title: 'Proteksi Warna Avatar pada Mode Gelap HP (Canvas2D Path2D)',
+    commit: '2a07fd4',
+    summary: 'Memperbaiki warna avatar karakter yang berubah pudar atau terbalik saat dibuka di ponsel dengan fitur Force Dark aktif, sekaligus mengunci skema warna dokumen ke only light.',
+    changes: [
+      'Menambahkan meta color-scheme only light pada shell halaman dan aturan CSS color-scheme: only light di global.css agar browser standar mempertahankan tema kertas hangat.',
+      'Mengubah PlayerAvatar.jsx agar menggambar seluruh path SVG langsung secara sinkron ke CanvasRenderingContext2D memakai Path2D dan DOMMatrix (tanpa data:image/svg+xml atau SVGImage), sehingga mesin Force Dark HP tidak membalik warna rambut, mata, kerah, maupun latar avatar.',
+      'Mempertegas garis outline karakter ke #111318 di avatarHelper.js, menambahkan cache offscreen canvas 320x320, dan memberi ring pembatas tipis .avatar-photo-lock saat prefers-color-scheme: dark aktif.'
+    ],
+    docs: {
+      files: [
+        'src/components/PlayerAvatar.jsx',
+        'src/lib/avatarHelper.js',
+        'src/styles/global.css',
+        'src/layouts/Layout.astro',
+        'src/pages/index.astro',
+        'src/pages/updates.astro',
+        'src/pages/lock/magical-athlete.astro'
+      ],
+      notes: 'Pemisahan render langsung ke Canvas2D menghilangkan tahap decoding SVGImage yang sebelumnya membalik warna stroke dan latar biru muda sebelum disalin ke canvas.'
+    }
+  },
+  {
+    id: 'upd-024',
+    date: '19 November 2026',
+    version: 'v2.7.0',
+    category: 'Desain & UI',
+    title: 'Pembaruan Tampilan Papan Skor dengan Podium 3 Besar & Filter Kategori',
+    commit: 'e032cba',
+    summary: 'Merombak papan Klasemen Sedulur 16 agar memiliki panggung podium untuk tiga peringkat teratas, ringkasan posisi pengguna, tab urutan per permainan, dan batang rasio skor.',
+    changes: [
+      'Memisahkan peringkat #1, #2, dan #3 ke kartu podium khusus dengan penekanan aksen emas hangat dan mahkota SVG untuk posisi teratas serta tata letak responsif ponsel hingga desktop.',
+      'Menambahkan kartu ringkasan posisi pengguna aktif, penanda badge Kamu, dan tombol Lihat Barisku untuk melompat langsung ke baris peringkat sendiri.',
+      'Menambahkan tab urutan kategori (Total Skor, Peta, Foto, serta Monopoli dan Dosen Killer saat jadwalnya terbuka), pencarian nama/NIM saat klasemen sudah dibuka, sensor blok hitam saat nama masih rahasia, dan batang rasio poin di tiap baris #4 ke bawah.'
+    ],
+    docs: {
+      files: [
+        'src/components/ScoreBoard.jsx'
+      ],
+      notes: 'Pencarian hanya aktif ketika klasemen sudah dibuka agar peserta tidak dapat menebak nama tersembunyi sebelum jadwal pembukaan panitia.'
+    }
+  },
+  {
+    id: 'upd-023',
+    date: '19 November 2026',
+    version: 'v2.6.2',
+    category: 'Desain & UI',
+    title: 'Sensor Blok Hitam Detektif pada Catatan Pembaruan & File Terkait',
+    commit: '22b9b11',
+    summary: 'Menampilkan seluruh catatan pembaruan publik dengan sensor blok hitam bergaya berkas detektif untuk mode, mekanik, dan berkas yang masih dirahasiakan.',
+    changes: [
+      'Menampilkan entri v2.6.1 secara publik di halaman /updates dengan blok sensor hitam otomatis pada istilah mode dan mekanik yang belum memasuki tanggal rilis.',
+      'Menyensor nama berkas yang masih terkunci pada bagian File Terkait di UpdatesPage.jsx sebagai badge blok hitam penuh tanpa membocorkan jalur file.'
+    ],
+    docs: {
+      files: [
+        'src/components/UpdatesPage.jsx',
+        'src/data/updatesLog.js'
+      ],
+      notes: 'Aturan sensor membaca status jadwal pembukaan dari app_settings secara dinamis sehingga blok hitam otomatis terbuka saat mode dirilis.'
+    }
+  },
+  {
     id: 'upd-022',
     date: '19 November 2026',
     version: 'v2.6.1',
