@@ -2,74 +2,248 @@ import React, { useMemo, useId, useRef, useEffect } from 'react';
 import {
   renderOpeepsSvg,
   generateSeedAvatarConfig,
-  normalizeAvatarConfig
+  normalizeAvatarConfig,
+  shadeHex
 } from '../lib/avatarHelper';
 
 const AVATAR_CANVAS_SIZE = 320;
+const SVG_VIEWBOX_SIZE = 380;
 const MAX_CANVAS_CACHE = 120;
 const avatarCanvasCache = new Map();
-const pendingRenders = new Map();
 
-function getOrRenderAvatarCanvas(cacheKey, svgDataUri, fallbackBg) {
-  const existing = avatarCanvasCache.get(cacheKey);
-  if (existing) return Promise.resolve(existing);
+function parseSvgTransform(transformStr) {
+  const matrix = new DOMMatrix();
+  if (!transformStr) return matrix;
 
-  const inflight = pendingRenders.get(cacheKey);
-  if (inflight) return inflight;
+  const regex = /(translate|rotate|scale)\s*\(([^)]+)\)/g;
+  let match;
+  while ((match = regex.exec(transformStr)) !== null) {
+    const fn = match[1];
+    const nums = match[2]
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number)
+      .filter((n) => !Number.isNaN(n));
 
-  const task = new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const offscreen = document.createElement('canvas');
-        offscreen.width = AVATAR_CANVAS_SIZE;
-        offscreen.height = AVATAR_CANVAS_SIZE;
-        const ctx = offscreen.getContext('2d', { alpha: false });
-        if (!ctx) {
-          resolve(null);
-          return;
-        }
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.fillStyle = fallbackBg || '#D1FAE5';
-        ctx.fillRect(0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
-        ctx.drawImage(img, 0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
-
-        if (avatarCanvasCache.size >= MAX_CANVAS_CACHE) {
-          const oldestKey = avatarCanvasCache.keys().next().value;
-          if (oldestKey !== undefined) avatarCanvasCache.delete(oldestKey);
-        }
-        avatarCanvasCache.set(cacheKey, offscreen);
-        resolve(offscreen);
-      } catch {
-        resolve(null);
+    if (fn === 'translate' && nums.length >= 1) {
+      matrix.translateSelf(nums[0], nums[1] || 0);
+    } else if (fn === 'scale' && nums.length >= 1) {
+      matrix.scaleSelf(nums[0], nums.length >= 2 ? nums[1] : nums[0]);
+    } else if (fn === 'rotate' && nums.length >= 1) {
+      const [deg, cx = 0, cy = 0] = nums;
+      if (cx !== 0 || cy !== 0) {
+        matrix.translateSelf(cx, cy);
+        matrix.rotateSelf(deg);
+        matrix.translateSelf(-cx, -cy);
+      } else {
+        matrix.rotateSelf(deg);
       }
-    };
-    img.onerror = () => resolve(null);
-    img.src = svgDataUri;
-  }).finally(() => {
-    pendingRenders.delete(cacheKey);
-  });
+    }
+  }
+  return matrix;
+}
 
-  pendingRenders.set(cacheKey, task);
-  return task;
+function buildElementPath(el) {
+  const tag = el.tagName.toLowerCase();
+  if (tag === 'path') {
+    const d = el.getAttribute('d');
+    return d ? new Path2D(d) : null;
+  }
+  const p = new Path2D();
+  if (tag === 'circle') {
+    const cx = parseFloat(el.getAttribute('cx') || '0');
+    const cy = parseFloat(el.getAttribute('cy') || '0');
+    const r = parseFloat(el.getAttribute('r') || '0');
+    p.arc(cx, cy, r, 0, Math.PI * 2);
+    return p;
+  }
+  if (tag === 'ellipse') {
+    const cx = parseFloat(el.getAttribute('cx') || '0');
+    const cy = parseFloat(el.getAttribute('cy') || '0');
+    const rx = parseFloat(el.getAttribute('rx') || '0');
+    const ry = parseFloat(el.getAttribute('ry') || '0');
+    p.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    return p;
+  }
+  if (tag === 'rect') {
+    const x = parseFloat(el.getAttribute('x') || '0');
+    const y = parseFloat(el.getAttribute('y') || '0');
+    const w = parseFloat(el.getAttribute('width') || '0');
+    const h = parseFloat(el.getAttribute('height') || '0');
+    p.rect(x, y, w, h);
+    return p;
+  }
+  return null;
+}
+
+function extractUrlRefId(val) {
+  if (!val) return null;
+  const match = val.match(/url\(#([^)]+)\)/);
+  return match ? match[1] : null;
+}
+
+function applyClipFromDef(ctx, defEl) {
+  if (!defEl) return;
+  const combined = new Path2D();
+  let hasShape = false;
+  let clipRule = 'nonzero';
+
+  for (const child of Array.from(defEl.children)) {
+    const rawPath = buildElementPath(child);
+    if (!rawPath) continue;
+    const rule = child.getAttribute('clip-rule') || child.getAttribute('fill-rule');
+    if (rule === 'evenodd') clipRule = 'evenodd';
+    const childTransform = child.getAttribute('transform');
+    if (childTransform) {
+      combined.addPath(rawPath, parseSvgTransform(childTransform));
+    } else {
+      combined.addPath(rawPath);
+    }
+    hasShape = true;
+  }
+
+  if (hasShape) {
+    ctx.clip(combined, clipRule);
+  }
+}
+
+function drawSvgNode(ctx, el, defsMap, inheritedFill) {
+  const tag = el.tagName.toLowerCase();
+  if (tag === 'defs' || tag === 'mask' || tag === 'clippath') return;
+
+  const style = (el.getAttribute('style') || '').replace(/\s+/g, '').toLowerCase();
+  if (style.includes('display:none')) return;
+
+  ctx.save();
+
+  const transformAttr = el.getAttribute('transform');
+  if (transformAttr) {
+    const m = parseSvgTransform(transformAttr);
+    ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+  }
+
+  const opacityAttr = el.getAttribute('opacity');
+  if (opacityAttr !== null) {
+    const op = parseFloat(opacityAttr);
+    if (!Number.isNaN(op)) ctx.globalAlpha *= op;
+  }
+
+  if (style.includes('mix-blend-mode:multiply')) {
+    ctx.globalCompositeOperation = 'multiply';
+  }
+
+  const clipId = extractUrlRefId(el.getAttribute('clip-path'));
+  if (clipId) applyClipFromDef(ctx, defsMap.get(clipId));
+
+  const maskId = extractUrlRefId(el.getAttribute('mask'));
+  if (maskId) applyClipFromDef(ctx, defsMap.get(maskId));
+
+  const ownFill = el.getAttribute('fill');
+  const effectiveFill = ownFill !== null ? ownFill : inheritedFill;
+
+  if (tag === 'g' || tag === 'svg') {
+    for (const child of Array.from(el.children)) {
+      drawSvgNode(ctx, child, defsMap, effectiveFill);
+    }
+  } else {
+    const path = buildElementPath(el);
+    if (path) {
+      if (effectiveFill && effectiveFill !== 'none' && !effectiveFill.startsWith('url(')) {
+        const fillRule = el.getAttribute('fill-rule') === 'evenodd' ? 'evenodd' : 'nonzero';
+        ctx.fillStyle = effectiveFill;
+        ctx.fill(path, fillRule);
+      }
+
+      const stroke = el.getAttribute('stroke');
+      if (stroke && stroke !== 'none') {
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = parseFloat(el.getAttribute('stroke-width') || '1');
+        ctx.lineCap = el.getAttribute('stroke-linecap') || 'butt';
+        ctx.lineJoin = el.getAttribute('stroke-linejoin') || 'miter';
+        ctx.stroke(path);
+      }
+    }
+  }
+
+  ctx.restore();
+}
+
+function renderAvatarToOffscreenCanvas(cacheKey, svgMarkup, bgHex) {
+  const existing = avatarCanvasCache.get(cacheKey);
+  if (existing) return existing;
+
+  const offscreen = document.createElement('canvas');
+  offscreen.width = AVATAR_CANVAS_SIZE;
+  offscreen.height = AVATAR_CANVAS_SIZE;
+  const ctx = offscreen.getContext('2d', { alpha: false });
+  if (!ctx) return null;
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  const bg = bgHex || '#D1FAE5';
+  const grad = ctx.createRadialGradient(
+    AVATAR_CANVAS_SIZE * 0.42,
+    AVATAR_CANVAS_SIZE * 0.34,
+    AVATAR_CANVAS_SIZE * 0.06,
+    AVATAR_CANVAS_SIZE * 0.5,
+    AVATAR_CANVAS_SIZE * 0.5,
+    AVATAR_CANVAS_SIZE * 0.72
+  );
+  grad.addColorStop(0, shadeHex(bg, 6));
+  grad.addColorStop(1, shadeHex(bg, -18));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
+
+  try {
+    const doc = new DOMParser().parseFromString(svgMarkup, 'image/svg+xml');
+    const svgEl = doc.documentElement;
+    if (svgEl && svgEl.tagName.toLowerCase() === 'svg') {
+      const defsMap = new Map();
+      for (const defNode of Array.from(svgEl.querySelectorAll('mask[id], clipPath[id]'))) {
+        const id = defNode.getAttribute('id');
+        if (id) defsMap.set(id, defNode);
+      }
+
+      ctx.save();
+      const scale = AVATAR_CANVAS_SIZE / SVG_VIEWBOX_SIZE;
+      ctx.scale(scale, scale);
+
+      // Draw SVG children directly via Canvas2D/Path2D so mobile Force Dark
+      // SVGImage renderers never invert hair, eye, or background colors.
+      for (const child of Array.from(svgEl.children)) {
+        if (child.tagName.toLowerCase() === 'circle') continue;
+        drawSvgNode(ctx, child, defsMap, svgEl.getAttribute('fill') || 'none');
+      }
+      ctx.restore();
+    }
+  } catch (err) {
+    console.error('Gagal menggambar avatar pada canvas:', err);
+  }
+
+  if (avatarCanvasCache.size >= MAX_CANVAS_CACHE) {
+    const oldestKey = avatarCanvasCache.keys().next().value;
+    if (oldestKey !== undefined) avatarCanvasCache.delete(oldestKey);
+  }
+  avatarCanvasCache.set(cacheKey, offscreen);
+  return offscreen;
 }
 
 /**
- * Open Peeps avatar drawn directly onto a 2D canvas element so mobile
- * Force Dark image classifiers (which invert <img>/<svg>) preserve true colors.
+ * Open Peeps avatar painted synchronously via Canvas2D + Path2D (bypassing
+ * SVGImage/<img>) so mobile Force Dark engines cannot alter facial or hair ink.
  */
 export default function PlayerAvatar({ config, seed = '', className = 'w-12 h-12', alt = 'Karakter Pemain' }) {
   const reactId = useId();
   const canvasRef = useRef(null);
 
-  const { cacheKey, svgDataUri, bgHex } = useMemo(() => {
+  const { cacheKey, svgMarkup, bgHex } = useMemo(() => {
     const resolved = config ? normalizeAvatarConfig(config) : generateSeedAvatarConfig(seed || reactId);
     const key = JSON.stringify(resolved);
-    const svgMarkup = renderOpeepsSvg(resolved, `${reactId}_${seed || 'av'}`).trim();
+    const markup = renderOpeepsSvg(resolved, `${reactId}_${seed || 'av'}`).trim();
     return {
       cacheKey: key,
-      svgDataUri: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`,
+      svgMarkup: markup,
       bgHex: resolved.circleBg
     };
   }, [config, seed, reactId]);
@@ -80,27 +254,11 @@ export default function PlayerAvatar({ config, seed = '', className = 'w-12 h-12
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    const cached = avatarCanvasCache.get(cacheKey);
-    if (cached) {
-      ctx.drawImage(cached, 0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
-      return;
+    const offscreen = renderAvatarToOffscreenCanvas(cacheKey, svgMarkup, bgHex);
+    if (offscreen) {
+      ctx.drawImage(offscreen, 0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
     }
-
-    ctx.fillStyle = bgHex || '#D1FAE5';
-    ctx.fillRect(0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
-
-    let cancelled = false;
-    getOrRenderAvatarCanvas(cacheKey, svgDataUri, bgHex).then((offscreen) => {
-      if (cancelled || !offscreen || !canvasRef.current) return;
-      const targetCtx = canvasRef.current.getContext('2d', { alpha: false });
-      if (!targetCtx) return;
-      targetCtx.drawImage(offscreen, 0, 0, AVATAR_CANVAS_SIZE, AVATAR_CANVAS_SIZE);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [cacheKey, svgDataUri, bgHex]);
+  }, [cacheKey, svgMarkup, bgHex]);
 
   return (
     <div
