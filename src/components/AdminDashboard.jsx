@@ -1,5 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import {
+  extractEarlyAccessConfig,
+  filterVisiblePatchNotes,
+  mergeEarlyAccessIntoPatchNotes,
+  getEarlyAccessWindowStatus
+} from '../lib/earlyAccess';
+
+function toLocalDateTimeInput(isoStr) {
+  if (!isoStr) return '';
+  const dateObj = new Date(isoStr);
+  if (Number.isNaN(dateObj.getTime())) return '';
+  return new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
 
 export default function AdminDashboard({ onBack }) {
   const [unlockDate, setUnlockDate] = useState('');
@@ -21,17 +34,25 @@ export default function AdminDashboard({ onBack }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [mysteryCoords, setMysteryCoords] = useState([]);
 
+  const [alumniRoster, setAlumniRoster] = useState([]);
+  const [earlyAccessNims, setEarlyAccessNims] = useState([]);
+  const [earlyAccessStart, setEarlyAccessStart] = useState('');
+  const [earlyAccessEnd, setEarlyAccessEnd] = useState('');
+  const [earlyAccessSearch, setEarlyAccessSearch] = useState('');
+
   const fetchSettings = async () => {
     setIsLoading(true);
     setErrorMsg('');
     try {
-      const { data, error } = await supabase
-        .from('app_settings')
-        .select('*')
-        .eq('id', 1)
-        .single();
+      const [{ data, error }, { data: rosterData, error: rosterErr }] = await Promise.all([
+        supabase.from('app_settings').select('*').eq('id', 1).single(),
+        supabase.from('alumni').select('nim, nama').order('nama', { ascending: true })
+      ]);
 
       if (error) throw error;
+      if (!rosterErr && Array.isArray(rosterData)) {
+        setAlumniRoster(rosterData);
+      }
 
       const { data: alumniCoords, error: coordsErr } = await supabase
         .from('alumni')
@@ -44,30 +65,17 @@ export default function AdminDashboard({ onBack }) {
 
       if (data) {
         setShowScoreboard(data.show_scoreboard);
-        
-        if (data.patch_notes) {
-          setPatchNotes(data.patch_notes);
-        }
+        setPatchNotes(filterVisiblePatchNotes(data.patch_notes));
 
-        if (data.wheel_unlock_date) {
-          const dateObj = new Date(data.wheel_unlock_date);
-          setUnlockDate(new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
-        }
+        const eaCfg = extractEarlyAccessConfig(data);
+        setEarlyAccessNims(eaCfg.nims);
+        setEarlyAccessStart(toLocalDateTimeInput(eaCfg.start_at));
+        setEarlyAccessEnd(toLocalDateTimeInput(eaCfg.end_at));
 
-        if (data.monopoli_unlock_date) {
-          const mDateObj = new Date(data.monopoli_unlock_date);
-          setMonopoliDate(new Date(mDateObj.getTime() - mDateObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
-        }
-
-        if (data.werewolf_unlock_date) {
-          const wDateObj = new Date(data.werewolf_unlock_date);
-          setWerewolfDate(new Date(wDateObj.getTime() - wDateObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
-        }
-
-        if (data.uno_unlock_date) {
-          const uDateObj = new Date(data.uno_unlock_date);
-          setUnoDate(new Date(uDateObj.getTime() - uDateObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
-        }
+        setUnlockDate(toLocalDateTimeInput(data.wheel_unlock_date));
+        setMonopoliDate(toLocalDateTimeInput(data.monopoli_unlock_date));
+        setWerewolfDate(toLocalDateTimeInput(data.werewolf_unlock_date));
+        setUnoDate(toLocalDateTimeInput(data.uno_unlock_date));
       }
     } catch (error) {
       console.error("Gagal menarik data setting:", error.message);
@@ -81,7 +89,18 @@ export default function AdminDashboard({ onBack }) {
     fetchSettings();
   }, []);
 
+  const buildCurrentEarlyAccessPayload = () => ({
+    nims: earlyAccessNims,
+    start_at: earlyAccessStart ? new Date(earlyAccessStart).toISOString() : null,
+    end_at: earlyAccessEnd ? new Date(earlyAccessEnd).toISOString() : null
+  });
+
   const handleSave = async () => {
+    if (earlyAccessStart && earlyAccessEnd && new Date(earlyAccessEnd).getTime() < new Date(earlyAccessStart).getTime()) {
+      setSaveStatus('Tanggal berakhir Early Access tidak boleh lebih awal dari tanggal mulai.');
+      return;
+    }
+
     setIsSaving(true);
     setSaveStatus('Menyimpan perubahan...');
 
@@ -90,6 +109,7 @@ export default function AdminDashboard({ onBack }) {
       const dbMonopoliDate = monopoliDate ? new Date(monopoliDate).toISOString() : null;
       const dbWerewolfDate = werewolfDate ? new Date(werewolfDate).toISOString() : null;
       const dbUnoDate = unoDate ? new Date(unoDate).toISOString() : null;
+      const mergedPatchNotes = mergeEarlyAccessIntoPatchNotes(patchNotes, buildCurrentEarlyAccessPayload());
 
       const { error } = await supabase
         .from('app_settings')
@@ -98,7 +118,8 @@ export default function AdminDashboard({ onBack }) {
           wheel_unlock_date: dbDate,
           monopoli_unlock_date: dbMonopoliDate,
           werewolf_unlock_date: dbWerewolfDate,
-          uno_unlock_date: dbUnoDate
+          uno_unlock_date: dbUnoDate,
+          patch_notes: mergedPatchNotes
         })
         .eq('id', 1);
 
@@ -125,7 +146,8 @@ export default function AdminDashboard({ onBack }) {
 
     try {
       setNoteError('');
-      const { error } = await supabase.from('app_settings').update({ patch_notes: updatedNotes }).eq('id', 1);
+      const merged = mergeEarlyAccessIntoPatchNotes(updatedNotes, buildCurrentEarlyAccessPayload());
+      const { error } = await supabase.from('app_settings').update({ patch_notes: merged }).eq('id', 1);
       if (error) throw error;
       setPatchNotes(updatedNotes);
       setNewNoteText('');
@@ -140,7 +162,8 @@ export default function AdminDashboard({ onBack }) {
     const updatedNotes = patchNotes.filter(n => n.id !== idToRemove);
     try {
       setNoteError('');
-      const { error } = await supabase.from('app_settings').update({ patch_notes: updatedNotes }).eq('id', 1);
+      const merged = mergeEarlyAccessIntoPatchNotes(updatedNotes, buildCurrentEarlyAccessPayload());
+      const { error } = await supabase.from('app_settings').update({ patch_notes: merged }).eq('id', 1);
       if (error) throw error;
       setPatchNotes(updatedNotes);
       setConfirmDeleteId(null);
@@ -148,6 +171,22 @@ export default function AdminDashboard({ onBack }) {
       setNoteError("Gagal menghapus catatan. Coba lagi.");
     }
   };
+
+  const toggleEarlyAccessNim = (nim) => {
+    setEarlyAccessNims((prev) =>
+      prev.includes(nim) ? prev.filter((item) => item !== nim) : [...prev, nim]
+    );
+  };
+
+  const filteredRoster = useMemo(() => {
+    const q = earlyAccessSearch.trim().toLowerCase();
+    if (!q) return alumniRoster;
+    return alumniRoster.filter(
+      (p) => (p.nama || '').toLowerCase().includes(q) || (p.nim || '').toLowerCase().includes(q)
+    );
+  }, [alumniRoster, earlyAccessSearch]);
+
+  const earlyAccessStatus = getEarlyAccessWindowStatus(buildCurrentEarlyAccessPayload());
 
   const handleClearDate = () => setUnlockDate('');
   const handleClearMonopoliDate = () => setMonopoliDate('');
@@ -516,6 +555,170 @@ export default function AdminDashboard({ onBack }) {
                   />
                   <div className="w-14 h-7 bg-[#E7DFCE] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[10px] after:left-[2px] after:bg-white after:border-[#C7BDA8] after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
                 </label>
+              </div>
+            </div>
+
+            <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6] md:col-span-2 space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold text-green-900">
+                    Pengaturan Uji Coba (Early Access)
+                  </h2>
+                  <p className="text-xs text-stone-600 mt-1 max-w-2xl leading-relaxed">
+                    Pilih alumni yang diizinkan menguji semua permainan sebelum jadwal rilis. Selama periode uji coba aktif, sesi yang dimainkan Admin bersama penerima Early Access tidak masuk ke penilaian database klasemen.
+                  </p>
+                </div>
+                <span
+                  className={`px-3 py-1 rounded-lg text-xs font-mono font-bold border ${
+                    earlyAccessStatus === 'active'
+                      ? 'bg-green-100 text-green-900 border-green-300'
+                      : earlyAccessStatus === 'scheduled'
+                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                        : earlyAccessStatus === 'expired'
+                          ? 'bg-rose-50 text-rose-800 border-rose-200'
+                          : 'bg-white text-stone-600 border-[#DED6C6]'
+                  }`}
+                >
+                  {earlyAccessStatus === 'active'
+                    ? 'Status: Uji Coba Aktif'
+                    : earlyAccessStatus === 'scheduled'
+                      ? 'Status: Terjadwal'
+                      : earlyAccessStatus === 'expired'
+                        ? 'Status: Durasi Berakhir'
+                        : 'Status: Nonaktif'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="ea-start-date" className="block text-xs font-bold text-stone-800 mb-1.5">
+                    Mulai Uji Coba
+                  </label>
+                  <input
+                    id="ea-start-date"
+                    type="datetime-local"
+                    value={earlyAccessStart}
+                    onChange={(e) => setEarlyAccessStart(e.target.value)}
+                    className="w-full min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-green-800"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="ea-end-date" className="block text-xs font-bold text-stone-800 mb-1.5">
+                    Berakhir Uji Coba
+                  </label>
+                  <input
+                    id="ea-end-date"
+                    type="datetime-local"
+                    value={earlyAccessEnd}
+                    onChange={(e) => setEarlyAccessEnd(e.target.value)}
+                    className="w-full min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-green-800"
+                  />
+                </div>
+              </div>
+
+              {(earlyAccessStart || earlyAccessEnd) && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEarlyAccessStart('');
+                      setEarlyAccessEnd('');
+                    }}
+                    className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 border border-[#DED6C6] transition-colors"
+                  >
+                    Reset Durasi Uji Coba
+                  </button>
+                </div>
+              )}
+
+              <div className="bg-white p-4 rounded-xl border border-[#DED6C6] space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-stone-900">
+                    Penerima Early Access ({earlyAccessNims.length} alumni dipilih)
+                  </span>
+                  {earlyAccessNims.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setEarlyAccessNims([])}
+                      className="text-xs font-bold text-rose-700 hover:underline min-h-[44px] px-2"
+                    >
+                      Kosongkan Pilihan
+                    </button>
+                  )}
+                </div>
+
+                {earlyAccessNims.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {earlyAccessNims.map((nim) => {
+                      const found = alumniRoster.find((a) => a.nim === nim);
+                      return (
+                        <span
+                          key={nim}
+                          className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-lg bg-green-50 border border-green-300 text-xs font-semibold text-green-900"
+                        >
+                          <span>{found ? `${found.nama} (${nim})` : nim}</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleEarlyAccessNim(nim)}
+                            aria-label={`Hapus ${found?.nama || nim} dari Early Access`}
+                            className="min-w-[28px] min-h-[28px] rounded-md hover:bg-green-200 text-green-900 font-bold"
+                          >
+                            &times;
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="ea-search-alumni" className="sr-only">
+                    Cari alumni untuk Early Access
+                  </label>
+                  <input
+                    id="ea-search-alumni"
+                    type="text"
+                    value={earlyAccessSearch}
+                    onChange={(e) => setEarlyAccessSearch(e.target.value)}
+                    placeholder="Cari nama atau NIM alumni..."
+                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#FAF6EE] border border-[#C7BDA8] text-sm text-stone-900 placeholder:text-stone-500"
+                  />
+                </div>
+
+                <div className="max-h-52 overflow-y-auto divide-y divide-[#EDE6D8] border border-[#DED6C6] rounded-xl">
+                  {filteredRoster.length === 0 ? (
+                    <p className="p-4 text-center text-xs text-stone-600">
+                      Tidak ada alumni yang cocok dengan pencarian.
+                    </p>
+                  ) : (
+                    filteredRoster.map((person) => {
+                      const checked = earlyAccessNims.includes(person.nim);
+                      return (
+                        <label
+                          key={person.nim}
+                          className={`flex items-center justify-between gap-3 px-3.5 py-2.5 min-h-[44px] cursor-pointer transition-colors ${
+                            checked ? 'bg-green-50/70' : 'hover:bg-[#FAF6EE]'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <span className="block text-xs sm:text-sm font-bold text-stone-900 truncate">
+                              {person.nama}
+                            </span>
+                            <span className="block text-[11px] font-mono text-stone-600">
+                              NIM {person.nim}
+                            </span>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleEarlyAccessNim(person.nim)}
+                            className="w-5 h-5 accent-[#14532D] shrink-0 cursor-pointer"
+                          />
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </div>
 

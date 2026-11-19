@@ -9,6 +9,7 @@ import LayarVoting from './LayarVoting';
 import LayarEksekusi from './LayarEksekusi';
 import StoryShareButton from './StoryShareButton';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
+import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
 
 export default function DosenKillerGame({ onBack }) {
   const [roomCode, setRoomCode] = useState(''); 
@@ -250,13 +251,18 @@ export default function DosenKillerGame({ onBack }) {
         let durasiNext = 0;
         let pesanBaru = '';
 
-        const bagikanPoin = async (daftarPemenang) => {
+        const bagikanPoin = async (daftarPemenang, allRoomPlayers) => {
+          const roomNims = (allRoomPlayers || players || []).map((p) => p.nim);
+          const skipDb = await checkShouldSkipRoomScoring('werewolf', roomNims);
+          if (skipDb) return true;
+
           await Promise.all(daftarPemenang.map(async (p) => {
             const { data: userData } = await supabase.from('alumni').select('skor_werewolf').eq('nim', p.nim).single();
             if (userData) {
               await supabase.from('alumni').update({ skor_werewolf: (userData.skor_werewolf || 0) + 3000 }).eq('nim', p.nim);
             }
           }));
+          return false;
         };
 
         const checkOutcome = async (freshList) => {
@@ -266,13 +272,17 @@ export default function DosenKillerGame({ onBack }) {
 
           if (dosenLive === 0) {
             const wargaMenang = (freshList || []).filter((p) => p.peran && p.peran !== 'DOSEN_KILLER' && p.peran !== 'PENONTON');
-            await bagikanPoin(wargaMenang);
-            return 'MAHASISWA MENANG! Semua Dosen Killer berhasil ditemukan. Tim Mahasiswa mendapatkan 3000 Poin!';
+            const isTrial = await bagikanPoin(wargaMenang, freshList);
+            return isTrial
+              ? 'MAHASISWA MENANG! Semua Dosen Killer berhasil ditemukan. (Mode Uji Coba: skor tidak masuk database klasemen.)'
+              : 'MAHASISWA MENANG! Semua Dosen Killer berhasil ditemukan. Tim Mahasiswa mendapatkan 3000 Poin!';
           }
           if (dosenLive >= wargaLive) {
             const dosenMenang = (freshList || []).filter((p) => p.peran === 'DOSEN_KILLER');
-            await bagikanPoin(dosenMenang);
-            return 'DOSEN KILLER MENANG! Kelas dikuasai Dosen Killer dan mendapatkan 3000 Poin!';
+            const isTrial = await bagikanPoin(dosenMenang, freshList);
+            return isTrial
+              ? 'DOSEN KILLER MENANG! Kelas dikuasai Dosen Killer. (Mode Uji Coba: skor tidak masuk database klasemen.)'
+              : 'DOSEN KILLER MENANG! Kelas dikuasai Dosen Killer dan mendapatkan 3000 Poin!';
           }
           return null;
         };

@@ -15,6 +15,7 @@ import {
   hasSavedPlayerAvatar
 } from '../lib/avatarHelper';
 import { isAdminSession, setAdminSessionVerified } from '../lib/adminAuth';
+import { extractEarlyAccessConfig, hasActiveEarlyAccess } from '../lib/earlyAccess';
 
 const TreasureHunt = lazy(() => import('./TreasureHunt'));
 const FaceGame = lazy(() => import('./FaceGame'));
@@ -86,6 +87,20 @@ const IconFlag = () => (
   </svg>
 );
 
+const ALLOWED_VIEWS = [
+  'dashboard',
+  'map',
+  'face',
+  'kapsul',
+  'wheel',
+  'monopoli',
+  'dosenkiller',
+  'unobrutal',
+  'athlete',
+  'updates',
+  'admin'
+];
+
 export default function GameDashboard() {
   const [user, setUser] = useState(null);
   const [isChecking, setIsChecking] = useState(true);
@@ -108,6 +123,8 @@ export default function GameDashboard() {
   const [werewolfApproaching, setWerewolfApproaching] = useState(false);
   const [unoApproaching, setUnoApproaching] = useState(false);
   const [gameDates, setGameDates] = useState(null);
+  const [earlyAccessConfig, setEarlyAccessConfig] = useState(null);
+  const [isEarlyAccessActive, setIsEarlyAccessActive] = useState(false);
 
   const [mysteryLocked, setMysteryLocked] = useState(false);
   const [showMysteryConfirm, setShowMysteryConfirm] = useState(false);
@@ -136,11 +153,17 @@ export default function GameDashboard() {
         setAvatarConfig(getLocalAvatarConfig(savedNim) || generateSeedAvatarConfig(savedNim));
 
         const savedView = localStorage.getItem(`active_view_${savedNim}`);
-        const allowedViews = ['dashboard', 'map', 'face', 'kapsul', 'wheel', 'monopoli', 'dosenkiller', 'unobrutal', 'athlete', 'updates', 'admin'];
         let resolvedView = 'dashboard';
-        if (savedView && allowedViews.includes(savedView) && ((savedView !== 'admin' && savedView !== 'athlete') || isAdmin)) {
+        if (savedView && ALLOWED_VIEWS.includes(savedView) && ((savedView !== 'admin' && savedView !== 'athlete') || isAdmin)) {
           resolvedView = savedView;
           setActiveView(savedView);
+        }
+
+        // Anchor dashboard as base history entry so pressing hardware/browser Back
+        // from any restored sub-view returns to dashboard instead of browser home.
+        window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '');
+        if (resolvedView !== 'dashboard') {
+          window.history.pushState({ sedulurView: resolvedView }, '');
         }
 
         if (resolvedView === 'dashboard') {
@@ -297,6 +320,73 @@ export default function GameDashboard() {
     }
   }, [activeView, user?.nim]);
 
+  useEffect(() => {
+    if (!user) return;
+    const handlePopState = (event) => {
+      const next = event.state?.sedulurView;
+      if (next === 'avatar') {
+        setIsEditingAvatar(true);
+        setShowAvatarDesigner(true);
+        return;
+      }
+
+      setShowAvatarDesigner(false);
+      setIsEditingAvatar(false);
+
+      if (
+        next &&
+        ALLOWED_VIEWS.includes(next) &&
+        (next !== 'admin' || user.is_admin) &&
+        (next !== 'athlete' || user.is_admin || isEarlyAccessActive)
+      ) {
+        setActiveView(next);
+      } else {
+        setActiveView('dashboard');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [user, isEarlyAccessActive]);
+
+  const navigateToView = (nextView) => {
+    if (nextView === 'dashboard') {
+      if (window.history.state?.sedulurView && !window.history.state?.sedulurBase) {
+        window.history.back();
+        return;
+      }
+      setShowAvatarDesigner(false);
+      setIsEditingAvatar(false);
+      setActiveView('dashboard');
+      window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '');
+      return;
+    }
+
+    if (window.history.state?.sedulurView !== nextView) {
+      window.history.pushState({ sedulurView: nextView }, '');
+    }
+    setShowAvatarDesigner(false);
+    setIsEditingAvatar(false);
+    setActiveView(nextView);
+  };
+
+  const openAvatarEditor = () => {
+    if (window.history.state?.sedulurView !== 'avatar') {
+      window.history.pushState({ sedulurView: 'avatar' }, '');
+    }
+    setIsEditingAvatar(true);
+    setShowAvatarDesigner(true);
+  };
+
+  const closeAvatarEditor = () => {
+    if (window.history.state?.sedulurView === 'avatar') {
+      window.history.back();
+      return;
+    }
+    setShowAvatarDesigner(false);
+    setIsEditingAvatar(false);
+  };
+
   const handleLoginSuccess = (loggedInUser) => {
     const localOrSeed =
       loggedInUser.avatar_config ||
@@ -306,6 +396,7 @@ export default function GameDashboard() {
     setAvatarConfig(localOrSeed);
     setUser(loggedInUser);
     setActiveView('dashboard');
+    window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '');
     setIsEditingAvatar(false);
     setShowAvatarDesigner(!alreadySaved);
   };
@@ -314,8 +405,7 @@ export default function GameDashboard() {
     if (!user?.nim) return;
     const { config: saved } = await savePlayerAvatar(user.nim, nextConfig);
     setAvatarConfig(saved);
-    setShowAvatarDesigner(false);
-    setIsEditingAvatar(false);
+    closeAvatarEditor();
   };
 
   const closeAnniversary = () => {
@@ -364,13 +454,14 @@ export default function GameDashboard() {
         werewolf: data.werewolf_unlock_date,
         uno: data.uno_unlock_date
       });
+      setEarlyAccessConfig(extractEarlyAccessConfig(data));
     };
 
     const fetchSettings = async () => {
       try {
         const { data, error } = await supabase
           .from('app_settings')
-          .select('wheel_unlock_date, monopoli_unlock_date, werewolf_unlock_date, uno_unlock_date')
+          .select('wheel_unlock_date, monopoli_unlock_date, werewolf_unlock_date, uno_unlock_date, patch_notes')
           .eq('id', 1)
           .single();
 
@@ -433,8 +524,11 @@ export default function GameDashboard() {
     const checkLocalTime = () => {
       const now = Date.now();
       const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+      const eaActive = !user.is_admin && hasActiveEarlyAccess(earlyAccessConfig, user.nim, now);
+      setIsEarlyAccessActive(eaActive);
+      const hasPreviewAccess = Boolean(user.is_admin || eaActive);
 
-      if (user.is_admin) {
+      if (hasPreviewAccess) {
         setIsMonopoliUnlocked(true);
         setMonopoliApproaching(false);
       } else if (gameDates.monopoli) {
@@ -446,7 +540,7 @@ export default function GameDashboard() {
         setMonopoliApproaching(false);
       }
 
-      if (user.is_admin) {
+      if (hasPreviewAccess) {
         setIsWerewolfUnlocked(true);
         setWerewolfApproaching(false);
       } else if (gameDates.werewolf) {
@@ -458,7 +552,7 @@ export default function GameDashboard() {
         setWerewolfApproaching(false);
       }
 
-      if (user.is_admin) {
+      if (hasPreviewAccess) {
         setIsUnoUnlocked(true);
         setUnoApproaching(false);
       } else if (gameDates.uno) {
@@ -474,7 +568,7 @@ export default function GameDashboard() {
     checkLocalTime();
     const interval = setInterval(checkLocalTime, 1000);
     return () => clearInterval(interval);
-  }, [user, gameDates]);
+  }, [user, gameDates, earlyAccessConfig]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -500,10 +594,7 @@ export default function GameDashboard() {
         isEditing={isEditingAvatar}
         isMonopoliUnlocked={isMonopoliUnlocked}
         onSave={handleSaveAvatar}
-        onCancel={() => {
-          setShowAvatarDesigner(false);
-          setIsEditingAvatar(false);
-        }}
+        onCancel={closeAvatarEditor}
       />
     );
   }
@@ -514,7 +605,7 @@ export default function GameDashboard() {
         <nav aria-label="Navigasi kembali" className="mb-5 sm:mb-6 pb-4 border-b border-[#DED8CA] flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() => setActiveView('dashboard')}
+            onClick={() => navigateToView('dashboard')}
             className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DED8CA] text-[#14532D] hover:bg-[#EFE9DC] font-bold text-sm transition-colors"
           >
             &larr; Kembali ke Beranda Perayaan
@@ -526,12 +617,14 @@ export default function GameDashboard() {
         </nav>
         <main>
           <Suspense fallback={<LoadingScreen />}>
-            <Component onBack={() => setActiveView('dashboard')} {...props} />
+            <Component onBack={() => navigateToView('dashboard')} {...props} />
           </Suspense>
         </main>
       </div>
     </div>
   );
+
+  const hasTestAccess = Boolean(user.is_admin || isEarlyAccessActive);
 
   if (activeView === 'map') return renderSubView(TreasureHunt);
   if (activeView === 'face') return renderSubView(FaceGame);
@@ -540,12 +633,12 @@ export default function GameDashboard() {
   if (activeView === 'monopoli') return renderSubView(MonopoliBoard, { myAvatarConfig: avatarConfig });
   if (activeView === 'dosenkiller') return renderSubView(DosenKillerGame);
   if (activeView === 'unobrutal') return renderSubView(UnoBrutalGame);
-  if (activeView === 'athlete' && user.is_admin) return renderSubView(MagicalAthleteGame);
+  if (activeView === 'athlete' && hasTestAccess) return renderSubView(MagicalAthleteGame);
 
   if (activeView === 'updates') {
     return (
       <Suspense fallback={<LoadingScreen label="Memuat catatan pembaruan..." />}>
-        <UpdatesPage onBack={() => setActiveView('dashboard')} />
+        <UpdatesPage onBack={() => navigateToView('dashboard')} />
       </Suspense>
     );
   }
@@ -553,7 +646,7 @@ export default function GameDashboard() {
   if (activeView === 'admin' && user.is_admin) {
     return (
       <Suspense fallback={<LoadingScreen label="Memuat ruang panitia..." />}>
-        <AdminDashboard onBack={() => setActiveView('dashboard')} />
+        <AdminDashboard onBack={() => navigateToView('dashboard')} />
       </Suspense>
     );
   }
@@ -583,7 +676,7 @@ export default function GameDashboard() {
         ? 'Kelilingi petak kampus memakai bidak karaktermu, beli properti kontrakan, dan jawab tantangan Truth or Dare.'
         : redactedDetail,
       ctaLabel: 'Buka Papan Monopoli',
-      onClick: () => setActiveView('monopoli')
+      onClick: () => navigateToView('monopoli')
     });
   }
   if (isWerewolfUnlocked || werewolfApproaching) {
@@ -600,7 +693,7 @@ export default function GameDashboard() {
         ? 'Permainan tebak peran ala kelas kuliah: temukan siapa Dosen Killer sebelum satu kelas kena remedial.'
         : redactedDetail,
       ctaLabel: 'Masuk Ruang Kelas',
-      onClick: () => setActiveView('dosenkiller')
+      onClick: () => navigateToView('dosenkiller')
     });
   }
   if (isUnoUnlocked || unoApproaching) {
@@ -617,10 +710,10 @@ export default function GameDashboard() {
         ? 'Buka meja kartu bersama teman-teman angkatan dengan aturan tumpuk kartu yang meriah.'
         : redactedDetail,
       ctaLabel: 'Gabung Meja Kartu',
-      onClick: () => setActiveView('unobrutal')
+      onClick: () => navigateToView('unobrutal')
     });
   }
-  if (user.is_admin) {
+  if (hasTestAccess) {
     multiplayerGames.push({
       id: 'athlete',
       title: 'Magical Athlete TL16',
@@ -629,7 +722,7 @@ export default function GameDashboard() {
       description:
         'Bursa draft atlet berkarakter dan balapan 4 ronde lintas petak bersama teman atau bot.',
       ctaLabel: 'Masuk Arena Balap',
-      onClick: () => setActiveView('athlete')
+      onClick: () => navigateToView('athlete')
     });
   }
 
@@ -735,10 +828,7 @@ export default function GameDashboard() {
           <nav aria-label="Menu pengguna" className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
             <button
               type="button"
-              onClick={() => {
-                setIsEditingAvatar(true);
-                setShowAvatarDesigner(true);
-              }}
+              onClick={openAvatarEditor}
               className="min-h-[44px] text-xs whitespace-nowrap bg-[#F1ECE0] hover:bg-[#E5DFD2] border border-[#DED8CA] text-zinc-900 px-3.5 py-2 rounded-xl font-bold transition-colors"
             >
               Edit Karakter
@@ -746,7 +836,7 @@ export default function GameDashboard() {
             <RoadmapModal />
             <button
               type="button"
-              onClick={() => setActiveView('updates')}
+              onClick={() => navigateToView('updates')}
               className="min-h-[44px] text-xs whitespace-nowrap bg-[#FFFDF9] hover:bg-[#F1ECE0] px-3.5 py-2 rounded-xl border border-[#DED8CA] text-zinc-800 font-bold transition-colors"
             >
               Catatan Update
@@ -754,7 +844,7 @@ export default function GameDashboard() {
             {user.is_admin && (
               <button
                 type="button"
-                onClick={() => setActiveView('admin')}
+                onClick={() => navigateToView('admin')}
                 className="min-h-[44px] text-xs whitespace-nowrap bg-[#14532D] hover:bg-[#166534] text-white px-3.5 py-2 rounded-xl font-bold transition-colors"
               >
                 Ruang Panitia
@@ -773,6 +863,29 @@ export default function GameDashboard() {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
         <main className="space-y-10 sm:space-y-12">
+          {isEarlyAccessActive && (
+            <div
+              role="status"
+              className="px-4 py-3.5 rounded-2xl bg-[#FEF7E6] border border-[#D97706] text-stone-900 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+            >
+              <div>
+                <strong className="text-amber-900">Akses Uji Coba (Early Access) Aktif:</strong>{' '}
+                kamu bisa menguji seluruh permainan bersama panitia. Skor permainan uji coba tidak masuk penilaian database klasemen.
+              </div>
+              {earlyAccessConfig?.end_at && (
+                <span className="font-mono text-[11px] font-bold text-amber-900 shrink-0">
+                  Berlaku s.d.{' '}
+                  {new Date(earlyAccessConfig.end_at).toLocaleString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </span>
+              )}
+            </div>
+          )}
+
           {/* BAGIAN 1: AGENDA UTAMA & PROFIL + WHEEL OF FAMILY (EDITORIAL 2-KOLOM) */}
           <section aria-labelledby="highlight-heading">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6 items-stretch">
@@ -803,7 +916,7 @@ export default function GameDashboard() {
                 <div>
                   <button
                     type="button"
-                    onClick={() => setActiveView('kapsul')}
+                    onClick={() => navigateToView('kapsul')}
                     className="w-full sm:w-auto min-h-[48px] px-6 py-3 bg-[#14532D] hover:bg-[#166534] rounded-xl font-bold text-white text-sm sm:text-base transition-colors"
                   >
                     Isi Kapsul Waktu Sekarang
@@ -831,10 +944,7 @@ export default function GameDashboard() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsEditingAvatar(true);
-                      setShowAvatarDesigner(true);
-                    }}
+                    onClick={openAvatarEditor}
                     className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#FFFDF9] hover:bg-white border border-[#DED8CA] text-zinc-800 text-xs font-bold transition-colors shrink-0"
                   >
                     Ubah
@@ -842,19 +952,21 @@ export default function GameDashboard() {
                 </div>
 
                 <div className="flex-1 flex flex-col justify-between gap-4">
-                  {user.is_admin ? (
+                  {hasTestAccess ? (
                     <>
                       <div>
                         <h3 className="text-xl font-bold text-zinc-900 mb-1.5">Wheel of Family</h3>
                         <p className="text-zinc-700 text-sm leading-relaxed">
-                          {targetDate
-                            ? 'Hitung mundur untuk peserta sedang berjalan. Panitia dapat menguji roda putar kapan saja.'
-                            : 'Jadwal pembukaan roda putar belum diatur di Ruang Panitia.'}
+                          {user.is_admin
+                            ? (targetDate
+                              ? 'Hitung mundur untuk peserta sedang berjalan. Panitia dapat menguji roda putar kapan saja.'
+                              : 'Jadwal pembukaan roda putar belum diatur di Ruang Panitia.')
+                            : 'Akses uji coba (Early Access) aktif. Kamu bisa menguji roda putar bersama panitia.'}
                         </p>
                       </div>
                       <button
                         type="button"
-                        onClick={() => setActiveView('wheel')}
+                        onClick={() => navigateToView('wheel')}
                         className="w-full min-h-[46px] py-2.5 px-5 bg-[#FFFDF9] hover:bg-white border border-[#CEC6B6] rounded-xl font-bold text-zinc-900 text-sm transition-colors"
                       >
                         Buka Roda Putar
@@ -921,7 +1033,7 @@ export default function GameDashboard() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => setActiveView('wheel')}
+                        onClick={() => navigateToView('wheel')}
                         className="w-full min-h-[46px] py-2.5 px-5 bg-amber-400 hover:bg-amber-300 text-zinc-950 rounded-xl font-bold text-sm transition-colors"
                       >
                         Buka Roda Kenangan
@@ -1001,7 +1113,7 @@ export default function GameDashboard() {
                 <div>
                   <button
                     type="button"
-                    onClick={() => setActiveView('map')}
+                    onClick={() => navigateToView('map')}
                     className="w-full sm:w-auto min-h-[46px] bg-[#14532D] hover:bg-[#166534] py-2.5 px-5 rounded-xl font-bold text-white text-sm transition-colors"
                   >
                     Mulai Tebak Lokasi
@@ -1025,7 +1137,7 @@ export default function GameDashboard() {
                 <div>
                   <button
                     type="button"
-                    onClick={() => setActiveView('face')}
+                    onClick={() => navigateToView('face')}
                     className="w-full sm:w-auto min-h-[46px] bg-[#14532D] hover:bg-[#166534] py-2.5 px-5 rounded-xl font-bold text-white text-sm transition-colors"
                   >
                     Mulai Tebak Foto

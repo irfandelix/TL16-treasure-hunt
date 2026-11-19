@@ -1,5 +1,24 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-030',
+    date: '19 November 2026',
+    version: 'v2.8.2',
+    category: 'Perbaikan Bug',
+    title: 'Sinkronisasi Tombol Back HP & Browser ke Menu Sebelumnya',
+    commit: 'latest',
+    summary: 'Menghubungkan perpindahan menu permainan dan editor karakter ke Browser History API agar menekan tombol Back di HP kembali ke beranda aplikasi, bukan langsung keluar ke beranda browser.',
+    changes: [
+      'Menambahkan helper navigateToView, openAvatarEditor, closeAvatarEditor, dan listener popstate di GameDashboard.jsx menggunakan window.history.pushState dan replaceState.',
+      'Menancapkan entri dasar dashboard saat sesi dimuat ulang di sub-halaman sehingga tombol Back HP tetap mengarahkan kembali ke beranda perayaan.'
+    ],
+    docs: {
+      files: [
+        'src/components/GameDashboard.jsx'
+      ],
+      notes: 'Tombol kembali di layar aplikasi juga memakai history.back() saat entri riwayat tersedia agar tumpukan riwayat browser tetap bersih.'
+    }
+  },
+  {
     id: 'upd-029',
     date: '19 November 2026',
     version: 'v2.8.1',

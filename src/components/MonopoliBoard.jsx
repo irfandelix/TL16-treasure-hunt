@@ -4,6 +4,7 @@ import { useRoomConnection } from '../lib/useRoomConnection';
 import PlayerAvatar from './PlayerAvatar';
 import StoryShareButton from './StoryShareButton';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
+import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
 
 const BOARD_DATA = [
   { id: 0,  name: "START",               type: "corner",   side: 0 },
@@ -542,7 +543,28 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
     loadGameData();
   };
 
+  const [isTrialSession, setIsTrialSession] = useState(false);
+
+  useEffect(() => {
+    if (appState !== 'result' || players.length === 0) return;
+    let active = true;
+    checkShouldSkipRoomScoring('monopoli', players.map((p) => p.nim)).then((skip) => {
+      if (active) setIsTrialSession(skip);
+    });
+    return () => {
+      active = false;
+    };
+  }, [appState, players]);
+
   const givePoints = async (nim, amount) => {
+    const roomNims = players.map((p) => p.nim);
+    if (!roomNims.includes(nim)) roomNims.push(nim);
+    const shouldSkip = await checkShouldSkipRoomScoring('monopoli', roomNims);
+    if (shouldSkip) {
+      setIsTrialSession(true);
+      return;
+    }
+
     const TABEL_ALUMNI = 'alumni';
     let updatedScore = null;
 
@@ -1139,7 +1161,9 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
           </div>
           
           <p className="text-xs text-stone-600 mb-4 leading-relaxed">
-            Poin permainan sudah tersimpan permanen ke klasemen. Riwayat ruangan ini akan dihapus otomatis setelah 30 menit.
+            {isTrialSession
+              ? 'Mode Uji Coba (Early Access): poin sesi ini tidak dimasukkan ke database penilaian klasemen.'
+              : 'Poin permainan sudah tersimpan permanen ke klasemen. Riwayat ruangan ini akan dihapus otomatis setelah 30 menit.'}
           </p>
 
           <div className="flex flex-col gap-3">
