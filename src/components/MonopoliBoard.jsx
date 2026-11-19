@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRoomConnection } from '../lib/useRoomConnection';
 import PlayerAvatar from './PlayerAvatar';
+import StoryShareButton from './StoryShareButton';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
 const BOARD_DATA = [
@@ -1141,13 +1142,52 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
             Poin permainan sudah tersimpan permanen ke klasemen. Riwayat ruangan ini akan dihapus otomatis setelah 30 menit.
           </p>
 
-          <button
-            type="button"
-            onClick={exitGame}
-            className="w-full min-h-[48px] py-3.5 px-6 bg-amber-400 hover:bg-amber-300 font-bold rounded-xl text-base text-slate-950 transition-colors"
-          >
-            Kembali ke Ruang Utama
-          </button>
+          <div className="flex flex-col gap-3">
+            <StoryShareButton
+              label="Bagikan Hasil Sesi ke IG Story"
+              variant="primary"
+              className="w-full"
+              getPayload={() => {
+                const sorted = [...players].sort((a, b) => (a.rank || 99) - (b.rank || 99));
+                const winner = sorted[0];
+                return {
+                  variant: 'session',
+                  badge: 'MONOPOLI TL16',
+                  name: currentUser.nama,
+                  subtitle: `Ruang ${currentRoom?.room_code || '-'}  |  ${sorted.length} Pemain`,
+                  nim: currentUser.nim,
+                  avatarConfig: getPlayerAvatarConfig(currentUser.nim),
+                  accent: isWinner ? '#B45309' : '#14532D',
+                  ringColor: isWinner ? '#D97706' : '#14532D',
+                  scoreText: isWinner ? 'JUARA SESI MONOPOLI!' : `PERINGKAT #${myResult?.rank || '-'}`,
+                  scoreLabel: winner ? `Pemenang sesi: ${winner.nama}` : 'Sesi Monopoli TL16 Selesai',
+                  sessionTitle: 'PEMAIN DI RUANGAN INI',
+                  sessionPlayers: sorted.map((p, idx) => {
+                    const rank = p.rank || idx + 1;
+                    const pts = rank === 1 ? 3000 : rank === 2 ? 1500 : rank === 3 ? 750 : 0;
+                    return {
+                      rank: `#${rank}`,
+                      nama: p.nama,
+                      meta: p.status === 'bankrupt' ? 'Bangkrut' : `Kas Rp ${p.cash || 0}k`,
+                      scoreText: pts > 0 ? `+${pts} Poin` : 'Peserta',
+                      isMe: p.nim === currentUser.nim
+                    };
+                  }),
+                  filename: `monopoli-tl16-${currentRoom?.room_code || 'sesi'}.png`,
+                  shareTitle: 'Hasil Sesi Monopoli TL16',
+                  shareText: `Baru selesai main Monopoli TL16 bareng ${sorted.length} teman angkatan!`
+                };
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={exitGame}
+              className="w-full min-h-[48px] py-3.5 px-6 bg-amber-400 hover:bg-amber-300 font-bold rounded-xl text-base text-slate-950 transition-colors"
+            >
+              Kembali ke Ruang Utama
+            </button>
+          </div>
         </div>
       </div>
     );

@@ -1,5 +1,35 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-028',
+    date: '19 November 2026',
+    version: 'v2.8.0',
+    category: 'Fitur Baru',
+    title: 'Poster IG Story 9:16 untuk Klasemen, Kuis Solo, & Sesi Multiplayer',
+    commit: 'latest',
+    summary: 'Menambahkan generator poster vertikal 1080x1920 bergaya Kertas Kenangan yang bisa langsung dibagikan ke Instagram Story via Web Share API di HP atau diunduh otomatis sebagai PNG.',
+    changes: [
+      'Membuat modul avatarCanvas.js, storyCardGenerator.js, dan komponen StoryShareButton.jsx untuk menggambar kartu Story 9:16 lengkap dengan logo Asset 2.webp, avatar Canvas2D peserta, dan ruang aman UI Instagram.',
+      'Menambahkan tombol Bagikan ke Story pada ScoreBoard.jsx, FaceGame.jsx, dan TreasureHunt.jsx dengan blok Persaingan Terdekat (1 peserta di atas dan 1 di bawah beserta selisih skor, otomatis tersensor blok hitam saat klasemen masih dirahasiakan).',
+      'Menambahkan tombol Bagikan Hasil Sesi pada layar akhir Monopoli TL16, Dosen Killer, UNO Seru TL16, dan Magical Athlete TL16 yang menampilkan daftar seluruh peserta dalam satu sesi ruangan.'
+    ],
+    docs: {
+      files: [
+        'src/lib/avatarCanvas.js',
+        'src/lib/storyCardGenerator.js',
+        'src/components/StoryShareButton.jsx',
+        'src/components/PlayerAvatar.jsx',
+        'src/components/ScoreBoard.jsx',
+        'src/components/FaceGame.jsx',
+        'src/components/TreasureHunt.jsx',
+        'src/components/MonopoliBoard.jsx',
+        'src/components/DosenKillerGame.jsx',
+        'src/components/UnoBrutalGame.jsx',
+        'src/components/MagicalAthleteGame.jsx'
+      ],
+      notes: 'Menggunakan Web Share API (navigator.share dengan berkas PNG) di browser ponsel yang mendukung dan jatuh otomatis ke unduhan PNG pada laptop atau browser dalam aplikasi.'
+    }
+  },
+  {
     id: 'upd-027',
     date: '19 November 2026',
     version: 'v2.7.3',

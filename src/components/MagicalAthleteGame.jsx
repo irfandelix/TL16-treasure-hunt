@@ -4,6 +4,8 @@ import { isAdminSession, verifyAdminPassword, setAdminSessionVerified } from '..
 import { useRoomConnection, pickActiveCoordinator, shouldBotControlPlayer } from '../lib/useRoomConnection';
 import { ATHLETE_CHARACTERS, TRACK_TILES, PLAYER_COLORS } from '../data/athleteCharacters';
 import confetti from 'canvas-confetti';
+import StoryShareButton from './StoryShareButton';
+import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
 const TRACK_LOOP_COORDS = {
   0:  { col: 1, row: 1, dir: 'Kanan' },
@@ -1655,15 +1657,52 @@ export default function MagicalAthleteGame({ onBack }) {
                     ))}
                 </div>
 
-                {currentUser.isAdmin && (
-                  <button
-                    type="button"
-                    onClick={handleResetGame}
-                    className="w-full min-h-[48px] py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl transition-colors shadow-md"
-                  >
-                    Mulai Pertandingan Baru
-                  </button>
-                )}
+                <div className="flex flex-col gap-3">
+                  <StoryShareButton
+                    label="Bagikan Hasil Turnamen ke IG Story"
+                    variant="primary"
+                    className="w-full"
+                    getPayload={() => {
+                      const sorted = [...players].sort((a, b) => (b.score || 0) - (a.score || 0));
+                      const winner = sorted[0];
+                      const isMeWinner = winner?.nim === currentUser.nim;
+                      const myEntry = sorted.find((p) => p.nim === currentUser.nim);
+                      const myRank = myEntry ? sorted.indexOf(myEntry) + 1 : null;
+                      return {
+                        variant: 'session',
+                        badge: 'MAGICAL ATHLETE TL16',
+                        name: currentUser.nama || 'Alumni TL 2016',
+                        subtitle: `Ruang ${roomCode || '-'}  |  Turnamen 4 Ronde`,
+                        nim: currentUser.nim || '',
+                        avatarConfig: getLocalAvatarConfig(currentUser.nim),
+                        accent: isMeWinner ? '#B45309' : '#14532D',
+                        ringColor: isMeWinner ? '#D97706' : '#14532D',
+                        scoreText: isMeWinner ? 'JUARA OLIMPIADE TL16!' : (myRank ? `PERINGKAT #${myRank}` : 'TURNAMEN SELESAI'),
+                        scoreLabel: winner ? `Juara sesi: ${winner.nama} (${winner.score || 0} Poin)` : 'Turnamen 4 Ronde Selesai',
+                        sessionTitle: 'PESERTA BALAPAN SESI INI',
+                        sessionPlayers: sorted.map((p, idx) => ({
+                          rank: `#${idx + 1}`,
+                          nama: p.nama,
+                          meta: p.is_bot ? 'Bot Simulasi' : `NIM ${p.nim}`,
+                          scoreText: `${p.score || 0} Poin`,
+                          isMe: p.nim === currentUser.nim
+                        })),
+                        filename: `magical-athlete-tl16-${roomCode || 'turnamen'}.png`,
+                        shareTitle: 'Hasil Turnamen Magical Athlete TL16',
+                        shareText: `Turnamen 4 ronde Magical Athlete TL16 di ruang ${roomCode} selesai!`
+                      };
+                    }}
+                  />
+                  {currentUser.isAdmin && (
+                    <button
+                      type="button"
+                      onClick={handleResetGame}
+                      className="w-full min-h-[48px] py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl transition-colors shadow-md"
+                    >
+                      Mulai Pertandingan Baru
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -3,7 +3,9 @@ import { supabase } from '../lib/supabaseClient';
 import { isAdminSession } from '../lib/adminAuth';
 import PlayerAvatar from './PlayerAvatar';
 import RedactedText from './RedactedText';
+import StoryShareButton from './StoryShareButton';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
+import { buildNeighborsLadder } from '../lib/storyCardGenerator';
 
 const IconCrown = ({ className = 'w-5 h-5' }) => (
   <svg
@@ -480,16 +482,61 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
                   </div>
                 </div>
 
-                {!isFiltering && currentUserEntry._rank > 3 && (
-                  <button
-                    type="button"
-                    onClick={handleJumpToMe}
-                    className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FFFDF9] hover:bg-white border border-[#CEC6B6] text-xs font-bold text-zinc-900 transition-colors shrink-0"
-                  >
-                    <span>Lihat Barisku</span>
-                    <IconArrowDown className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <StoryShareButton
+                    label="Bagikan ke Story"
+                    variant="primary"
+                    getPayload={() => {
+                      const rankedForCard = rankedAlumni.map((p) => ({
+                        nim: p.nim,
+                        nama: p.nama,
+                        score: p._activeScore
+                      }));
+                      const ladder = buildNeighborsLadder(rankedForCard, currentUserEntry.nim, shouldReveal);
+                      const breakdownParts = [
+                        `Peta: ${currentUserEntry.skor_peta || 0}`,
+                        `Foto: ${currentUserEntry.skor_muka || 0}`
+                      ];
+                      if (isMonopoliUnlocked) {
+                        breakdownParts.push(`Monopoli: ${currentUserEntry.skor_monopoli || 0}`);
+                      }
+                      if (isWerewolfUnlocked) {
+                        breakdownParts.push(`Dosen Killer: ${currentUserEntry.skor_werewolf || 0}`);
+                      }
+                      const isTop1 = shouldReveal && currentUserEntry._rank === 1;
+                      return {
+                        variant: 'ladder',
+                        badge: `KLASEMEN SEDULUR 16`,
+                        name: currentUserEntry.nama,
+                        subtitle: `NIM ${currentUserEntry.nim}`,
+                        nim: currentUserEntry.nim,
+                        avatarConfig: resolveAvatar(currentUserEntry),
+                        rankText: `PERINGKAT #${currentUserEntry._rank} DARI ${rankedAlumni.length}`,
+                        redactedRank: !shouldReveal,
+                        accent: isTop1 ? '#B45309' : '#14532D',
+                        ringColor: isTop1 ? '#D97706' : '#14532D',
+                        scoreText: String(currentUserEntry._activeScore),
+                        scoreLabel: sortBy === 'total' ? 'TOTAL POIN KENANGAN' : `POIN ${activeCategoryLabel.toUpperCase()}`,
+                        breakdownLine: breakdownParts.join('  |  '),
+                        neighborsTitle: ladder.title,
+                        neighbors: ladder.rows,
+                        filename: `klasemen-sedulur16-${currentUserEntry.nim}.png`,
+                        shareTitle: 'Klasemen 1 Dekade Sedulur 16',
+                        shareText: `Skor ${activeCategoryLabel} saya di 1 Dekade TL 2016: ${currentUserEntry._activeScore} poin!`
+                      };
+                    }}
+                  />
+                  {!isFiltering && currentUserEntry._rank > 3 && (
+                    <button
+                      type="button"
+                      onClick={handleJumpToMe}
+                      className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FFFDF9] hover:bg-white border border-[#CEC6B6] text-xs font-bold text-zinc-900 transition-colors shrink-0"
+                    >
+                      <span>Lihat Barisku</span>
+                      <IconArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 

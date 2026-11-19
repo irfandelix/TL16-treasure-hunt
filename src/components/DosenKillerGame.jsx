@@ -7,6 +7,8 @@ import LayarMalam from './LayarMalam';
 import LayarDiskusi from './LayarDiskusi';
 import LayarVoting from './LayarVoting';
 import LayarEksekusi from './LayarEksekusi';
+import StoryShareButton from './StoryShareButton';
+import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
 export default function DosenKillerGame({ onBack }) {
   const [roomCode, setRoomCode] = useState(''); 
@@ -722,7 +724,44 @@ export default function DosenKillerGame({ onBack }) {
         </h2>
         <p className="text-stone-800 text-sm max-w-md leading-relaxed">{pesanLayar}</p>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <StoryShareButton
+            label="Bagikan Hasil Sidang ke IG Story"
+            variant="primary"
+            getPayload={() => {
+              const roleLabel = (role) => {
+                if (role === 'DOSEN_KILLER') return 'Dosen Killer';
+                if (role === 'INTEL') return 'Intel';
+                if (role === 'AHLI') return 'Ahli';
+                if (role === 'UPTODATE') return 'Uptodate';
+                return 'Mahasiswa';
+              };
+              const ordered = [...pemain].sort((a, b) => Number(b.is_hidup) - Number(a.is_hidup));
+              return {
+                variant: 'session',
+                badge: 'SIDANG DOSEN KILLER',
+                name: currentUser.nama,
+                subtitle: `Kelas ${roomCode || '-'}  |  ${pemain.length} Peserta`,
+                nim: currentUser.nim,
+                avatarConfig: getLocalAvatarConfig(currentUser.nim),
+                accent: isMenang ? '#14532D' : '#B45309',
+                ringColor: isMenang ? '#14532D' : '#D97706',
+                scoreText: isMenang ? 'TIM MAHASISWA MENANG!' : 'DOSEN KILLER MENANG!',
+                scoreLabel: `Peranmu: ${roleLabel(peranKu)} (${isHidup ? 'Selamat' : 'Terkena DO'})`,
+                sessionTitle: 'PESERTA SIDANG DI KELAS INI',
+                sessionPlayers: ordered.map((p, idx) => ({
+                  rank: `#${idx + 1}`,
+                  nama: p.nama,
+                  meta: roleLabel(p.peran),
+                  scoreText: p.is_hidup ? 'Selamat' : 'DO',
+                  isMe: p.nim === currentUser.nim
+                })),
+                filename: `dosen-killer-${roomCode || 'sesi'}.png`,
+                shareTitle: 'Hasil Sidang Dosen Killer TL 2016',
+                shareText: `Sesi Sidang Dosen Killer kelas ${roomCode} selesai: ${isMenang ? 'Tim Mahasiswa Menang!' : 'Tim Dosen Killer Menang!'}`
+              };
+            }}
+          />
           {(currentUser.isAdmin || isPhaseCoordinator) && (
             <button
               type="button"

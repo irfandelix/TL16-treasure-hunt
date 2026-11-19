@@ -4,6 +4,8 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabaseClient';
+import StoryShareButton from './StoryShareButton';
+import { fetchSoloQuizStoryContext } from '../lib/storyCardGenerator';
 
 const defaultIcon = new L.Icon({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -226,27 +228,59 @@ export default function TreasureHunt({ onBack }) {
           <span className="text-green-900 font-mono font-bold text-5xl">{totalScore}</span>
         </p>
         
-        <div className="flex flex-col sm:flex-row justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              const userNim = localStorage.getItem('user_nim') || 'guest';
-              localStorage.removeItem(`hunt_completed_${userNim}`);
-              localStorage.removeItem(`hunt_final_score_${userNim}`);
-              localStorage.removeItem(`session_hunt_${userNim}`);
-              initGame();
+        <div className="flex flex-col gap-3 max-w-sm mx-auto">
+          <StoryShareButton
+            label="Bagikan Skor ke IG Story"
+            variant="primary"
+            className="w-full"
+            getPayload={async () => {
+              const userNim = localStorage.getItem('user_nim') || '';
+              const ctx = await fetchSoloQuizStoryContext('skor_peta', userNim, totalScore);
+              return {
+                variant: 'ladder',
+                badge: 'NAPAK TILAS PETA',
+                name: ctx.nama,
+                subtitle: userNim ? `NIM ${userNim}` : '20 TITIK KAMPUS & JOGJA',
+                nim: userNim,
+                avatarConfig: ctx.avatarConfig,
+                rankText: ctx.myRank ? `PERINGKAT PETA #${ctx.myRank} DARI ${ctx.totalCount}` : 'PETUALANGAN SELESAI',
+                redactedRank: !ctx.revealNames,
+                accent: '#14532D',
+                ringColor: '#14532D',
+                scoreText: String(totalScore),
+                scoreLabel: 'SKOR DIGITAL TREASURE HUNT',
+                breakdownLine: '20 Lokasi Kenangan  |  1 Dekade TL 2016',
+                neighborsTitle: ctx.neighborsTitle || 'POSISI DI KLASEMEN PETA',
+                neighbors: ctx.neighbors,
+                filename: `napak-tilas-sedulur16-${userNim || 'skor'}.png`,
+                shareTitle: 'Skor Napak Tilas 1 Dekade TL 2016',
+                shareText: `Skor Napak Tilas Peta saya di 1 Dekade TL 2016: ${totalScore} poin!`
+              };
             }}
-            className="inline-flex items-center justify-center bg-green-900 hover:bg-green-800 px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-white transition-colors"
-          >
-            Main Ulang Napak Tilas
-          </button>
-          <button
-            type="button"
-            onClick={handleGoHome}
-            className="inline-flex items-center justify-center bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#DED6C6] px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-stone-800 transition-colors"
-          >
-            Kembali ke Beranda
-          </button>
+          />
+
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                const userNim = localStorage.getItem('user_nim') || 'guest';
+                localStorage.removeItem(`hunt_completed_${userNim}`);
+                localStorage.removeItem(`hunt_final_score_${userNim}`);
+                localStorage.removeItem(`session_hunt_${userNim}`);
+                initGame();
+              }}
+              className="inline-flex items-center justify-center bg-green-900 hover:bg-green-800 px-6 py-3.5 min-h-[48px] rounded-xl font-bold text-white transition-colors flex-1"
+            >
+              Main Ulang Napak Tilas
+            </button>
+            <button
+              type="button"
+              onClick={handleGoHome}
+              className="inline-flex items-center justify-center bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#DED6C6] px-6 py-3.5 min-h-[48px] rounded-xl font-bold text-stone-800 transition-colors flex-1"
+            >
+              Kembali ke Beranda
+            </button>
+          </div>
         </div>
       </div>
     );

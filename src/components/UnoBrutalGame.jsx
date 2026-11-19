@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRoomConnection, pickActiveCoordinator, shouldBotControlPlayer } from '../lib/useRoomConnection';
+import StoryShareButton from './StoryShareButton';
+import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
 const CARD_COLORS = [
   { name: 'Merah', bg: 'bg-rose-700', border: 'border-rose-400', text: 'text-stone-900' },
@@ -752,16 +754,61 @@ export default function UnoBrutalGame() {
             <p className="text-stone-800 text-sm mb-4">
               Pemenang putaran ini: <strong className="text-amber-700">{players.find((p) => (Array.isArray(p.hand) && p.hand.length === 0) || p.nim === currentTurn)?.nama || 'Sedulur 16'}</strong>
             </p>
-            {isHost && (
-              <button
-                type="button"
-                onClick={startGame}
-                disabled={loading}
-                className="min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-8 py-3 rounded-xl text-sm shadow-md transition-colors"
-              >
-                Main Lagi di Meja Ini
-              </button>
-            )}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <StoryShareButton
+                label="Bagikan Hasil Meja ke IG Story"
+                variant="primary"
+                getPayload={() => {
+                  const ordered = [...players].sort((a, b) => {
+                    const lenA = Array.isArray(a.hand) ? a.hand.length : 99;
+                    const lenB = Array.isArray(b.hand) ? b.hand.length : 99;
+                    if (lenA !== lenB) return lenA - lenB;
+                    return (a.nim || '').localeCompare(b.nim || '');
+                  });
+                  const winner =
+                    players.find((p) => (Array.isArray(p.hand) && p.hand.length === 0) || p.nim === currentTurn) ||
+                    ordered[0];
+                  const isMeWinner = winner?.nim === user?.nim;
+                  return {
+                    variant: 'session',
+                    badge: 'UNO SEDULUR 16',
+                    name: user?.nama || 'Alumni TL 2016',
+                    subtitle: `Meja ${currentRoom || '-'}  |  ${players.length} Pemain`,
+                    nim: user?.nim || '',
+                    avatarConfig: getLocalAvatarConfig(user?.nim),
+                    accent: isMeWinner ? '#B45309' : '#14532D',
+                    ringColor: isMeWinner ? '#D97706' : '#14532D',
+                    scoreText: isMeWinner ? 'JUARA MEJA UNO!' : `PEMENANG: ${(winner?.nama || 'Sedulur 16').split(' ')[0]}`,
+                    scoreLabel: `Kartu tersisa di tanganmu: ${myHand.length} kartu`,
+                    sessionTitle: 'PEMAIN DI MEJA INI',
+                    sessionPlayers: ordered.map((p, idx) => {
+                      const count = Array.isArray(p.hand) ? p.hand.length : 0;
+                      const won = p.nim === winner?.nim || count === 0;
+                      return {
+                        rank: `#${idx + 1}`,
+                        nama: p.nama,
+                        meta: won ? 'Habis kartu pertama' : 'Peserta meja',
+                        scoreText: won ? 'Juara' : `${count} kartu`,
+                        isMe: p.nim === user?.nim
+                      };
+                    }),
+                    filename: `uno-sedulur16-${currentRoom || 'meja'}.png`,
+                    shareTitle: 'Hasil Meja UNO Sedulur 16',
+                    shareText: `Selesai main UNO Sedulur 16 di meja ${currentRoom} bareng ${players.length} teman angkatan!`
+                  };
+                }}
+              />
+              {isHost && (
+                <button
+                  type="button"
+                  onClick={startGame}
+                  disabled={loading}
+                  className="min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-8 py-3 rounded-xl text-sm shadow-md transition-colors"
+                >
+                  Main Lagi di Meja Ini
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="bg-white border border-[#DED6C6] rounded-xl p-4">

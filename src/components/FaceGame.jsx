@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import confetti from 'canvas-confetti';
+import StoryShareButton from './StoryShareButton';
+import { fetchSoloQuizStoryContext } from '../lib/storyCardGenerator';
 
 export default function FaceGame({ onBack }) {
   const [list, setList] = useState([]);
@@ -255,6 +257,36 @@ export default function FaceGame({ onBack }) {
         </p>
         
         <div className="flex flex-col gap-3">
+          <StoryShareButton
+            label="Bagikan Skor ke IG Story"
+            variant="primary"
+            className="w-full"
+            getPayload={async () => {
+              const userNim = localStorage.getItem('user_nim') || '';
+              const ctx = await fetchSoloQuizStoryContext('skor_muka', userNim, score);
+              return {
+                variant: 'ladder',
+                badge: 'TEBAK FOTO KENANGAN',
+                name: ctx.nama,
+                subtitle: userNim ? `NIM ${userNim}` : '20 FOTO MABA 2016',
+                nim: userNim,
+                avatarConfig: ctx.avatarConfig,
+                rankText: ctx.myRank ? `PERINGKAT FOTO #${ctx.myRank} DARI ${ctx.totalCount}` : 'KUIS FOTO SELESAI',
+                redactedRank: !ctx.revealNames,
+                accent: '#14532D',
+                ringColor: '#14532D',
+                scoreText: String(score),
+                scoreLabel: 'SKOR TEBAK MUKA BLUR',
+                breakdownLine: '20 Foto Angkatan 2016  |  1 Dekade TL 2016',
+                neighborsTitle: ctx.neighborsTitle || 'POSISI DI KLASEMEN FOTO',
+                neighbors: ctx.neighbors,
+                filename: `tebak-foto-sedulur16-${userNim || 'skor'}.png`,
+                shareTitle: 'Skor Tebak Foto 1 Dekade TL 2016',
+                shareText: `Skor Tebak Foto Kenangan saya di 1 Dekade TL 2016: ${score} poin!`
+              };
+            }}
+          />
+
           <button 
             type="button"
             onClick={handleRestartQuiz} 
