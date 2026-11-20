@@ -14,6 +14,59 @@ import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
 import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
 
+const DOSEN_KILLER_ROLES = [
+  {
+    id: 'dosen',
+    name: 'Dosen Killer',
+    team: 'Kubu Penyamar',
+    teamClass: 'bg-rose-100 text-rose-900 border-rose-200',
+    accentClass: 'text-rose-800',
+    quota: '2 orang (bertambah jika kelas ramai)',
+    description:
+      'Menyamar di tengah mahasiswa. Setiap malam diam-diam memilih 1 orang untuk diberi nilai E (DO), dan punya ruang obrolan rahasia khusus sesama Dosen Killer untuk mengatur siasat.'
+  },
+  {
+    id: 'intel',
+    name: 'Mahasiswa Intel',
+    team: 'Kubu Mahasiswa',
+    teamClass: 'bg-sky-100 text-sky-900 border-sky-200',
+    accentClass: 'text-sky-900',
+    quota: '1 orang',
+    description:
+      'Setiap siang menerima bocoran 3 nama kandidat di layar: 1 di antaranya pasti Dosen Killer asli, 2 lainnya mahasiswa biasa. Gunakan petunjuk ini untuk mengarahkan obrolan tanpa buru-buru membongkar jati diri.'
+  },
+  {
+    id: 'ahli',
+    name: 'Mahasiswa Ahli',
+    team: 'Kubu Mahasiswa',
+    teamClass: 'bg-emerald-100 text-emerald-900 border-emerald-200',
+    accentClass: 'text-emerald-900',
+    quota: '1 orang',
+    description:
+      'Setiap malam memilih 1 teman untuk dilindungi nilainya. Jika pilihanmu cocok dengan incaran Dosen Killer malam itu, teman tersebut selamat dan tidak jadi kena DO.'
+  },
+  {
+    id: 'uptodate',
+    name: 'Mahasiswa Uptodate',
+    team: 'Kubu Mahasiswa',
+    teamClass: 'bg-amber-100 text-amber-900 border-amber-200',
+    accentClass: 'text-amber-800',
+    quota: '1 orang',
+    description:
+      'Punya perlindungan otomatis di malam pertama. Kalau diincar Dosen Killer pada ronde pertama, kamu lolos dari ancaman DO. Mulai malam kedua, bermain seperti mahasiswa biasa.'
+  },
+  {
+    id: 'biasa',
+    name: 'Mahasiswa Biasa',
+    team: 'Kubu Mahasiswa',
+    teamClass: 'bg-[#F1ECE0] text-zinc-800 border-[#DED8CA]',
+    accentClass: 'text-zinc-900',
+    quota: 'Sisa peserta kelas',
+    description:
+      'Tidak punya tugas khusus di malam hari, tetapi suara kalian paling menentukan. Amati jawaban teman saat diskusi siang, tangkap gerak-gerik yang janggal, lalu sepakati siapa yang dikeluarkan waktu sidang.'
+  }
+];
+
 export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
   const [roomCode, setRoomCode] = useState(''); 
   const [inputRoomCode, setInputRoomCode] = useState('');
@@ -588,54 +641,152 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
 
   if (!isInRoom) {
     return (
-      <div className="p-6 md:p-8 max-w-md mx-auto bg-white rounded-2xl border border-[#DED6C6] mt-10 text-center shadow-md">
-        <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
-          Deduksi Sosial Angkatan
-        </p>
-        <h2 className="text-2xl font-bold text-stone-900 mb-1">Sidang Dosen Killer</h2>
-        <p className="text-sm text-stone-600 mb-6">
-          Buka ruang kelas baru atau gabung ke kelas yang sudah dibuat temanmu.
-        </p>
+      <div className="max-w-4xl mx-auto py-4 sm:py-6 space-y-6">
+        <section className="bg-[#FFFDF9] rounded-2xl border border-[#DED8CA] p-6 sm:p-8 shadow-sm">
+          <div className="grid md:grid-cols-12 gap-6 md:gap-8 items-center">
+            <div className="md:col-span-7 space-y-3 text-left">
+              <h1 className="text-3xl sm:text-4xl font-bold text-zinc-900 tracking-tight">
+                Sidang Dosen Killer
+              </h1>
+              <p className="text-sm sm:text-base text-zinc-700 leading-relaxed">
+                Permainan tebak peran ramai-ramai ala Werewolf versi kelas kuliah. Di antara teman seangkatan, ada beberapa Dosen Killer yang menyamar dan diam-diam mengincar mahasiswa setiap malam.
+              </p>
+              <p className="text-sm text-zinc-700 leading-relaxed">
+                Cocok dimainkan bareng satu angkatan (bisa sampai 100 orang dalam satu kelas). Sebelum masuk, kenali dulu tokoh dan cara mainnya di bawah.
+              </p>
+            </div>
 
-        {lobbyError && (
-          <div role="alert" className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-500/40 text-rose-200 text-xs font-medium">
-            {lobbyError}
-          </div>
-        )}
+            <div className="md:col-span-5 bg-[#FAF6EE] border border-[#DED8CA] rounded-2xl p-5 space-y-4">
+              {lobbyError && (
+                <div role="alert" className="p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-semibold">
+                  {lobbyError}
+                </div>
+              )}
 
-        <div className="space-y-4">
-          <button
-            type="button"
-            onClick={handleCreateRoom}
-            className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 px-6 rounded-xl transition-colors text-base"
-          >
-            Buka Kelas Baru (Buat Ruangan)
-          </button>
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-[#DED6C6]"></div>
-            <span className="flex-shrink mx-4 text-stone-600 font-mono text-xs">ATAU GABUNG KELAS</span>
-            <div className="flex-grow border-t border-[#DED6C6]"></div>
+              <button
+                type="button"
+                onClick={handleCreateRoom}
+                className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 px-5 rounded-xl transition-colors text-sm sm:text-base"
+              >
+                Buka Kelas Baru
+              </button>
+
+              <div className="relative flex py-1 items-center">
+                <div className="flex-grow border-t border-[#DED8CA]"></div>
+                <span className="flex-shrink mx-3 text-zinc-600 font-mono text-xs">ATAU GABUNG KODE</span>
+                <div className="flex-grow border-t border-[#DED8CA]"></div>
+              </div>
+
+              <div className="flex gap-2">
+                <label htmlFor="dk-room-code-input" className="sr-only">
+                  Kode Kelas Dosen Killer
+                </label>
+                <input
+                  id="dk-room-code-input"
+                  type="text"
+                  placeholder="CONTOH: DK-392"
+                  value={inputRoomCode}
+                  onChange={(e) => setInputRoomCode(e.target.value)}
+                  className="flex-1 min-w-0 min-h-[48px] bg-white border border-[#C7BDA8] rounded-xl text-center text-sm font-mono font-bold tracking-widest text-zinc-900 uppercase focus:border-amber-500 placeholder:text-zinc-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleJoinRoom}
+                  className="min-h-[48px] bg-[#14532D] hover:bg-[#166534] text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shrink-0"
+                >
+                  Masuk
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <label htmlFor="dk-room-code-input" className="sr-only">
-              Kode Kelas Dosen Killer
-            </label>
-            <input 
-              id="dk-room-code-input"
-              type="text" 
-              placeholder="CONTOH: DK-392"
-              value={inputRoomCode}
-              onChange={(e) => setInputRoomCode(e.target.value)}
-              className="flex-1 min-h-[48px] bg-[#FAF6EE] border border-[#C7BDA8] rounded-xl text-center text-sm font-mono font-bold tracking-widest text-stone-900 uppercase focus:border-amber-400 placeholder:text-stone-500"
-            />
-            <button
-              type="button"
-              onClick={handleJoinRoom}
-              className="min-h-[48px] bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors"
-            >
-              Masuk
-            </button>
+        </section>
+
+        <section aria-labelledby="dk-roles-heading" className="bg-[#FFFDF9] rounded-2xl border border-[#DED8CA] overflow-hidden">
+          <div className="px-6 py-4 bg-[#FAF6EE] border-b border-[#DED8CA] flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="dk-roles-heading" className="text-lg font-bold text-zinc-900">
+              Kenalan dengan 5 Tokoh di Kelas
+            </h2>
+            <span className="text-xs text-zinc-600">
+              Peran dibagikan acak begitu kelas dimulai
+            </span>
           </div>
+
+          <div className="divide-y divide-[#EDE6D8]">
+            {DOSEN_KILLER_ROLES.map((role) => (
+              <div key={role.id} className="px-6 py-4 flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-5">
+                <div className="sm:w-56 shrink-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className={`text-sm font-bold ${role.accentClass}`}>{role.name}</h3>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${role.teamClass}`}>
+                      {role.team}
+                    </span>
+                  </div>
+                  <p className="text-xs font-mono text-zinc-600">{role.quota}</p>
+                </div>
+                <p className="text-sm text-zinc-700 leading-relaxed flex-1">
+                  {role.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <section aria-labelledby="dk-flow-heading" className="bg-[#FFFDF9] rounded-2xl border border-[#DED8CA] p-6 space-y-4">
+            <h2 id="dk-flow-heading" className="text-lg font-bold text-zinc-900">
+              Jalannya Satu Ronde
+            </h2>
+            <ol className="space-y-3.5 text-sm text-zinc-700">
+              <li className="flex items-start gap-3">
+                <span className="w-6 h-6 rounded-lg bg-[#F1ECE0] border border-[#DED8CA] text-zinc-900 font-mono text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  1
+                </span>
+                <div>
+                  <strong className="text-zinc-900 block">Malam Hari (30 detik)</strong>
+                  <span>Kelas hening. Dosen Killer memilih 1 mahasiswa untuk diberi nilai E, sementara Mahasiswa Ahli memilih 1 teman yang ingin diselamatkan.</span>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-6 h-6 rounded-lg bg-[#F1ECE0] border border-[#DED8CA] text-zinc-900 font-mono text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  2
+                </span>
+                <div>
+                  <strong className="text-zinc-900 block">Pagi dan Diskusi Kelas</strong>
+                  <span>Hasil kejadian semalam diumumkan. Semua pemain yang masih bertahan saling bertanya dan berdebat di obrolan kelas. Jika lebih dari separuh pemain sepakat lanjut, waktu diskusi bisa langsung dilewati.</span>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-6 h-6 rounded-lg bg-[#F1ECE0] border border-[#DED8CA] text-zinc-900 font-mono text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  3
+                </span>
+                <div>
+                  <strong className="text-zinc-900 block">Sidang Pemungutan Suara (20 detik)</strong>
+                  <span>Setiap orang memilih 1 nama yang paling dicurigai (tidak bisa memilih diri sendiri). Pemilik suara terbanyak langsung dikeluarkan dan perannya dibuka. Jika suara seri atau kosong, tidak ada yang keluar di ronde itu.</span>
+                </div>
+              </li>
+            </ol>
+          </section>
+
+          <section aria-labelledby="dk-win-heading" className="bg-[#FFFDF9] rounded-2xl border border-[#DED8CA] p-6 space-y-4">
+            <h2 id="dk-win-heading" className="text-lg font-bold text-zinc-900">
+              Cara Menang dan Aturan Main
+            </h2>
+            <div className="space-y-3 text-sm text-zinc-700 leading-relaxed">
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
+                <strong className="text-emerald-900 block mb-0.5">Tim Mahasiswa Menang</strong>
+                <span>Semua Dosen Killer berhasil ketahuan dan dikeluarkan lewat sidang.</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-rose-50/70 border border-rose-200">
+                <strong className="text-rose-900 block mb-0.5">Tim Dosen Killer Menang</strong>
+                <span>Jumlah Dosen Killer yang masih bertahan sudah sama atau lebih banyak daripada sisa mahasiswa di kelas.</span>
+              </div>
+              <ul className="list-disc list-inside space-y-1.5 text-xs sm:text-sm text-zinc-700 pt-1">
+                <li>Setiap anggota tim pemenang mendapat <strong>+3.000 poin</strong> di papan klasemen (kecuali saat mode uji coba).</li>
+                <li>Teman yang telat bergabung ketika kelas sudah berjalan otomatis ikut menyaksikan sebagai penonton.</li>
+                <li>Usahakan layar HP tetap menyala selama sidang berlangsung supaya tidak tertinggal giliran memilih.</li>
+              </ul>
+            </div>
+          </section>
         </div>
       </div>
     );
@@ -755,33 +906,25 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
 
           <div className="bg-white p-6 rounded-2xl mb-8 border border-[#DED6C6] text-left">
             <h2 className="font-bold text-amber-700 mb-4 text-base text-center border-b border-[#DED6C6] pb-3">
-              Panduan Peran Kelas
+              Panduan Tokoh di Kelas
             </h2>
-            <div className="grid sm:grid-cols-2 gap-4 text-xs">
-              <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
-                <h3 className="text-rose-700 font-bold mb-1">Dosen Killer</h3>
-                <p className="text-stone-600 leading-relaxed">
-                  Memilih 1 mahasiswa setiap malam untuk diberi nilai E (DO) dan dapat berdiskusi di ruang pesan khusus sesama Dosen Killer.
-                </p>
-              </div>
-              <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
-                <h3 className="text-sky-800 font-bold mb-1">Mahasiswa Intel</h3>
-                <p className="text-stone-600 leading-relaxed">
-                  Menerima petunjuk 3 nama kandidat setiap siang (1 Dosen Killer asli dan 2 Mahasiswa) untuk membantu arah diskusi.
-                </p>
-              </div>
-              <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
-                <h3 className="text-green-800 font-bold mb-1">Mahasiswa Ahli</h3>
-                <p className="text-stone-600 leading-relaxed">
-                  Memilih 1 teman setiap malam untuk diselamatkan nilainya agar terhindar dari ancaman DO.
-                </p>
-              </div>
-              <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
-                <h3 className="text-amber-700 font-bold mb-1">Mahasiswa Uptodate & Biasa</h3>
-                <p className="text-stone-600 leading-relaxed">
-                  Mahasiswa Uptodate kebal serangan malam pertama, sementara seluruh mahasiswa berdiskusi dan memilih suspek saat siang hari.
-                </p>
-              </div>
+            <div className="grid sm:grid-cols-2 gap-3 text-xs">
+              {DOSEN_KILLER_ROLES.map((role) => (
+                <div
+                  key={role.id}
+                  className={`bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6] ${role.id === 'biasa' ? 'sm:col-span-2' : ''}`}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <h3 className={`font-bold ${role.accentClass}`}>{role.name}</h3>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${role.teamClass}`}>
+                      {role.team}
+                    </span>
+                  </div>
+                  <p className="text-stone-700 leading-relaxed">
+                    {role.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
 

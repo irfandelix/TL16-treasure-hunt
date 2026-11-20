@@ -1,5 +1,25 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-036',
+    date: '20 November 2026',
+    version: 'v2.9.5',
+    category: 'Tampilan',
+    title: 'Panduan Tokoh dan Cara Main di Halaman Awal Sidang Dosen Killer',
+    commit: 'latest',
+    summary: 'Menambahkan penjelasan lengkap tentang daftar tokoh, jalannya satu ronde, dan syarat menang langsung di halaman masuk Sidang Dosen Killer memakai bahasa sehari-hari.',
+    changes: [
+      'Menampilkan pengenalan 5 peran beserta kubu dan tugas masing-masing sebelum pemain membuat atau bergabung ke kelas Sidang Dosen Killer.',
+      'Menambahkan ringkasan alur permainan dan syarat menang agar alumni yang baru pertama kali ikut bisa langsung paham.',
+      'Menyamakan panduan tokoh di dalam ruang tunggu kelas serta memperbaiki kontras pesan peringatan saat kode kelas kosong.'
+    ],
+    docs: {
+      files: [
+        'src/components/DosenKillerGame.jsx'
+      ],
+      notes: 'Penjelasan tokoh sekarang tampil sejak halaman awal sekaligus di ruang tunggu agar pemain bisa membacanya santai sebelum sesi dimulai.'
+    }
+  },
+  {
     id: 'upd-035',
     date: '20 November 2026',
     version: 'v2.9.4',
