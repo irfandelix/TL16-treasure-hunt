@@ -797,7 +797,7 @@ export default function GameDashboard() {
     if (!canOpenKapsul) {
       return renderAccessDenied(
         kapsulConfig?.enabled ? kapsulConfig?.unlock_at : null,
-        'Kapsul Waktu 2016 ke 2026'
+        'Agenda Kejutan TL 2016'
       );
     }
     return renderSubView(FormKapsulWaktu, { userLocal: user });
@@ -1090,67 +1090,63 @@ export default function GameDashboard() {
           {/* BAGIAN 1: AGENDA UTAMA & PROFIL + WHEEL OF FAMILY (EDITORIAL 2-KOLOM) */}
           <section aria-labelledby="highlight-heading">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6 items-stretch">
-              <article className="md:col-span-7 bg-[#FFFDF9] p-5 sm:p-6 lg:p-8 rounded-2xl border border-[#DED8CA] flex flex-col justify-between gap-6">
-                <div className="space-y-4">
+              {canOpenKapsul ? (
+                <article className="md:col-span-7 bg-[#FFFDF9] p-5 sm:p-6 lg:p-8 rounded-2xl border border-[#DED8CA] flex flex-col justify-between gap-6">
+                  <div className="space-y-4">
+                    <img
+                      src="/Asset 2.webp"
+                      alt="Happy Anniversary Teknik Lingkungan 2016"
+                      width="220"
+                      height="86"
+                      fetchPriority="high"
+                      className="w-40 sm:w-48 h-auto"
+                    />
+                    <div>
+                      <h2 id="highlight-heading" className="text-2xl sm:text-3xl font-bold text-zinc-900 leading-tight">
+                        Kapsul Waktu 2016 ke 2026
+                      </h2>
+                      <p className="text-zinc-600 text-sm sm:text-base mt-2 leading-relaxed max-w-xl">
+                        Unggah satu foto terbaikmu di tahun 2026 beserta pesan hangat atau cerita lucu masa kuliah untuk{' '}
+                        <RedactedText revealed={Boolean(user.is_admin || wheelUnlocked)} widthClass="w-48">
+                          diputar bersama pada puncak acara Wheel of Family
+                        </RedactedText>
+                        .
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {!isKapsulUnlocked && hasTestAccess && (
+                      <p className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2">
+                        {kapsulConfig?.enabled && kapsulConfig?.unlock_at
+                          ? `Pratinjau Panitia: Kapsul Waktu dijadwalkan buka untuk peserta pada ${formatReleaseDateId(kapsulConfig.unlock_at)}.`
+                          : 'Pratinjau Panitia: Kapsul Waktu masih dinonaktifkan untuk peserta.'}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => navigateToView('kapsul')}
+                      className="cursor-pointer w-full sm:w-auto min-h-[48px] px-6 py-3 bg-[#14532D] hover:bg-[#166534] rounded-xl font-bold text-white text-sm sm:text-base transition-colors"
+                    >
+                      Isi Kapsul Waktu Sekarang
+                    </button>
+                  </div>
+                </article>
+              ) : (
+                <article className="md:col-span-7 bg-[#FFFDF9] p-8 sm:p-10 rounded-2xl border border-[#DED8CA] flex items-center justify-center">
+                  <h2 id="highlight-heading" className="sr-only">
+                    Happy Anniversary Teknik Lingkungan 2016
+                  </h2>
                   <img
                     src="/Asset 2.webp"
                     alt="Happy Anniversary Teknik Lingkungan 2016"
-                    width="220"
-                    height="86"
+                    width="280"
+                    height="109"
                     fetchPriority="high"
-                    className="w-40 sm:w-48 h-auto"
+                    className="w-56 sm:w-72 h-auto"
                   />
-                  <div>
-                    <h2 id="highlight-heading" className="text-2xl sm:text-3xl font-bold text-zinc-900 leading-tight">
-                      Kapsul Waktu 2016 ke 2026
-                    </h2>
-                    <p className="text-zinc-600 text-sm sm:text-base mt-2 leading-relaxed max-w-xl">
-                      Unggah satu foto terbaikmu di tahun 2026 beserta pesan hangat atau cerita lucu masa kuliah untuk{' '}
-                      <RedactedText revealed={Boolean(user.is_admin || wheelUnlocked)} widthClass="w-48">
-                        diputar bersama pada puncak acara Wheel of Family
-                      </RedactedText>
-                      .
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {canOpenKapsul ? (
-                    <>
-                      {!isKapsulUnlocked && hasTestAccess && (
-                        <p className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2">
-                          {kapsulConfig?.enabled && kapsulConfig?.unlock_at
-                            ? `Pratinjau Panitia: Kapsul Waktu dijadwalkan buka untuk peserta pada ${formatReleaseDateId(kapsulConfig.unlock_at)}.`
-                            : 'Pratinjau Panitia: Kapsul Waktu masih dinonaktifkan untuk peserta.'}
-                        </p>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => navigateToView('kapsul')}
-                        className="cursor-pointer w-full sm:w-auto min-h-[48px] px-6 py-3 bg-[#14532D] hover:bg-[#166534] rounded-xl font-bold text-white text-sm sm:text-base transition-colors"
-                      >
-                        Isi Kapsul Waktu Sekarang
-                      </button>
-                    </>
-                  ) : (
-                    <div
-                      role="status"
-                      className="rounded-xl bg-[#F1ECE0] border border-[#DED8CA] px-4 py-3 text-sm text-zinc-800 space-y-1"
-                    >
-                      <p className="font-bold text-zinc-900">
-                        {kapsulConfig?.enabled && kapsulConfig?.unlock_at
-                          ? 'Kapsul Waktu Belum Dibuka'
-                          : 'Kapsul Waktu Dinonaktifkan Sementara'}
-                      </p>
-                      <p className="text-xs sm:text-sm text-zinc-700 leading-relaxed">
-                        {kapsulConfig?.enabled && kapsulConfig?.unlock_at
-                          ? `Pengisian foto dan pesan akan dibuka mulai ${formatReleaseDateId(kapsulConfig.unlock_at)}.`
-                          : 'Fitur ini sedang dinonaktifkan sementara oleh panitia dan akan dibuka sesuai jadwal yang diumumkan.'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </article>
+                </article>
+              )}
 
               <article className="md:col-span-5 bg-[#F1ECE0] p-5 sm:p-6 lg:p-8 rounded-2xl border border-[#DED8CA] flex flex-col justify-between gap-6">
                 <div className="flex items-center justify-between gap-3 pb-5 border-b border-[#D8D0C0]">
