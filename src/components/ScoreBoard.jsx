@@ -117,6 +117,13 @@ export function computeCategoryAwards(alumniList, { isMonopoliUnlocked = false, 
       }
     }
     if (best > 0 && holders.length > 0) {
+      holders.sort((a, b) => {
+        const totalDiff =
+          getTotalScore(b, isMonopoliUnlocked, isWerewolfUnlocked) -
+          getTotalScore(a, isMonopoliUnlocked, isWerewolfUnlocked);
+        if (totalDiff !== 0) return totalDiff;
+        return String(a.nim || '').localeCompare(String(b.nim || ''));
+      });
       awards.push({ ...spec, bestScore: best, holders });
     }
   }

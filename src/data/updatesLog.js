@@ -1,5 +1,23 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-032',
+    date: '20 November 2026',
+    version: 'v2.9.1',
+    category: 'Perbaikan Bug',
+    title: 'Penyelarasan Urutan Seri Gelar Rekor Bidang dengan Podium #1',
+    commit: 'latest',
+    summary: 'Menyamakan aturan pemecah seri pada Gelar Pemegang Rekor Bidang dengan urutan Podium klasemen agar nama pemegang gelar utama selalu cocok dengan Peringkat #1 bidang tersebut.',
+    changes: [
+      'Menambahkan pengurutan pemecah seri (total skor tertinggi lalu NIM terkecil) pada computeCategoryAwards di ScoreBoard.jsx sehingga daftar pemegang skor seri tidak lagi mengikuti urutan acak dari database.'
+    ],
+    docs: {
+      files: [
+        'src/components/ScoreBoard.jsx'
+      ],
+      notes: 'Saat beberapa alumni memiliki skor tertinggi yang sama di satu bidang, nama pertama di strip Gelar Pemegang Rekor Bidang kini identik dengan Peringkat #1 di Podium.'
+    }
+  },
+  {
     id: 'upd-031',
     date: '20 November 2026',
     version: 'v2.9.0',
