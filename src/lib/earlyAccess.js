@@ -131,7 +131,7 @@ export async function checkShouldSkipRoomScoring(gameColumn, participantNims = [
   try {
     const { data, error } = await supabase
       .from('app_settings')
-      .select('monopoli_unlock_date, werewolf_unlock_date, patch_notes')
+      .select('monopoli_unlock_date, werewolf_unlock_date, uno_unlock_date, patch_notes')
       .eq('id', 1)
       .single();
 
@@ -142,7 +142,13 @@ export async function checkShouldSkipRoomScoring(gameColumn, participantNims = [
 
     const eaConfig = extractEarlyAccessConfig(data);
     const unlockDateIso =
-      gameColumn === 'monopoli' ? data.monopoli_unlock_date : data.werewolf_unlock_date;
+      gameColumn === 'monopoli'
+        ? data.monopoli_unlock_date
+        : gameColumn === 'werewolf'
+        ? data.werewolf_unlock_date
+        : gameColumn === 'uno'
+        ? data.uno_unlock_date
+        : null;
 
     return shouldSkipScoreWrite({
       unlockDateIso,
@@ -153,4 +159,38 @@ export async function checkShouldSkipRoomScoring(gameColumn, participantNims = [
   } catch {
     return isAdminSession();
   }
+}
+
+const ALLOWED_SCORE_COLUMNS = new Set(['skor_monopoli', 'skor_werewolf', 'skor_uno', 'skor_athlete']);
+
+/**
+ * Safely increment an alumni leaderboard score column with compare-and-swap retries.
+ */
+export async function awardAlumniPoints(nim, columnName, amount) {
+  if (!nim || !amount || amount <= 0 || !ALLOWED_SCORE_COLUMNS.has(columnName)) return false;
+  try {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const { data: row, error: readErr } = await supabase
+        .from('alumni')
+        .select(columnName)
+        .eq('nim', nim)
+        .single();
+      if (readErr || !row) return false;
+
+      const currentVal = Number(row[columnName] || 0);
+      const nextVal = currentVal + amount;
+      const { data: saved, error: writeErr } = await supabase
+        .from('alumni')
+        .update({ [columnName]: nextVal })
+        .eq('nim', nim)
+        .eq(columnName, row[columnName] ?? 0)
+        .select(columnName);
+
+      if (writeErr) return false;
+      if (saved && saved.length > 0) return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
 }

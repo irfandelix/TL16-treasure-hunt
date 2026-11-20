@@ -1,5 +1,30 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-038',
+    date: '20 November 2026',
+    version: 'v2.9.7',
+    category: 'Fitur Baru',
+    title: 'Sistem Poin Klasemen untuk UNO Sedulur 16 dan Magical Athlete TL 2016',
+    commit: 'latest',
+    summary: 'Kemenangan di UNO Sedulur 16 dan Magical Athlete TL 2016 kini ikut menyumbang poin ke papan klasemen, lengkap dengan keterangan hadiah poin di panduan masing-masing permainan.',
+    changes: [
+      'Menambahkan hadiah +3.000 poin klasemen bagi pemenang meja di UNO Sedulur 16 dan hadiah peringkat (+3.000 / +1.500 / +750 poin) di akhir 4 ronde Magical Athlete TL 2016.',
+      'Menambahkan keterangan hadiah poin klasemen pada panduan awal dan layar akhir kedua permainan, sambil tetap mengecualikan sesi uji coba agar klasemen tetap adil.',
+      'Menghubungkan skor UNO Sedulur 16 dan Magical Athlete TL 2016 ke total klasemen, tab urutan, dan gelar pemegang rekor bidang saat jadwalnya sudah terbuka.'
+    ],
+    docs: {
+      files: [
+        'src/data/scores_uno_athlete_schema.sql',
+        'src/lib/earlyAccess.js',
+        'src/components/UnoBrutalGame.jsx',
+        'src/components/MagicalAthleteGame.jsx',
+        'src/components/ScoreBoard.jsx',
+        'src/components/UpdatesPage.jsx'
+      ],
+      notes: 'Papan klasemen tetap tampil normal meskipun kolom skor baru belum ditambahkan di server.'
+    }
+  },
+  {
     id: 'upd-037',
     date: '20 November 2026',
     version: 'v2.9.6',

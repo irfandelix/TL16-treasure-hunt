@@ -71,24 +71,36 @@ const IconRefresh = ({ className = 'w-4 h-4' }) => (
   </svg>
 );
 
-function getTotalScore(person, isMonopoliUnlocked, isWerewolfUnlocked) {
+function getTotalScore(person, isMonopoliUnlocked, isWerewolfUnlocked, isUnoUnlocked = false, isAthleteUnlocked = false) {
   return (
     (person.skor_peta || 0) +
     (person.skor_muka || 0) +
     (isMonopoliUnlocked ? (person.skor_monopoli || 0) : 0) +
-    (isWerewolfUnlocked ? (person.skor_werewolf || 0) : 0)
+    (isWerewolfUnlocked ? (person.skor_werewolf || 0) : 0) +
+    (isUnoUnlocked ? (person.skor_uno || 0) : 0) +
+    (isAthleteUnlocked ? (person.skor_athlete || 0) : 0)
   );
 }
 
-function getCategoryScore(person, sortKey, isMonopoliUnlocked, isWerewolfUnlocked) {
+function getCategoryScore(person, sortKey, isMonopoliUnlocked, isWerewolfUnlocked, isUnoUnlocked = false, isAthleteUnlocked = false) {
   if (sortKey === 'peta') return person.skor_peta || 0;
   if (sortKey === 'muka') return person.skor_muka || 0;
   if (sortKey === 'monopoli') return isMonopoliUnlocked ? (person.skor_monopoli || 0) : 0;
   if (sortKey === 'werewolf') return isWerewolfUnlocked ? (person.skor_werewolf || 0) : 0;
-  return getTotalScore(person, isMonopoliUnlocked, isWerewolfUnlocked);
+  if (sortKey === 'uno') return isUnoUnlocked ? (person.skor_uno || 0) : 0;
+  if (sortKey === 'athlete') return isAthleteUnlocked ? (person.skor_athlete || 0) : 0;
+  return getTotalScore(person, isMonopoliUnlocked, isWerewolfUnlocked, isUnoUnlocked, isAthleteUnlocked);
 }
 
-export function computeCategoryAwards(alumniList, { isMonopoliUnlocked = false, isWerewolfUnlocked = false } = {}) {
+export function computeCategoryAwards(
+  alumniList,
+  {
+    isMonopoliUnlocked = false,
+    isWerewolfUnlocked = false,
+    isUnoUnlocked = false,
+    isAthleteUnlocked = false
+  } = {}
+) {
   if (!Array.isArray(alumniList) || alumniList.length === 0) return [];
 
   const specs = [
@@ -100,6 +112,12 @@ export function computeCategoryAwards(alumniList, { isMonopoliUnlocked = false, 
   }
   if (isWerewolfUnlocked) {
     specs.push({ id: 'werewolf', title: 'Detektif Sidang', field: 'skor_werewolf', categoryLabel: 'Dosen Killer' });
+  }
+  if (isUnoUnlocked) {
+    specs.push({ id: 'uno', title: 'Juara Kartu UNO', field: 'skor_uno', categoryLabel: 'UNO' });
+  }
+  if (isAthleteUnlocked) {
+    specs.push({ id: 'athlete', title: 'Pelari Tercepat', field: 'skor_athlete', categoryLabel: 'Magical Athlete' });
   }
 
   const awards = [];
@@ -119,8 +137,8 @@ export function computeCategoryAwards(alumniList, { isMonopoliUnlocked = false, 
     if (best > 0 && holders.length > 0) {
       holders.sort((a, b) => {
         const totalDiff =
-          getTotalScore(b, isMonopoliUnlocked, isWerewolfUnlocked) -
-          getTotalScore(a, isMonopoliUnlocked, isWerewolfUnlocked);
+          getTotalScore(b, isMonopoliUnlocked, isWerewolfUnlocked, isUnoUnlocked, isAthleteUnlocked) -
+          getTotalScore(a, isMonopoliUnlocked, isWerewolfUnlocked, isUnoUnlocked, isAthleteUnlocked);
         if (totalDiff !== 0) return totalDiff;
         return String(a.nim || '').localeCompare(String(b.nim || ''));
       });
@@ -136,8 +154,11 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
   const [isRevealed, setIsRevealed] = useState(false);
   const [isMonopoliUnlocked, setIsMonopoliUnlocked] = useState(false);
   const [isWerewolfUnlocked, setIsWerewolfUnlocked] = useState(false);
+  const [isUnoUnlocked, setIsUnoUnlocked] = useState(false);
+  const [isAthleteUnlocked, setIsAthleteUnlocked] = useState(false);
   const [isPublicMonopoliUnlocked, setIsPublicMonopoliUnlocked] = useState(false);
   const [isPublicWerewolfUnlocked, setIsPublicWerewolfUnlocked] = useState(false);
+  const [isPublicUnoUnlocked, setIsPublicUnoUnlocked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [sortBy, setSortBy] = useState('total');
@@ -149,14 +170,11 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
     try {
       const { data: settings, error: settingsError } = await supabase
         .from('app_settings')
-        .select('show_scoreboard, monopoli_unlock_date, werewolf_unlock_date')
+        .select('show_scoreboard, monopoli_unlock_date, werewolf_unlock_date, uno_unlock_date')
         .eq('id', 1)
         .single();
 
       if (settingsError) throw settingsError;
-
-      let monopoliBuka = false;
-      let werewolfBuka = false;
 
       if (settings) {
         setIsRevealed(Boolean(settings.show_scoreboard));
@@ -167,19 +185,27 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
         const publicWerewolfBuka = Boolean(
           settings.werewolf_unlock_date && now >= new Date(settings.werewolf_unlock_date).getTime()
         );
-
-        monopoliBuka = checkAdmin || publicMonopoliBuka;
-        werewolfBuka = checkAdmin || publicWerewolfBuka;
+        const publicUnoBuka = Boolean(
+          settings.uno_unlock_date && now >= new Date(settings.uno_unlock_date).getTime()
+        );
 
         setIsPublicMonopoliUnlocked(publicMonopoliBuka);
         setIsPublicWerewolfUnlocked(publicWerewolfBuka);
-        setIsMonopoliUnlocked(monopoliBuka);
-        setIsWerewolfUnlocked(werewolfBuka);
+        setIsPublicUnoUnlocked(publicUnoBuka);
+        setIsMonopoliUnlocked(checkAdmin || publicMonopoliBuka);
+        setIsWerewolfUnlocked(checkAdmin || publicWerewolfBuka);
+        setIsUnoUnlocked(checkAdmin || publicUnoBuka);
+        setIsAthleteUnlocked(checkAdmin);
       }
 
       let alumniRes = await supabase
         .from('alumni')
-        .select('nim, nama, skor_peta, skor_muka, skor_monopoli, skor_werewolf, avatar_config');
+        .select('nim, nama, skor_peta, skor_muka, skor_monopoli, skor_werewolf, skor_uno, skor_athlete, avatar_config');
+      if (alumniRes.error) {
+        alumniRes = await supabase
+          .from('alumni')
+          .select('nim, nama, skor_peta, skor_muka, skor_monopoli, skor_werewolf, avatar_config');
+      }
       if (alumniRes.error) {
         alumniRes = await supabase
           .from('alumni')
@@ -222,8 +248,14 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
     if (isWerewolfUnlocked) {
       list.push({ id: 'werewolf', label: 'Dosen Killer' });
     }
+    if (isUnoUnlocked) {
+      list.push({ id: 'uno', label: 'UNO' });
+    }
+    if (isAthleteUnlocked) {
+      list.push({ id: 'athlete', label: 'Magical Athlete' });
+    }
     return list;
-  }, [isMonopoliUnlocked, isWerewolfUnlocked]);
+  }, [isMonopoliUnlocked, isWerewolfUnlocked, isUnoUnlocked, isAthleteUnlocked]);
 
   useEffect(() => {
     if (!categories.some((item) => item.id === sortBy)) {
@@ -235,8 +267,8 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
     return [...alumni]
       .map((person) => ({
         ...person,
-        _total: getTotalScore(person, isMonopoliUnlocked, isWerewolfUnlocked),
-        _activeScore: getCategoryScore(person, sortBy, isMonopoliUnlocked, isWerewolfUnlocked)
+        _total: getTotalScore(person, isMonopoliUnlocked, isWerewolfUnlocked, isUnoUnlocked, isAthleteUnlocked),
+        _activeScore: getCategoryScore(person, sortBy, isMonopoliUnlocked, isWerewolfUnlocked, isUnoUnlocked, isAthleteUnlocked)
       }))
       .sort((a, b) => {
         if (b._activeScore !== a._activeScore) return b._activeScore - a._activeScore;
@@ -247,7 +279,7 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
         ...person,
         _rank: index + 1
       }));
-  }, [alumni, isMonopoliUnlocked, isWerewolfUnlocked, sortBy]);
+  }, [alumni, isMonopoliUnlocked, isWerewolfUnlocked, isUnoUnlocked, isAthleteUnlocked, sortBy]);
 
   const leaderScore = useMemo(() => {
     if (rankedAlumni.length === 0) return 0;
@@ -291,8 +323,13 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
 
   const categoryAwards = useMemo(() => {
     if (!shouldReveal) return [];
-    return computeCategoryAwards(alumni, { isMonopoliUnlocked, isWerewolfUnlocked });
-  }, [shouldReveal, alumni, isMonopoliUnlocked, isWerewolfUnlocked]);
+    return computeCategoryAwards(alumni, {
+      isMonopoliUnlocked,
+      isWerewolfUnlocked,
+      isUnoUnlocked,
+      isAthleteUnlocked
+    });
+  }, [shouldReveal, alumni, isMonopoliUnlocked, isWerewolfUnlocked, isUnoUnlocked, isAthleteUnlocked]);
 
   const resolveAvatar = (person) => {
     if (person.nim === currentNim && currentAvatarConfig) return currentAvatarConfig;
@@ -358,6 +395,12 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
     }
     if (isWerewolfUnlocked) {
       items.push({ key: 'werewolf', label: 'Dosen Killer', value: person.skor_werewolf || 0 });
+    }
+    if (isUnoUnlocked) {
+      items.push({ key: 'uno', label: 'UNO', value: person.skor_uno || 0 });
+    }
+    if (isAthleteUnlocked) {
+      items.push({ key: 'athlete', label: 'Magical Athlete', value: person.skor_athlete || 0 });
     }
 
     return (
@@ -552,9 +595,14 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
                           ? { label: 'Dosen Killer', value: currentUserEntry.skor_werewolf || 0 }
                           : { redacted: true, width: 190 }
                       ];
+                      if (isPublicUnoUnlocked) {
+                        breakdownItems.push({ label: 'UNO', value: currentUserEntry.skor_uno || 0 });
+                      }
                       const isLockedSort =
                         (sortBy === 'monopoli' && !isPublicMonopoliUnlocked) ||
-                        (sortBy === 'werewolf' && !isPublicWerewolfUnlocked);
+                        (sortBy === 'werewolf' && !isPublicWerewolfUnlocked) ||
+                        (sortBy === 'uno' && !isPublicUnoUnlocked) ||
+                        sortBy === 'athlete';
                       const publicScoreLabel =
                         sortBy === 'total' || isLockedSort
                           ? 'TOTAL POIN KENANGAN'

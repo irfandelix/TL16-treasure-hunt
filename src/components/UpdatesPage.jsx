@@ -21,7 +21,7 @@ const SECRET_MODE_RULES = [
     key: 'uno',
     widthClass: 'w-20',
     pattern:
-      'UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|\\bUNO\\b|Titip Absen|4 warna|top_card|current_turn|tumpuk kartu|meja kartu|keluar meja|kartu Skip dan \\+2|IconCards',
+      'UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|skor_uno|Juara Kartu UNO|\\bUNO\\b|Titip Absen|4 warna|top_card|current_turn|tumpuk kartu|meja kartu|keluar meja|kartu Skip dan \\+2|IconCards',
   },
   {
     key: 'wheel',
@@ -33,7 +33,7 @@ const SECRET_MODE_RULES = [
     key: 'athlete',
     widthClass: 'w-24',
     pattern:
-      'src/pages/lock/magical-athlete\\.astro|/lock/magical-athlete|magical-athlete|Magical Athlete TL16|Magical Athlete|MagicalAthleteGame(?:\\.jsx)?|athlete_rooms|athlete_players|athlete_schema\\.sql|athleteCharacters\\.js|\\b5 Permainan\\b|hak Host [^,.]*',
+      'src/pages/lock/magical-athlete\\.astro|/lock/magical-athlete|magical-athlete|Magical Athlete TL16|Magical Athlete|MagicalAthleteGame(?:\\.jsx)?|athlete_rooms|athlete_players|athlete_schema\\.sql|scores_uno_athlete_schema\\.sql|athleteCharacters\\.js|skor_athlete|Pelari Tercepat|\\b5 Permainan\\b|hak Host [^,.]*',
   },
 ];
 

@@ -6,6 +6,7 @@ import InviteLinkButton from './InviteLinkButton';
 import RoomStatusScreen from './RoomStatusScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
+import { checkShouldSkipRoomScoring, awardAlumniPoints } from '../lib/earlyAccess';
 
 const CARD_COLORS = [
   { name: 'Merah', bg: 'bg-rose-700', border: 'border-rose-400', text: 'text-stone-900' },
@@ -52,6 +53,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
   const [myHand, setMyHand] = useState([]);
   const [statusNotice, setStatusNotice] = useState('');
   const [pendingWildCard, setPendingWildCard] = useState(null);
+  const [isTrialSession, setIsTrialSession] = useState(false);
 
   useEffect(() => {
     cleanupFinishedRooms('unobrutal');
@@ -341,6 +343,12 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
       .match({ room_code: currentRoom, nim: user.nim });
 
     if (remaining.length === 0) {
+      const roomNims = players.map((p) => p.nim).filter(Boolean);
+      const skipDb = await checkShouldSkipRoomScoring('uno', roomNims);
+      setIsTrialSession(skipDb);
+      if (!skipDb) {
+        await awardAlumniPoints(user.nim, 'skor_uno', 3000);
+      }
       await supabase
         .from('uno_rooms')
         .update({
@@ -350,7 +358,11 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
         })
         .eq('room_code', currentRoom);
       setRoomStatus('finished');
-      setStatusNotice('UNO Habis! Selamat, kamu berhasil menghabiskan semua kartu di tangan!');
+      setStatusNotice(
+        skipDb
+          ? 'UNO Habis! Kamu menang meja ini (Mode Uji Coba: poin tidak masuk papan klasemen).'
+          : 'UNO Habis! Selamat, kamu menang meja ini dan meraih +3.000 Poin Klasemen!'
+      );
       return;
     }
 
@@ -572,9 +584,9 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
               </p>
             </div>
             <div className="px-6 py-4 bg-[#FAF6EE]/60 flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-5">
-              <strong className="sm:w-48 shrink-0 text-zinc-900">Cara Menang</strong>
+              <strong className="sm:w-48 shrink-0 text-zinc-900">Cara Menang &amp; Poin</strong>
               <p className="leading-relaxed">
-                Siapa pun yang berhasil menghabiskan seluruh kartu di tangannya paling duluan langsung keluar sebagai pemenang meja.
+                Siapa pun yang berhasil menghabiskan seluruh kartu di tangannya paling duluan langsung keluar sebagai pemenang meja dan meraih <strong>+3.000 poin</strong> di papan klasemen (kecuali saat mode uji coba).
               </p>
             </div>
           </div>
@@ -658,6 +670,11 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
         .match({ room_code: currentRoom, nim: turnPlayer.nim });
 
       if (remaining.length === 0) {
+        const roomNims = players.map((p) => p.nim).filter(Boolean);
+        const skipDb = await checkShouldSkipRoomScoring('uno', roomNims);
+        if (!skipDb) {
+          await awardAlumniPoints(turnPlayer.nim, 'skor_uno', 3000);
+        }
         await supabase
           .from('uno_rooms')
           .update({
@@ -846,8 +863,13 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
             <h2 className="text-2xl font-bold text-green-800 mb-2">
               Permainan Selesai!
             </h2>
-            <p className="text-stone-800 text-sm mb-4">
+            <p className="text-stone-800 text-sm mb-2">
               Pemenang putaran ini: <strong className="text-amber-700">{players.find((p) => (Array.isArray(p.hand) && p.hand.length === 0) || p.nim === currentTurn)?.nama || 'Sedulur 16'}</strong>
+            </p>
+            <p className="text-xs font-mono font-bold text-emerald-800 mb-4">
+              {isTrialSession
+                ? 'Mode Uji Coba: poin tidak masuk papan klasemen.'
+                : 'Hadiah pemenang meja: +3.000 Poin Klasemen'}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <StoryShareButton

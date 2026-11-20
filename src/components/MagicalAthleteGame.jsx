@@ -9,6 +9,7 @@ import InviteLinkButton from './InviteLinkButton';
 import RoomStatusScreen from './RoomStatusScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
+import { checkShouldSkipRoomScoring, awardAlumniPoints } from '../lib/earlyAccess';
 
 const TRACK_LOOP_COORDS = {
   0:  { col: 1, row: 1, dir: 'Kanan' },
@@ -70,6 +71,7 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
   const [secretSelectedChar, setSecretSelectedChar] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
   const [isProcessingMove, setIsProcessingMove] = useState(false);
+  const [isTrialSession, setIsTrialSession] = useState(false);
 
   const roomDataRef = useRef(null);
   const playersRef = useRef([]);
@@ -933,6 +935,24 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
     ]);
 
     if (latestRoom.current_round >= 4) {
+      const finalStandings = latestPlayers
+        .map((p) => ({
+          ...p,
+          finalScore: p.id === finisher.id ? (p.score || 0) + pointsAwarded : (p.score || 0)
+        }))
+        .sort((a, b) => b.finalScore - a.finalScore);
+      const humanNims = finalStandings.filter((p) => !p.is_bot && p.nim).map((p) => p.nim);
+      const skipDb = await checkShouldSkipRoomScoring('athlete', humanNims);
+      setIsTrialSession(skipDb);
+      if (!skipDb) {
+        const rankRewards = [3000, 1500, 750];
+        await Promise.all(
+          finalStandings.slice(0, 3).map((p, idx) =>
+            !p.is_bot && p.nim ? awardAlumniPoints(p.nim, 'skor_athlete', rankRewards[idx]) : Promise.resolve()
+          )
+        );
+      }
+
       await supabase.from('athlete_rooms').update({
         status: 'GAME_OVER',
         updated_at: new Date().toISOString(),
@@ -1232,9 +1252,12 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                   <strong className="text-amber-900 block mb-0.5">Ronde 4 (Babak Penentuan)</strong>
                   <span>Poin digandakan! Pemenang ronde terakhir langsung meraih <strong>10 Medali</strong>, jadi masih ada peluang membalikkan keadaan di akhir.</span>
                 </div>
-                <p className="text-xs sm:text-sm text-zinc-700">
-                  Setelah 4 ronde selesai, pemain dengan total medali terbanyak keluar sebagai juara turnamen.
-                </p>
+                <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
+                  <strong className="text-emerald-900 block mb-0.5">Hadiah Poin Klasemen</strong>
+                  <span>
+                    Setelah 4 ronde selesai, pemilik total medali terbanyak menjadi juara turnamen: <strong>Juara #1 +3.000 poin</strong>, <strong>Juara #2 +1.500 poin</strong>, dan <strong>Juara #3 +750 poin</strong> di papan klasemen (kecuali saat mode uji coba).
+                  </span>
+                </div>
               </div>
             </section>
           </div>
@@ -1828,8 +1851,15 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                             <div className="text-xs font-mono text-stone-600">NIM: {p.nim}</div>
                           </div>
                         </div>
-                        <div className="text-base font-bold font-mono text-green-800">
-                          {p.score || 0} Poin
+                        <div className="text-right">
+                          <div className="text-base font-bold font-mono text-green-800">
+                            {p.score || 0} Medali
+                          </div>
+                          {!p.is_bot && idx < 3 && (
+                            <div className="text-[11px] font-mono text-amber-800">
+                              {isTrialSession ? 'Mode Uji Coba' : `+${[3000, 1500, 750][idx]} Poin`}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
