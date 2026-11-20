@@ -2,6 +2,7 @@ import React, { useState, useEffect, Fragment } from 'react';
 import { UPDATES_LOG } from '../data/updatesLog';
 import { supabase } from '../lib/supabaseClient';
 import { isAdminSession } from '../lib/adminAuth';
+import { copyTextToClipboard } from '../lib/roomInvite';
 import RedactedText from './RedactedText';
 
 const SECRET_MODE_RULES = [
@@ -89,6 +90,7 @@ const CATEGORY_STYLE = {
 export default function UpdatesPage({ onBack }) {
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [expandedDocs, setExpandedDocs] = useState(() => ({ [UPDATES_LOG[0]?.id]: true }));
+  const [shareCopied, setShareCopied] = useState(false);
   const [unlockedModes, setUnlockedModes] = useState({
     monopoli: false,
     werewolf: false,
@@ -156,6 +158,31 @@ export default function UpdatesPage({ onBack }) {
     setExpandedDocs((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const handleShareUpdates = async () => {
+    if (typeof window === 'undefined') return;
+    const shareUrl = `${window.location.origin}/updates`;
+    const shareData = {
+      title: 'Catatan Update & Dokumentasi - 1 Dekade TL 2016',
+      text: 'Lihat riwayat pembaruan dan fitur terbaru Portal 1 Dekade Teknik Lingkungan 2016.',
+      url: shareUrl
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+    } catch (err) {
+      if (err?.name === 'AbortError') return;
+    }
+
+    const copied = await copyTextToClipboard(shareUrl);
+    if (copied) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2500);
+    }
+  };
+
   return (
     <div className="min-h-[100dvh] bg-[#FAF6EE] text-stone-900 p-4 sm:p-6 md:p-8 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))] font-sans">
       <div className="max-w-4xl mx-auto">
@@ -180,9 +207,34 @@ export default function UpdatesPage({ onBack }) {
               &larr; Kembali ke Beranda Perayaan
             </a>
           )}
-          <span className="font-mono text-xs font-bold text-stone-600 bg-[#F3EDE0] px-3 py-1.5 rounded-lg border border-[#DED6C6]">
-            Total Pembaruan: {visibleUpdates.length}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleShareUpdates}
+              className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl bg-[#14532D] hover:bg-[#166534] text-white font-bold text-xs sm:text-sm transition-colors"
+            >
+              <svg
+                aria-hidden="true"
+                className="w-4 h-4 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.85"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              <span>{shareCopied ? 'Tautan Disalin!' : 'Bagikan Halaman'}</span>
+            </button>
+            <span className="font-mono text-xs font-bold text-stone-600 bg-[#F3EDE0] px-3 py-2 rounded-lg border border-[#DED6C6]">
+              Total Pembaruan: {visibleUpdates.length}
+            </span>
+          </div>
         </nav>
 
         <header className="mb-8">

@@ -1,5 +1,26 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-039',
+    date: '20 November 2026',
+    version: 'v2.9.8',
+    category: 'Perbaikan',
+    title: 'Perbaikan Tombol Back Browser & Tombol Bagikan Catatan Update',
+    commit: 'latest',
+    summary: 'Menggunakan alamat tagar (#menu) dan penambatan ulang riwayat agar tombol Back tidak melompati beranda, serta menambahkan tombol Bagikan Halaman di Catatan Update & Dokumentasi.',
+    changes: [
+      'Menambahkan alamat tagar unik tiap halaman menu agar riwayat browser membedakan beranda dan halaman permainan.',
+      'Menambatkan ulang riwayat beranda saat sentuhan atau ketikan pertama setelah halaman dimuat ulang atau dibuka dari tautan undangan.',
+      'Menambahkan tombol Bagikan Halaman di bagian atas Catatan Update & Dokumentasi untuk langsung membagikan atau menyalin tautan /updates.'
+    ],
+    docs: {
+      files: [
+        'src/components/GameDashboard.jsx',
+        'src/components/UpdatesPage.jsx'
+      ],
+      notes: 'Chrome melewati entri riwayat yang dibuat otomatis tanpa sentuhan pengguna, sehingga penambatan ulang pada interaksi pertama membuat tombol Back kembali ke beranda acara dengan konsisten.'
+    }
+  },
+  {
     id: 'upd-038',
     date: '20 November 2026',
     version: 'v2.9.7',

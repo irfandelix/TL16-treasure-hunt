@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabaseClient';
 import Login from './Login';
@@ -102,6 +102,21 @@ const ALLOWED_VIEWS = [
   'admin'
 ];
 
+function getBasePathUrl() {
+  return window.location.pathname + window.location.search;
+}
+
+function getViewHashUrl(view) {
+  const base = getBasePathUrl();
+  return view && view !== 'dashboard' ? `${base}#${view}` : base;
+}
+
+function parseViewFromHash(hashValue) {
+  const clean = String(hashValue || '').replace(/^#/, '').trim().toLowerCase();
+  if (clean === 'avatar') return 'avatar';
+  return ALLOWED_VIEWS.includes(clean) ? clean : '';
+}
+
 export default function GameDashboard() {
   const [user, setUser] = useState(null);
   const [isChecking, setIsChecking] = useState(true);
@@ -127,6 +142,8 @@ export default function GameDashboard() {
   const [earlyAccessConfig, setEarlyAccessConfig] = useState(null);
   const [isEarlyAccessActive, setIsEarlyAccessActive] = useState(false);
   const [pendingJoinCode, setPendingJoinCode] = useState(null);
+  const activeViewRef = useRef('dashboard');
+  const needsGestureAnchorRef = useRef(false);
 
   const [mysteryLocked, setMysteryLocked] = useState(false);
   const [showMysteryConfirm, setShowMysteryConfirm] = useState(false);
@@ -158,18 +175,29 @@ export default function GameDashboard() {
         setUser({ nim: savedNim, nama: savedNama, is_admin: isAdmin });
         setAvatarConfig(getLocalAvatarConfig(savedNim) || generateSeedAvatarConfig(savedNim));
 
+        const hashView = parseViewFromHash(window.location.hash);
         const savedView = localStorage.getItem(`active_view_${savedNim}`);
+        const candidateView = hashView && hashView !== 'avatar' ? hashView : savedView;
         let resolvedView = 'dashboard';
-        if (savedView && ALLOWED_VIEWS.includes(savedView) && ((savedView !== 'admin' && savedView !== 'athlete') || isAdmin)) {
-          resolvedView = savedView;
-          setActiveView(savedView);
+        if (
+          candidateView &&
+          ALLOWED_VIEWS.includes(candidateView) &&
+          ((candidateView !== 'admin' && candidateView !== 'athlete') || isAdmin)
+        ) {
+          resolvedView = candidateView;
+          setActiveView(candidateView);
         }
 
-        // Anchor dashboard as base history entry so pressing hardware/browser Back
-        // from any restored sub-view returns to dashboard instead of browser home.
-        window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '');
+        activeViewRef.current = resolvedView;
         if (resolvedView !== 'dashboard') {
-          window.history.pushState({ sedulurView: resolvedView }, '');
+          // Push a distinct hash URL on load AND re-anchor on first user gesture
+          // so Chrome's History Manipulation Intervention does not skip dashboard on Back.
+          window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '', getBasePathUrl());
+          window.history.pushState({ sedulurView: resolvedView, sedulurPushed: true }, '', getViewHashUrl(resolvedView));
+          needsGestureAnchorRef.current = true;
+        } else {
+          window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '', getBasePathUrl());
+          needsGestureAnchorRef.current = false;
         }
 
         if (resolvedView === 'dashboard') {
@@ -318,6 +346,7 @@ export default function GameDashboard() {
   };
 
   useEffect(() => {
+    activeViewRef.current = activeView;
     if (!user?.nim) return;
     if (activeView === 'dashboard') {
       localStorage.removeItem(`active_view_${user.nim}`);
@@ -328,8 +357,20 @@ export default function GameDashboard() {
 
   useEffect(() => {
     if (!user) return;
-    const handlePopState = (event) => {
-      const next = event.state?.sedulurView;
+
+    const anchorHistoryOnUserGesture = () => {
+      if (!needsGestureAnchorRef.current) return;
+      needsGestureAnchorRef.current = false;
+      const current = activeViewRef.current;
+      if (current && current !== 'dashboard') {
+        window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '', getBasePathUrl());
+        window.history.pushState({ sedulurView: current, sedulurPushed: true }, '', getViewHashUrl(current));
+      }
+    };
+
+    const syncFromBrowserHistory = (event) => {
+      needsGestureAnchorRef.current = false;
+      const next = event?.state?.sedulurView || parseViewFromHash(window.location.hash) || 'dashboard';
       if (next === 'avatar') {
         setIsEditingAvatar(true);
         setShowAvatarDesigner(true);
@@ -345,49 +386,63 @@ export default function GameDashboard() {
         (next !== 'admin' || user.is_admin) &&
         (next !== 'athlete' || user.is_admin || isEarlyAccessActive)
       ) {
+        activeViewRef.current = next;
         setActiveView(next);
       } else {
         setPendingJoinCode(null);
+        activeViewRef.current = 'dashboard';
         setActiveView('dashboard');
       }
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('pointerdown', anchorHistoryOnUserGesture, true);
+    window.addEventListener('keydown', anchorHistoryOnUserGesture, true);
+    window.addEventListener('popstate', syncFromBrowserHistory);
+    window.addEventListener('hashchange', syncFromBrowserHistory);
+    return () => {
+      window.removeEventListener('pointerdown', anchorHistoryOnUserGesture, true);
+      window.removeEventListener('keydown', anchorHistoryOnUserGesture, true);
+      window.removeEventListener('popstate', syncFromBrowserHistory);
+      window.removeEventListener('hashchange', syncFromBrowserHistory);
+    };
   }, [user, isEarlyAccessActive]);
 
   const navigateToView = (nextView) => {
+    needsGestureAnchorRef.current = false;
     if (nextView === 'dashboard') {
       setPendingJoinCode(null);
-      if (window.history.state?.sedulurView && !window.history.state?.sedulurBase) {
+      if (window.history.state?.sedulurPushed && !window.history.state?.sedulurBase) {
         window.history.back();
         return;
       }
       setShowAvatarDesigner(false);
       setIsEditingAvatar(false);
+      activeViewRef.current = 'dashboard';
       setActiveView('dashboard');
-      window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '');
+      window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '', getBasePathUrl());
       return;
     }
 
     if (window.history.state?.sedulurView !== nextView) {
-      window.history.pushState({ sedulurView: nextView }, '');
+      window.history.pushState({ sedulurView: nextView, sedulurPushed: true }, '', getViewHashUrl(nextView));
     }
     setShowAvatarDesigner(false);
     setIsEditingAvatar(false);
+    activeViewRef.current = nextView;
     setActiveView(nextView);
   };
 
   const openAvatarEditor = () => {
+    needsGestureAnchorRef.current = false;
     if (window.history.state?.sedulurView !== 'avatar') {
-      window.history.pushState({ sedulurView: 'avatar' }, '');
+      window.history.pushState({ sedulurView: 'avatar', sedulurPushed: true }, '', getViewHashUrl('avatar'));
     }
     setIsEditingAvatar(true);
     setShowAvatarDesigner(true);
   };
 
   const closeAvatarEditor = () => {
-    if (window.history.state?.sedulurView === 'avatar') {
+    if (window.history.state?.sedulurView === 'avatar' && window.history.state?.sedulurPushed) {
       window.history.back();
       return;
     }
@@ -403,8 +458,10 @@ export default function GameDashboard() {
     const alreadySaved = Boolean(loggedInUser.avatar_config) || hasLocalSavedAvatar(loggedInUser.nim);
     setAvatarConfig(localOrSeed);
     setUser(loggedInUser);
+    activeViewRef.current = 'dashboard';
     setActiveView('dashboard');
-    window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '');
+    needsGestureAnchorRef.current = false;
+    window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '', getBasePathUrl());
     setIsEditingAvatar(false);
     setShowAvatarDesigner(!alreadySaved);
   };
@@ -598,8 +655,11 @@ export default function GameDashboard() {
     setPendingJoinCode(invite);
     setShowAvatarDesigner(false);
     setIsEditingAvatar(false);
+    activeViewRef.current = invite.game;
     if (window.history.state?.sedulurView !== invite.game) {
-      window.history.pushState({ sedulurView: invite.game }, '');
+      window.history.replaceState({ sedulurView: 'dashboard', sedulurBase: true }, '', getBasePathUrl());
+      window.history.pushState({ sedulurView: invite.game, sedulurPushed: true }, '', getViewHashUrl(invite.game));
+      needsGestureAnchorRef.current = true;
     }
     setActiveView(invite.game);
   }, [user, gameDates, earlyAccessConfig]);
