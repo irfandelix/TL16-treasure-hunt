@@ -7,6 +7,7 @@ import InviteLinkButton from './InviteLinkButton';
 import RoomStatusScreen from './RoomStatusScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
+import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
 
 const BOARD_DATA = [
   { id: 0,  name: "START",               type: "corner",   side: 0 },
@@ -290,19 +291,7 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
   }, []);
 
   const cleanupExpiredFinishedRooms = useCallback(async () => {
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-    const { data: expiredRooms } = await supabase
-      .from('monopoli_rooms')
-      .select('id')
-      .eq('status', 'finished')
-      .lt('last_active', thirtyMinutesAgo);
-
-    if (expiredRooms && expiredRooms.length > 0) {
-      const expiredIds = expiredRooms.map(r => r.id);
-      await supabase.from('monopoli_properties').delete().in('room_id', expiredIds);
-      await supabase.from('monopoli_players').delete().in('room_id', expiredIds);
-      await supabase.from('monopoli_rooms').delete().in('id', expiredIds);
-    }
+    await cleanupFinishedRooms('monopoli');
   }, []);
 
   const fetchActiveRooms = useCallback(async () => {
@@ -385,6 +374,11 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
       return;
     }
     if (room.status === 'finished') {
+      if (isFinishedRoomExpired('monopoli', room)) {
+        await cleanupFinishedRooms('monopoli');
+        setRoomIssue({ status: 'not_found', code: rCode });
+        return;
+      }
       setRoomIssue({ status: 'finished', code: rCode });
       return;
     }

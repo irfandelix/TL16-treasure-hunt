@@ -12,6 +12,7 @@ import InviteLinkButton from './InviteLinkButton';
 import RoomStatusScreen from './RoomStatusScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
+import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
 
 export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
   const [roomCode, setRoomCode] = useState(''); 
@@ -67,6 +68,7 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
   }, [showAdminWarning]);
 
   useEffect(() => {
+    cleanupFinishedRooms('dosenkiller');
     if (!currentUser.nim) return;
     const savedDkRoom = localStorage.getItem(`dk_room_${currentUser.nim}`);
     if (savedDkRoom && !isInRoom && !initialRoomCode) {
@@ -332,7 +334,7 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
           const { data: freshAfterNight } = await supabase.from('mahasiswa_roles').select('*').eq('room_code', roomCode);
           const nightWinText = await checkOutcome(freshAfterNight);
           if (nightWinText) {
-            nextFase = 'SELESAI'; durasiNext = 999;
+            nextFase = 'SELESAI'; durasiNext = 0;
             pesanBaru = `${pesanBaru} ${nightWinText}`;
           } else {
             nextFase = 'PAGI'; durasiNext = 6;
@@ -374,7 +376,7 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
           const { data: freshPlayers } = await supabase.from('mahasiswa_roles').select('*').eq('room_code', roomCode);
           const winText = await checkOutcome(freshPlayers);
           if (winText) {
-            nextFase = 'SELESAI'; durasiNext = 999;
+            nextFase = 'SELESAI'; durasiNext = 0;
             pesanBaru = winText;
           } else {
             nextFase = 'MALAM'; durasiNext = 30;
@@ -484,6 +486,11 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
       return;
     }
     if (data.fase_game === 'SELESAI') {
+      if (isFinishedRoomExpired('dosenkiller', data)) {
+        await cleanupFinishedRooms('dosenkiller');
+        setRoomIssue({ status: 'not_found', code: kodeBersih });
+        return;
+      }
       setRoomIssue({ status: 'finished', code: kodeBersih });
       return;
     }

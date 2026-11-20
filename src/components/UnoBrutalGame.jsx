@@ -5,6 +5,7 @@ import StoryShareButton from './StoryShareButton';
 import InviteLinkButton from './InviteLinkButton';
 import RoomStatusScreen from './RoomStatusScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
+import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
 
 const CARD_COLORS = [
   { name: 'Merah', bg: 'bg-rose-700', border: 'border-rose-400', text: 'text-stone-900' },
@@ -53,6 +54,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
   const [pendingWildCard, setPendingWildCard] = useState(null);
 
   useEffect(() => {
+    cleanupFinishedRooms('unobrutal');
     const nim = localStorage.getItem('user_nim');
     const nama = localStorage.getItem('user_nama');
     if (nim && nama) {
@@ -197,7 +199,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
     try {
       const { data: roomData, error: roomError } = await supabase
         .from('uno_rooms')
-        .select('status')
+        .select('*')
         .eq('room_code', cleanCode)
         .single();
 
@@ -206,6 +208,11 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
         return;
       }
       if (roomData.status === 'finished') {
+        if (isFinishedRoomExpired('unobrutal', roomData)) {
+          await cleanupFinishedRooms('unobrutal');
+          setRoomIssue({ status: 'not_found', code: cleanCode });
+          return;
+        }
         setRoomIssue({ status: 'finished', code: cleanCode });
         return;
       }
@@ -337,7 +344,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
       await supabase
         .from('uno_rooms')
         .update({
-          top_card: playedCard,
+          top_card: { ...playedCard, finishedAt: new Date().toISOString() },
           status: 'finished',
           current_turn: user.nim
         })
@@ -635,7 +642,11 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
       if (remaining.length === 0) {
         await supabase
           .from('uno_rooms')
-          .update({ top_card: playedCard, status: 'finished', current_turn: turnPlayer.nim })
+          .update({
+            top_card: { ...playedCard, finishedAt: new Date().toISOString() },
+            status: 'finished',
+            current_turn: turnPlayer.nim
+          })
           .eq('room_code', currentRoom)
           .eq('current_turn', currentTurn);
         return;

@@ -8,6 +8,7 @@ import StoryShareButton from './StoryShareButton';
 import InviteLinkButton from './InviteLinkButton';
 import RoomStatusScreen from './RoomStatusScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
+import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
 
 const TRACK_LOOP_COORDS = {
   0:  { col: 1, row: 1, dir: 'Kanan' },
@@ -277,6 +278,11 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
       return;
     }
     if (room.status === 'GAME_OVER') {
+      if (isFinishedRoomExpired('athlete', room)) {
+        await cleanupFinishedRooms('athlete');
+        setRoomIssue({ status: 'not_found', code });
+        return;
+      }
       setRoomIssue({ status: 'finished', code });
       return;
     }
@@ -307,6 +313,10 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
     setRoomData(null);
     setPlayers([]);
   };
+
+  useEffect(() => {
+    cleanupFinishedRooms('athlete');
+  }, []);
 
   useEffect(() => {
     if (!initialRoomCode || autoJoinedRef.current || !isLoggedIn || isInRoom) return;
@@ -925,6 +935,7 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
     if (latestRoom.current_round >= 4) {
       await supabase.from('athlete_rooms').update({
         status: 'GAME_OVER',
+        updated_at: new Date().toISOString(),
         last_action: `TURNAMEN SELESAI! ${victoryText} Selamat kepada para juara!`
       }).eq('room_code', roomCode);
     } else {

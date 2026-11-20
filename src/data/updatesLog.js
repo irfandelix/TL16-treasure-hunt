@@ -1,5 +1,28 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-034',
+    date: '20 November 2026',
+    version: 'v2.9.3',
+    category: 'Fitur Baru',
+    title: 'Pembersihan Otomatis Ruangan Selesai Setelah 30 Menit',
+    commit: 'latest',
+    summary: 'Menyeragamkan penghapusan otomatis ruangan yang telah selesai setelah 30 menit di seluruh permainan multiplayer agar data ruangan di server tetap bersih.',
+    changes: [
+      'Membuat modul bersama roomCleanup.js untuk mengecek batas waktu 30 menit dan menghapus data ruangan selesai beserta pemain/pesan terkait secara seragam.',
+      'Menghubungkan pembersihan otomatis 30 menit di MonopoliBoard.jsx, DosenKillerGame.jsx, UnoBrutalGame.jsx, dan MagicalAthleteGame.jsx baik saat membuka lobi maupun saat tautan ruangan lama diakses.'
+    ],
+    docs: {
+      files: [
+        'src/lib/roomCleanup.js',
+        'src/components/MonopoliBoard.jsx',
+        'src/components/DosenKillerGame.jsx',
+        'src/components/UnoBrutalGame.jsx',
+        'src/components/MagicalAthleteGame.jsx'
+      ],
+      notes: 'Selama 30 menit pertama setelah permainan tamat, pemain tetap sempat melihat hasil/mengunduh poster dan link lama menampilkan status Permainan Sudah Selesai; setelah lewat 30 menit, ruangan dihapus otomatis dan menampilkan status Ruangan Tidak Ditemukan.'
+    }
+  },
+  {
     id: 'upd-033',
     date: '20 November 2026',
     version: 'v2.9.2',
