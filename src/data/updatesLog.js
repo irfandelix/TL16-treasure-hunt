@@ -1,5 +1,25 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-040',
+    date: '20 November 2026',
+    version: 'v2.9.9',
+    category: 'Keamanan',
+    title: 'Halaman Pemberitahuan untuk Agenda yang Belum Dibuka',
+    commit: 'latest',
+    summary: 'Jika seseorang membuka tautan permainan atau agenda yang belum memasuki jadwal rilis resminya, layar kini langsung menampilkan halaman pemberitahuan untuk menunggu tanggal mainnya.',
+    changes: [
+      'Menambahkan tampilan Akses Dibatasi pada halaman status ruangan lengkap dengan jadwal buka (jika sudah ditentukan) dan tombol kembali ke beranda.',
+      'Mengarahkan seluruh tautan undangan atau alamat langsung ke halaman pemberitahuan tersebut apabila jadwal permainan belum dibuka.'
+    ],
+    docs: {
+      files: [
+        'src/components/RoomStatusScreen.jsx',
+        'src/components/GameDashboard.jsx'
+      ],
+      notes: 'Nama permainan yang masih dirahasiakan tidak ditampilkan di halaman pemberitahuan ini agar kejutan acara tetap terjaga.'
+    }
+  },
+  {
     id: 'upd-039',
     date: '20 November 2026',
     version: 'v2.9.8',

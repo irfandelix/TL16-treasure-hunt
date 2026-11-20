@@ -6,6 +6,7 @@ import RoadmapModal from './RoadmapModal';
 import PlayerAvatar from './PlayerAvatar';
 import AvatarDesigner from './AvatarDesigner';
 import RedactedText from './RedactedText';
+import RoomStatusScreen from './RoomStatusScreen';
 import {
   getLocalAvatarConfig,
   loadPlayerAvatar,
@@ -117,6 +118,19 @@ function parseViewFromHash(hashValue) {
   return ALLOWED_VIEWS.includes(clean) ? clean : '';
 }
 
+function formatReleaseDateId(dateValue) {
+  if (!dateValue) return '';
+  const d = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
 export default function GameDashboard() {
   const [user, setUser] = useState(null);
   const [isChecking, setIsChecking] = useState(true);
@@ -142,6 +156,7 @@ export default function GameDashboard() {
   const [earlyAccessConfig, setEarlyAccessConfig] = useState(null);
   const [isEarlyAccessActive, setIsEarlyAccessActive] = useState(false);
   const [pendingJoinCode, setPendingJoinCode] = useState(null);
+  const [accessDeniedInfo, setAccessDeniedInfo] = useState(null);
   const activeViewRef = useRef('dashboard');
   const needsGestureAnchorRef = useRef(false);
 
@@ -176,14 +191,11 @@ export default function GameDashboard() {
         setAvatarConfig(getLocalAvatarConfig(savedNim) || generateSeedAvatarConfig(savedNim));
 
         const hashView = parseViewFromHash(window.location.hash);
-        const savedView = localStorage.getItem(`active_view_${savedNim}`);
+        const savedView = sessionStorage.getItem(`active_view_${savedNim}`);
+        localStorage.removeItem(`active_view_${savedNim}`);
         const candidateView = hashView && hashView !== 'avatar' ? hashView : savedView;
         let resolvedView = 'dashboard';
-        if (
-          candidateView &&
-          ALLOWED_VIEWS.includes(candidateView) &&
-          ((candidateView !== 'admin' && candidateView !== 'athlete') || isAdmin)
-        ) {
+        if (candidateView && ALLOWED_VIEWS.includes(candidateView)) {
           resolvedView = candidateView;
           setActiveView(candidateView);
         }
@@ -349,9 +361,9 @@ export default function GameDashboard() {
     activeViewRef.current = activeView;
     if (!user?.nim) return;
     if (activeView === 'dashboard') {
-      localStorage.removeItem(`active_view_${user.nim}`);
+      sessionStorage.removeItem(`active_view_${user.nim}`);
     } else {
-      localStorage.setItem(`active_view_${user.nim}`, activeView);
+      sessionStorage.setItem(`active_view_${user.nim}`, activeView);
     }
   }, [activeView, user?.nim]);
 
@@ -379,13 +391,9 @@ export default function GameDashboard() {
 
       setShowAvatarDesigner(false);
       setIsEditingAvatar(false);
+      setAccessDeniedInfo(null);
 
-      if (
-        next &&
-        ALLOWED_VIEWS.includes(next) &&
-        (next !== 'admin' || user.is_admin) &&
-        (next !== 'athlete' || user.is_admin || isEarlyAccessActive)
-      ) {
+      if (next && ALLOWED_VIEWS.includes(next)) {
         activeViewRef.current = next;
         setActiveView(next);
       } else {
@@ -395,11 +403,13 @@ export default function GameDashboard() {
       }
     };
 
+    window.addEventListener('click', anchorHistoryOnUserGesture, true);
     window.addEventListener('pointerdown', anchorHistoryOnUserGesture, true);
     window.addEventListener('keydown', anchorHistoryOnUserGesture, true);
     window.addEventListener('popstate', syncFromBrowserHistory);
     window.addEventListener('hashchange', syncFromBrowserHistory);
     return () => {
+      window.removeEventListener('click', anchorHistoryOnUserGesture, true);
       window.removeEventListener('pointerdown', anchorHistoryOnUserGesture, true);
       window.removeEventListener('keydown', anchorHistoryOnUserGesture, true);
       window.removeEventListener('popstate', syncFromBrowserHistory);
@@ -409,6 +419,7 @@ export default function GameDashboard() {
 
   const navigateToView = (nextView) => {
     needsGestureAnchorRef.current = false;
+    setAccessDeniedInfo(null);
     if (nextView === 'dashboard') {
       setPendingJoinCode(null);
       if (window.history.state?.sedulurPushed && !window.history.state?.sedulurBase) {
@@ -650,7 +661,20 @@ export default function GameDashboard() {
       (invite.game === 'unobrutal' && (hasPreview || isPubliclyReleased(gameDates.uno, now))) ||
       (invite.game === 'athlete' && hasPreview);
 
-    if (!allowed) return;
+    if (!allowed) {
+      const releaseIso =
+        invite.game === 'monopoli'
+          ? gameDates.monopoli
+          : invite.game === 'dosenkiller'
+          ? gameDates.werewolf
+          : invite.game === 'unobrutal'
+          ? gameDates.uno
+          : null;
+      setAccessDeniedInfo({
+        releaseDateLabel: formatReleaseDateId(releaseIso)
+      });
+      return;
+    }
 
     setPendingJoinCode(invite);
     setShowAvatarDesigner(false);
@@ -718,29 +742,71 @@ export default function GameDashboard() {
     </div>
   );
 
-  const hasTestAccess = Boolean(user.is_admin || isEarlyAccessActive);
+  const hasTestAccess = Boolean(
+    user.is_admin || isEarlyAccessActive || hasActiveEarlyAccess(earlyAccessConfig, user.nim)
+  );
+  const canOpenMonopoli = hasTestAccess || isMonopoliUnlocked || isPubliclyReleased(gameDates?.monopoli);
+  const canOpenWerewolf = hasTestAccess || isWerewolfUnlocked || isPubliclyReleased(gameDates?.werewolf);
+  const canOpenUno = hasTestAccess || isUnoUnlocked || isPubliclyReleased(gameDates?.uno);
+  const canOpenWheel = hasTestAccess || wheelUnlocked || isPubliclyReleased(targetDate);
+
+  const renderAccessDenied = (releaseDateValue = null) => (
+    <div className="min-h-[100dvh] bg-[#F8F6F1] text-zinc-900 p-4 sm:p-6 md:p-8 flex items-center justify-center">
+      <RoomStatusScreen
+        gameName="Agenda Kejutan TL 2016"
+        status="access_denied"
+        releaseDateLabel={formatReleaseDateId(releaseDateValue)}
+        onBackHome={() => navigateToView('dashboard')}
+      />
+    </div>
+  );
+
+  if (accessDeniedInfo) {
+    return (
+      <div className="min-h-[100dvh] bg-[#F8F6F1] text-zinc-900 p-4 sm:p-6 md:p-8 flex items-center justify-center">
+        <RoomStatusScreen
+          gameName="Agenda Kejutan TL 2016"
+          status="access_denied"
+          releaseDateLabel={accessDeniedInfo.releaseDateLabel}
+          onBackHome={() => navigateToView('dashboard')}
+        />
+      </div>
+    );
+  }
+
+  const isScheduledView = ['monopoli', 'dosenkiller', 'unobrutal', 'athlete', 'wheel'].includes(activeView);
+  if (isScheduledView && !gameDates && !user.is_admin) {
+    return <LoadingScreen label="Memeriksa jadwal pembukaan..." />;
+  }
 
   if (activeView === 'map') return renderSubView(TreasureHunt);
   if (activeView === 'face') return renderSubView(FaceGame);
   if (activeView === 'kapsul') return renderSubView(FormKapsulWaktu, { userLocal: user });
-  if (activeView === 'wheel') return renderSubView(WheelOfFamily);
+  if (activeView === 'wheel') {
+    if (!canOpenWheel) return renderAccessDenied(targetDate);
+    return renderSubView(WheelOfFamily);
+  }
   if (activeView === 'monopoli') {
+    if (!canOpenMonopoli) return renderAccessDenied(gameDates?.monopoli);
     return renderSubView(MonopoliBoard, {
       myAvatarConfig: avatarConfig,
       initialRoomCode: pendingJoinCode?.game === 'monopoli' ? pendingJoinCode.code : ''
     });
   }
   if (activeView === 'dosenkiller') {
+    if (!canOpenWerewolf) return renderAccessDenied(gameDates?.werewolf);
     return renderSubView(DosenKillerGame, {
       initialRoomCode: pendingJoinCode?.game === 'dosenkiller' ? pendingJoinCode.code : ''
     });
   }
   if (activeView === 'unobrutal') {
+    if (!canOpenUno) return renderAccessDenied(gameDates?.uno);
     return renderSubView(UnoBrutalGame, {
       initialRoomCode: pendingJoinCode?.game === 'unobrutal' ? pendingJoinCode.code : ''
     });
   }
-  if (activeView === 'athlete' && hasTestAccess) {
+  if (activeView === 'athlete') {
+    if (!hasTestAccess) return renderAccessDenied(null);
     return renderSubView(MagicalAthleteGame, {
       initialRoomCode: pendingJoinCode?.game === 'athlete' ? pendingJoinCode.code : ''
     });
@@ -754,7 +820,8 @@ export default function GameDashboard() {
     );
   }
 
-  if (activeView === 'admin' && user.is_admin) {
+  if (activeView === 'admin') {
+    if (!user.is_admin) return renderAccessDenied(null);
     return (
       <Suspense fallback={<LoadingScreen label="Memuat ruang panitia..." />}>
         <AdminDashboard onBack={() => navigateToView('dashboard')} />

@@ -42,19 +42,36 @@ export const ROOM_STATUS_COPY = {
     description:
       'Ruangan ditutup sebelum permainan dimulai. Kembali ke lobi untuk membuat atau masuk ke ruangan lain.',
     tone: 'neutral'
+  },
+  access_denied: {
+    badge: 'Akses Dibatasi',
+    title: 'Halaman ini belum dibuka untuk umum',
+    description:
+      'Permainan atau agenda ini belum memasuki jadwal pembukaan resminya. Mohon ditunggu sampai tanggal mainnya tiba ya!',
+    tone: 'rose'
   }
 };
 
 function StatusIcon({ status }) {
   const isFinishedOrActive = status === 'finished' || status === 'started' || status === 'full';
-  const colorClass = isFinishedOrActive ? 'text-[#B45309] bg-amber-50 border-amber-200' : 'text-zinc-700 bg-[#F1ECE0] border-[#DED8CA]';
+  const isDenied = status === 'access_denied';
+  const colorClass = isDenied
+    ? 'text-rose-700 bg-rose-50 border-rose-200'
+    : isFinishedOrActive
+    ? 'text-[#B45309] bg-amber-50 border-amber-200'
+    : 'text-zinc-700 bg-[#F1ECE0] border-[#DED8CA]';
 
   return (
     <div
       aria-hidden="true"
       className={`w-14 h-14 mx-auto mb-5 rounded-2xl border flex items-center justify-center ${colorClass}`}
     >
-      {status === 'finished' ? (
+      {status === 'access_denied' ? (
+        <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="11" width="16" height="10" rx="2" />
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </svg>
+      ) : status === 'finished' ? (
         <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 22V4" />
           <path d="M4 5h12l-2 4 2 4H4" />
@@ -87,6 +104,7 @@ export default function RoomStatusScreen({
   gameName = 'Permainan',
   status = 'not_found',
   roomCode = '',
+  releaseDateLabel = '',
   onBackToLobby,
   onBackHome
 }) {
@@ -109,6 +127,12 @@ export default function RoomStatusScreen({
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#F1ECE0] border border-[#DED8CA] font-mono text-xs font-bold text-zinc-800 mb-4">
             <span>Kode Ruangan:</span>
             <span className="text-zinc-950 tracking-wider">{roomCode}</span>
+          </div>
+        )}
+
+        {releaseDateLabel && (
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 font-mono text-xs font-bold text-amber-900 mb-4">
+            <span>Jadwal Buka: {releaseDateLabel}</span>
           </div>
         )}
 

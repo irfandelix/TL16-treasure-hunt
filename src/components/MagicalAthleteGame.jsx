@@ -9,7 +9,7 @@ import InviteLinkButton from './InviteLinkButton';
 import RoomStatusScreen from './RoomStatusScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
-import { checkShouldSkipRoomScoring, awardAlumniPoints } from '../lib/earlyAccess';
+import { checkShouldSkipRoomScoring, awardAlumniPoints, extractEarlyAccessConfig, hasActiveEarlyAccess } from '../lib/earlyAccess';
 
 const TRACK_LOOP_COORDS = {
   0:  { col: 1, row: 1, dir: 'Kanan' },
@@ -72,6 +72,7 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
   const [toastMessage, setToastMessage] = useState('');
   const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [isTrialSession, setIsTrialSession] = useState(false);
+  const [accessCheckState, setAccessCheckState] = useState('checking');
 
   const roomDataRef = useRef(null);
   const playersRef = useRef([]);
@@ -140,6 +141,35 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
       setIsLoggedIn(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn || !currentUser.nim) return;
+    if (currentUser.isAdmin) {
+      setAccessCheckState('allowed');
+      return;
+    }
+
+    let active = true;
+    setAccessCheckState('checking');
+    supabase
+      .from('app_settings')
+      .select('patch_notes')
+      .eq('id', 1)
+      .single()
+      .then(({ data }) => {
+        if (!active) return;
+        const eaConfig = extractEarlyAccessConfig(data);
+        const allowed = hasActiveEarlyAccess(eaConfig, currentUser.nim);
+        setAccessCheckState(allowed ? 'allowed' : 'denied');
+      })
+      .catch(() => {
+        if (active) setAccessCheckState('denied');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isLoggedIn, currentUser.nim, currentUser.isAdmin]);
 
   useEffect(() => {
     if (currentUser.isAdmin) {
@@ -1092,6 +1122,33 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
             )}
           </form>
         </div>
+      </div>
+    );
+  }
+
+  if (accessCheckState === 'checking') {
+    return (
+      <div className="min-h-[60vh] bg-[#FAF6EE] flex items-center justify-center p-6 text-zinc-700 text-sm font-semibold">
+        Memeriksa akses halaman...
+      </div>
+    );
+  }
+
+  if (accessCheckState === 'denied') {
+    return (
+      <div className="min-h-screen bg-[#FAF6EE] flex items-center justify-center p-4">
+        <RoomStatusScreen
+          gameName="Agenda Kejutan TL 2016"
+          status="access_denied"
+          onBackHome={() => {
+            if (currentUser.nim) localStorage.removeItem(`active_view_${currentUser.nim}`);
+            if (onBack) {
+              onBack();
+            } else {
+              window.location.href = '/';
+            }
+          }}
+        />
       </div>
     );
   }
