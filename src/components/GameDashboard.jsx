@@ -16,7 +16,13 @@ import {
   hasSavedPlayerAvatar
 } from '../lib/avatarHelper';
 import { isAdminSession, setAdminSessionVerified } from '../lib/adminAuth';
-import { extractEarlyAccessConfig, hasActiveEarlyAccess, isPubliclyReleased } from '../lib/earlyAccess';
+import {
+  extractEarlyAccessConfig,
+  extractKapsulConfig,
+  hasActiveEarlyAccess,
+  isKapsulPubliclyOpen,
+  isPubliclyReleased
+} from '../lib/earlyAccess';
 import { captureInviteFromUrl, readPendingInvite, clearPendingInvite } from '../lib/roomInvite';
 
 const TreasureHunt = lazy(() => import('./TreasureHunt'));
@@ -154,6 +160,8 @@ export default function GameDashboard() {
   const [unoApproaching, setUnoApproaching] = useState(false);
   const [gameDates, setGameDates] = useState(null);
   const [earlyAccessConfig, setEarlyAccessConfig] = useState(null);
+  const [kapsulConfig, setKapsulConfig] = useState(null);
+  const [isKapsulUnlocked, setIsKapsulUnlocked] = useState(false);
   const [isEarlyAccessActive, setIsEarlyAccessActive] = useState(false);
   const [pendingJoinCode, setPendingJoinCode] = useState(null);
   const [accessDeniedInfo, setAccessDeniedInfo] = useState(null);
@@ -531,6 +539,7 @@ export default function GameDashboard() {
         uno: data.uno_unlock_date
       });
       setEarlyAccessConfig(extractEarlyAccessConfig(data));
+      setKapsulConfig(extractKapsulConfig(data));
     };
 
     const fetchSettings = async () => {
@@ -639,12 +648,14 @@ export default function GameDashboard() {
         setIsUnoUnlocked(false);
         setUnoApproaching(false);
       }
+
+      setIsKapsulUnlocked(isKapsulPubliclyOpen(kapsulConfig, now));
     };
 
     checkLocalTime();
     const interval = setInterval(checkLocalTime, 1000);
     return () => clearInterval(interval);
-  }, [user, gameDates, earlyAccessConfig]);
+  }, [user, gameDates, earlyAccessConfig, kapsulConfig]);
 
   useEffect(() => {
     if (!user || !gameDates) return;
@@ -745,15 +756,16 @@ export default function GameDashboard() {
   const hasTestAccess = Boolean(
     user.is_admin || isEarlyAccessActive || hasActiveEarlyAccess(earlyAccessConfig, user.nim)
   );
+  const canOpenKapsul = hasTestAccess || isKapsulUnlocked || isKapsulPubliclyOpen(kapsulConfig);
   const canOpenMonopoli = hasTestAccess || isMonopoliUnlocked || isPubliclyReleased(gameDates?.monopoli);
   const canOpenWerewolf = hasTestAccess || isWerewolfUnlocked || isPubliclyReleased(gameDates?.werewolf);
   const canOpenUno = hasTestAccess || isUnoUnlocked || isPubliclyReleased(gameDates?.uno);
   const canOpenWheel = hasTestAccess || wheelUnlocked || isPubliclyReleased(targetDate);
 
-  const renderAccessDenied = (releaseDateValue = null) => (
+  const renderAccessDenied = (releaseDateValue = null, featureName = 'Agenda Kejutan TL 2016') => (
     <div className="min-h-[100dvh] bg-[#F8F6F1] text-zinc-900 p-4 sm:p-6 md:p-8 flex items-center justify-center">
       <RoomStatusScreen
-        gameName="Agenda Kejutan TL 2016"
+        gameName={featureName}
         status="access_denied"
         releaseDateLabel={formatReleaseDateId(releaseDateValue)}
         onBackHome={() => navigateToView('dashboard')}
@@ -774,14 +786,22 @@ export default function GameDashboard() {
     );
   }
 
-  const isScheduledView = ['monopoli', 'dosenkiller', 'unobrutal', 'athlete', 'wheel'].includes(activeView);
+  const isScheduledView = ['kapsul', 'monopoli', 'dosenkiller', 'unobrutal', 'athlete', 'wheel'].includes(activeView);
   if (isScheduledView && !gameDates && !user.is_admin) {
     return <LoadingScreen label="Memeriksa jadwal pembukaan..." />;
   }
 
   if (activeView === 'map') return renderSubView(TreasureHunt);
   if (activeView === 'face') return renderSubView(FaceGame);
-  if (activeView === 'kapsul') return renderSubView(FormKapsulWaktu, { userLocal: user });
+  if (activeView === 'kapsul') {
+    if (!canOpenKapsul) {
+      return renderAccessDenied(
+        kapsulConfig?.enabled ? kapsulConfig?.unlock_at : null,
+        'Kapsul Waktu 2016 ke 2026'
+      );
+    }
+    return renderSubView(FormKapsulWaktu, { userLocal: user });
+  }
   if (activeView === 'wheel') {
     if (!canOpenWheel) return renderAccessDenied(targetDate);
     return renderSubView(WheelOfFamily);
@@ -924,7 +944,10 @@ export default function GameDashboard() {
               />
             </h2>
             <p className="text-zinc-700 text-base mb-8 leading-relaxed">
-              Selamat datang kembali, <strong className="text-zinc-900">{user.nama}</strong>! Mari rayakan satu dekade Teknik Lingkungan 2016 dengan mengisi kapsul kenangan dan bermain bersama.
+              Selamat datang kembali, <strong className="text-zinc-900">{user.nama}</strong>!{' '}
+              {isKapsulUnlocked
+                ? 'Mari rayakan satu dekade Teknik Lingkungan 2016 dengan mengisi kapsul kenangan dan bermain bersama.'
+                : 'Mari rayakan satu dekade Teknik Lingkungan 2016 dengan bermain bersama di Portal Sedulur 16.'}
             </p>
             <button
               type="button"
@@ -1091,14 +1114,41 @@ export default function GameDashboard() {
                   </div>
                 </div>
 
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => navigateToView('kapsul')}
-                    className="w-full sm:w-auto min-h-[48px] px-6 py-3 bg-[#14532D] hover:bg-[#166534] rounded-xl font-bold text-white text-sm sm:text-base transition-colors"
-                  >
-                    Isi Kapsul Waktu Sekarang
-                  </button>
+                <div className="space-y-3">
+                  {canOpenKapsul ? (
+                    <>
+                      {!isKapsulUnlocked && hasTestAccess && (
+                        <p className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2">
+                          {kapsulConfig?.enabled && kapsulConfig?.unlock_at
+                            ? `Pratinjau Panitia: Kapsul Waktu dijadwalkan buka untuk peserta pada ${formatReleaseDateId(kapsulConfig.unlock_at)}.`
+                            : 'Pratinjau Panitia: Kapsul Waktu masih dinonaktifkan untuk peserta.'}
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => navigateToView('kapsul')}
+                        className="cursor-pointer w-full sm:w-auto min-h-[48px] px-6 py-3 bg-[#14532D] hover:bg-[#166534] rounded-xl font-bold text-white text-sm sm:text-base transition-colors"
+                      >
+                        Isi Kapsul Waktu Sekarang
+                      </button>
+                    </>
+                  ) : (
+                    <div
+                      role="status"
+                      className="rounded-xl bg-[#F1ECE0] border border-[#DED8CA] px-4 py-3 text-sm text-zinc-800 space-y-1"
+                    >
+                      <p className="font-bold text-zinc-900">
+                        {kapsulConfig?.enabled && kapsulConfig?.unlock_at
+                          ? 'Kapsul Waktu Belum Dibuka'
+                          : 'Kapsul Waktu Dinonaktifkan Sementara'}
+                      </p>
+                      <p className="text-xs sm:text-sm text-zinc-700 leading-relaxed">
+                        {kapsulConfig?.enabled && kapsulConfig?.unlock_at
+                          ? `Pengisian foto dan pesan akan dibuka mulai ${formatReleaseDateId(kapsulConfig.unlock_at)}.`
+                          : 'Fitur ini sedang dinonaktifkan sementara oleh panitia dan akan dibuka sesuai jadwal yang diumumkan.'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </article>
 

@@ -3,12 +3,35 @@ import { isAdminSession } from './adminAuth';
 
 export const EARLY_ACCESS_RECORD_TYPE = 'early_access';
 export const EARLY_ACCESS_RECORD_ID = '__early_access_config__';
+export const KAPSUL_RECORD_TYPE = 'kapsul_schedule';
+export const KAPSUL_RECORD_ID = '__kapsul_schedule_config__';
 
 export const DEFAULT_EARLY_ACCESS_CONFIG = {
   nims: [],
   start_at: null,
   end_at: null
 };
+
+export const DEFAULT_KAPSUL_CONFIG = {
+  enabled: false,
+  unlock_at: null
+};
+
+function normalizeValidIso(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const ts = new Date(value).getTime();
+  return Number.isNaN(ts) ? null : value;
+}
+
+function isInternalConfigRecord(item) {
+  if (!item || typeof item !== 'object') return false;
+  return (
+    item.__type === EARLY_ACCESS_RECORD_TYPE ||
+    item.id === EARLY_ACCESS_RECORD_ID ||
+    item.__type === KAPSUL_RECORD_TYPE ||
+    item.id === KAPSUL_RECORD_ID
+  );
+}
 
 /**
  * Extract the early-access configuration stored inside app_settings.patch_notes
@@ -27,8 +50,26 @@ export function extractEarlyAccessConfig(settingsRow) {
     : [];
   return {
     nims,
-    start_at: typeof raw.start_at === 'string' && raw.start_at ? raw.start_at : null,
-    end_at: typeof raw.end_at === 'string' && raw.end_at ? raw.end_at : null
+    start_at: normalizeValidIso(raw.start_at),
+    end_at: normalizeValidIso(raw.end_at)
+  };
+}
+
+/**
+ * Extract the Kapsul Waktu toggle & scheduled unlock date stored inside app_settings.patch_notes.
+ * Defaults to OFF (enabled: false) when no record exists yet.
+ */
+export function extractKapsulConfig(settingsRow) {
+  const notes = Array.isArray(settingsRow?.patch_notes) ? settingsRow.patch_notes : [];
+  const raw = notes.find(
+    (item) => item && (item.__type === KAPSUL_RECORD_TYPE || item.id === KAPSUL_RECORD_ID)
+  );
+  if (!raw || typeof raw !== 'object') {
+    return { ...DEFAULT_KAPSUL_CONFIG };
+  }
+  return {
+    enabled: Boolean(raw.enabled),
+    unlock_at: normalizeValidIso(raw.unlock_at)
   };
 }
 
@@ -37,29 +78,62 @@ export function extractEarlyAccessConfig(settingsRow) {
  */
 export function filterVisiblePatchNotes(patchNotes) {
   if (!Array.isArray(patchNotes)) return [];
-  return patchNotes.filter(
-    (item) => item && item.__type !== EARLY_ACCESS_RECORD_TYPE && item.id !== EARLY_ACCESS_RECORD_ID
-  );
+  return patchNotes.filter((item) => item && !isInternalConfigRecord(item));
 }
 
 /**
- * Merge updated early-access config into patch_notes while preserving all visible notes.
+ * Merge internal app configuration records into patch_notes while preserving visible notes
+ * and any existing config omitted from the partial update.
  */
-export function mergeEarlyAccessIntoPatchNotes(existingPatchNotes, config) {
+export function mergeAppConfigsIntoPatchNotes(existingPatchNotes, { earlyAccess, kapsul } = {}) {
   const visible = filterVisiblePatchNotes(existingPatchNotes);
-  const cleanNims = Array.isArray(config?.nims)
-    ? [...new Set(config.nims.map((n) => String(n || '').trim()).filter(Boolean))]
+  const resolvedEa = earlyAccess ?? extractEarlyAccessConfig({ patch_notes: existingPatchNotes });
+  const resolvedKapsul = kapsul ?? extractKapsulConfig({ patch_notes: existingPatchNotes });
+
+  const cleanNims = Array.isArray(resolvedEa?.nims)
+    ? [...new Set(resolvedEa.nims.map((n) => String(n || '').trim()).filter(Boolean))]
     : [];
 
-  const record = {
+  const eaRecord = {
     id: EARLY_ACCESS_RECORD_ID,
     __type: EARLY_ACCESS_RECORD_TYPE,
     nims: cleanNims,
-    start_at: config?.start_at || null,
-    end_at: config?.end_at || null
+    start_at: normalizeValidIso(resolvedEa?.start_at),
+    end_at: normalizeValidIso(resolvedEa?.end_at)
   };
 
-  return [record, ...visible];
+  const kapsulRecord = {
+    id: KAPSUL_RECORD_ID,
+    __type: KAPSUL_RECORD_TYPE,
+    enabled: Boolean(resolvedKapsul?.enabled),
+    unlock_at: normalizeValidIso(resolvedKapsul?.unlock_at)
+  };
+
+  return [eaRecord, kapsulRecord, ...visible];
+}
+
+/**
+ * Merge updated early-access config into patch_notes while preserving all visible notes and other configs.
+ */
+export function mergeEarlyAccessIntoPatchNotes(existingPatchNotes, config, kapsulConfig) {
+  return mergeAppConfigsIntoPatchNotes(existingPatchNotes, {
+    earlyAccess: config,
+    kapsul: kapsulConfig
+  });
+}
+
+export function isKapsulPubliclyOpen(kapsulConfig, now = Date.now()) {
+  if (!kapsulConfig?.enabled) return false;
+  if (!kapsulConfig.unlock_at) return true;
+  return isPubliclyReleased(kapsulConfig.unlock_at, now);
+}
+
+export function getKapsulScheduleStatus(kapsulConfig, now = Date.now()) {
+  if (!kapsulConfig?.enabled) return 'off';
+  if (kapsulConfig.unlock_at && !isPubliclyReleased(kapsulConfig.unlock_at, now)) {
+    return 'scheduled';
+  }
+  return 'open';
 }
 
 /**

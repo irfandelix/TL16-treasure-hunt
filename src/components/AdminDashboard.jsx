@@ -3,9 +3,11 @@ import { supabase } from '../lib/supabaseClient';
 import { UPDATES_LOG } from '../data/updatesLog';
 import {
   extractEarlyAccessConfig,
+  extractKapsulConfig,
   filterVisiblePatchNotes,
-  mergeEarlyAccessIntoPatchNotes,
-  getEarlyAccessWindowStatus
+  mergeAppConfigsIntoPatchNotes,
+  getEarlyAccessWindowStatus,
+  getKapsulScheduleStatus
 } from '../lib/earlyAccess';
 import { copyTextToClipboard } from '../lib/roomInvite';
 
@@ -41,6 +43,8 @@ export default function AdminDashboard({ onBack }) {
   const [earlyAccessStart, setEarlyAccessStart] = useState('');
   const [earlyAccessEnd, setEarlyAccessEnd] = useState('');
   const [earlyAccessSearch, setEarlyAccessSearch] = useState('');
+  const [kapsulEnabled, setKapsulEnabled] = useState(false);
+  const [kapsulUnlockDate, setKapsulUnlockDate] = useState('');
   const [capsuleFilter, setCapsuleFilter] = useState('unfilled');
   const [capsuleSearch, setCapsuleSearch] = useState('');
   const [copiedUnfilled, setCopiedUnfilled] = useState(false);
@@ -77,6 +81,10 @@ export default function AdminDashboard({ onBack }) {
         setEarlyAccessStart(toLocalDateTimeInput(eaCfg.start_at));
         setEarlyAccessEnd(toLocalDateTimeInput(eaCfg.end_at));
 
+        const kapsulCfg = extractKapsulConfig(data);
+        setKapsulEnabled(Boolean(kapsulCfg.enabled));
+        setKapsulUnlockDate(toLocalDateTimeInput(kapsulCfg.unlock_at));
+
         setUnlockDate(toLocalDateTimeInput(data.wheel_unlock_date));
         setMonopoliDate(toLocalDateTimeInput(data.monopoli_unlock_date));
         setWerewolfDate(toLocalDateTimeInput(data.werewolf_unlock_date));
@@ -100,6 +108,11 @@ export default function AdminDashboard({ onBack }) {
     end_at: earlyAccessEnd ? new Date(earlyAccessEnd).toISOString() : null
   });
 
+  const buildCurrentKapsulPayload = () => ({
+    enabled: Boolean(kapsulEnabled),
+    unlock_at: kapsulUnlockDate ? new Date(kapsulUnlockDate).toISOString() : null
+  });
+
   const handleSave = async () => {
     if (earlyAccessStart && earlyAccessEnd && new Date(earlyAccessEnd).getTime() < new Date(earlyAccessStart).getTime()) {
       setSaveStatus('Tanggal berakhir Early Access tidak boleh lebih awal dari tanggal mulai.');
@@ -114,7 +127,10 @@ export default function AdminDashboard({ onBack }) {
       const dbMonopoliDate = monopoliDate ? new Date(monopoliDate).toISOString() : null;
       const dbWerewolfDate = werewolfDate ? new Date(werewolfDate).toISOString() : null;
       const dbUnoDate = unoDate ? new Date(unoDate).toISOString() : null;
-      const mergedPatchNotes = mergeEarlyAccessIntoPatchNotes(patchNotes, buildCurrentEarlyAccessPayload());
+      const mergedPatchNotes = mergeAppConfigsIntoPatchNotes(patchNotes, {
+        earlyAccess: buildCurrentEarlyAccessPayload(),
+        kapsul: buildCurrentKapsulPayload()
+      });
 
       const { error } = await supabase
         .from('app_settings')
@@ -151,7 +167,10 @@ export default function AdminDashboard({ onBack }) {
 
     try {
       setNoteError('');
-      const merged = mergeEarlyAccessIntoPatchNotes(updatedNotes, buildCurrentEarlyAccessPayload());
+      const merged = mergeAppConfigsIntoPatchNotes(updatedNotes, {
+        earlyAccess: buildCurrentEarlyAccessPayload(),
+        kapsul: buildCurrentKapsulPayload()
+      });
       const { error } = await supabase.from('app_settings').update({ patch_notes: merged }).eq('id', 1);
       if (error) throw error;
       setPatchNotes(updatedNotes);
@@ -167,7 +186,10 @@ export default function AdminDashboard({ onBack }) {
     const updatedNotes = patchNotes.filter(n => n.id !== idToRemove);
     try {
       setNoteError('');
-      const merged = mergeEarlyAccessIntoPatchNotes(updatedNotes, buildCurrentEarlyAccessPayload());
+      const merged = mergeAppConfigsIntoPatchNotes(updatedNotes, {
+        earlyAccess: buildCurrentEarlyAccessPayload(),
+        kapsul: buildCurrentKapsulPayload()
+      });
       const { error } = await supabase.from('app_settings').update({ patch_notes: merged }).eq('id', 1);
       if (error) throw error;
       setPatchNotes(updatedNotes);
@@ -192,6 +214,7 @@ export default function AdminDashboard({ onBack }) {
   }, [alumniRoster, earlyAccessSearch]);
 
   const earlyAccessStatus = getEarlyAccessWindowStatus(buildCurrentEarlyAccessPayload());
+  const kapsulStatus = getKapsulScheduleStatus(buildCurrentKapsulPayload());
 
   const capsuleStats = useMemo(() => {
     const filled = [];
@@ -314,7 +337,14 @@ export default function AdminDashboard({ onBack }) {
       {
         title: 'Kapsul Waktu, Wheel of Family, & Klasemen',
         tone: 'text-[#B45309]',
-        status: wheelData.status === 'released' ? 'Wheel Terbuka' : 'Kapsul Aktif',
+        status:
+          wheelData.status === 'released'
+            ? 'Wheel Terbuka'
+            : kapsulStatus === 'open'
+              ? 'Kapsul Aktif'
+              : kapsulStatus === 'scheduled'
+                ? 'Kapsul Terjadwal'
+                : 'Kapsul Nonaktif',
         detail:
           'Unggah foto 2026 terkompresi beserta pesan, roda undian yang menyaring pemenang sebelumnya, papan klasemen podium 3 besar dengan tab kategori, avatar Canvas2D anti-inversi dark mode HP, serta poster IG Story dengan sensor blok hitam.'
       },
@@ -675,6 +705,81 @@ export default function AdminDashboard({ onBack }) {
                     </button>
                   )}
                 </div>
+              </div>
+            </div>
+
+            <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6] md:col-span-2 space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold text-green-900">
+                    Kontrol &amp; Jadwal Kapsul Waktu (2016 ke 2026)
+                  </h2>
+                  <p className="text-xs text-stone-600 mt-1 max-w-2xl leading-relaxed">
+                    Matikan saklar untuk menonaktifkan pengisian Kapsul Waktu sementara, atau aktifkan dan tentukan tanggal pembukaannya untuk peserta.
+                  </p>
+                </div>
+                <span
+                  className={`px-3 py-1 rounded-lg text-xs font-mono font-bold border ${
+                    kapsulStatus === 'open'
+                      ? 'bg-green-100 text-green-900 border-green-300'
+                      : kapsulStatus === 'scheduled'
+                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                        : 'bg-rose-50 text-rose-800 border-rose-200'
+                  }`}
+                >
+                  {kapsulStatus === 'open'
+                    ? 'Status: Aktif Terbuka'
+                    : kapsulStatus === 'scheduled'
+                      ? 'Status: Terjadwal Aktif'
+                      : 'Status: Nonaktif (Di-off-kan)'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl border border-[#DED6C6]">
+                <label htmlFor="toggle-kapsul-enabled" className="font-bold text-stone-800 text-sm sm:text-base cursor-pointer">
+                  Aktifkan Fitur Kapsul Waktu untuk Peserta
+                </label>
+                <label htmlFor="toggle-kapsul-enabled" className="relative inline-flex items-center cursor-pointer min-h-[44px] shrink-0">
+                  <input
+                    id="toggle-kapsul-enabled"
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={kapsulEnabled}
+                    onChange={() => setKapsulEnabled((prev) => !prev)}
+                  />
+                  <div className="w-14 h-7 bg-[#E7DFCE] rounded-full peer peer-focus-visible:ring-2 peer-focus-visible:ring-[#14532D] peer-focus-visible:ring-offset-2 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[10px] after:left-[2px] after:bg-white after:border-[#C7BDA8] after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
+                </label>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="schedule-kapsul" className="block text-xs font-bold text-stone-800">
+                  Tanggal &amp; Jam Pembukaan Saat Diaktifkan (Opsional)
+                </label>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+                  <input
+                    id="schedule-kapsul"
+                    type="datetime-local"
+                    value={kapsulUnlockDate}
+                    onChange={(e) => setKapsulUnlockDate(e.target.value)}
+                    className="w-full sm:flex-1 min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-green-800"
+                  />
+                  {kapsulUnlockDate && (
+                    <button
+                      type="button"
+                      onClick={() => setKapsulUnlockDate('')}
+                      className="cursor-pointer text-xs font-bold text-rose-800 hover:text-white px-4 py-2.5 min-h-[44px] rounded-xl bg-white hover:bg-rose-700 border border-[#DED6C6] transition-colors shrink-0"
+                    >
+                      Reset Tanggal
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  {!kapsulEnabled && kapsulUnlockDate
+                    ? 'Tanggal pembukaan sudah diisi, namun saklar masih OFF. Aktifkan saklar di atas lalu klik Simpan Pengaturan agar terbuka otomatis pada jadwal tersebut.'
+                    : kapsulEnabled && !kapsulUnlockDate
+                      ? 'Tanggal kosong: begitu disimpan, Kapsul Waktu langsung terbuka untuk semua alumni.'
+                      : 'Jika saklar ON dan tanggal diisi, Kapsul Waktu otomatis terbuka tepat pada tanggal dan jam yang dipilih.'}
+                </p>
               </div>
             </div>
 
