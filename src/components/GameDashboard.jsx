@@ -15,7 +15,8 @@ import {
   hasSavedPlayerAvatar
 } from '../lib/avatarHelper';
 import { isAdminSession, setAdminSessionVerified } from '../lib/adminAuth';
-import { extractEarlyAccessConfig, hasActiveEarlyAccess } from '../lib/earlyAccess';
+import { extractEarlyAccessConfig, hasActiveEarlyAccess, isPubliclyReleased } from '../lib/earlyAccess';
+import { captureInviteFromUrl, readPendingInvite, clearPendingInvite } from '../lib/roomInvite';
 
 const TreasureHunt = lazy(() => import('./TreasureHunt'));
 const FaceGame = lazy(() => import('./FaceGame'));
@@ -125,11 +126,16 @@ export default function GameDashboard() {
   const [gameDates, setGameDates] = useState(null);
   const [earlyAccessConfig, setEarlyAccessConfig] = useState(null);
   const [isEarlyAccessActive, setIsEarlyAccessActive] = useState(false);
+  const [pendingJoinCode, setPendingJoinCode] = useState(null);
 
   const [mysteryLocked, setMysteryLocked] = useState(false);
   const [showMysteryConfirm, setShowMysteryConfirm] = useState(false);
   const [mysteryBusy, setMysteryBusy] = useState(false);
   const [mysteryNotice, setMysteryNotice] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    captureInviteFromUrl();
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -341,6 +347,7 @@ export default function GameDashboard() {
       ) {
         setActiveView(next);
       } else {
+        setPendingJoinCode(null);
         setActiveView('dashboard');
       }
     };
@@ -351,6 +358,7 @@ export default function GameDashboard() {
 
   const navigateToView = (nextView) => {
     if (nextView === 'dashboard') {
+      setPendingJoinCode(null);
       if (window.history.state?.sedulurView && !window.history.state?.sedulurBase) {
         window.history.back();
         return;
@@ -570,6 +578,32 @@ export default function GameDashboard() {
     return () => clearInterval(interval);
   }, [user, gameDates, earlyAccessConfig]);
 
+  useEffect(() => {
+    if (!user || !gameDates) return;
+    const invite = readPendingInvite();
+    if (!invite) return;
+
+    clearPendingInvite();
+    const now = Date.now();
+    const eaActive = !user.is_admin && hasActiveEarlyAccess(earlyAccessConfig, user.nim, now);
+    const hasPreview = Boolean(user.is_admin || eaActive);
+    const allowed =
+      (invite.game === 'monopoli' && (hasPreview || isPubliclyReleased(gameDates.monopoli, now))) ||
+      (invite.game === 'dosenkiller' && (hasPreview || isPubliclyReleased(gameDates.werewolf, now))) ||
+      (invite.game === 'unobrutal' && (hasPreview || isPubliclyReleased(gameDates.uno, now))) ||
+      (invite.game === 'athlete' && hasPreview);
+
+    if (!allowed) return;
+
+    setPendingJoinCode(invite);
+    setShowAvatarDesigner(false);
+    setIsEditingAvatar(false);
+    if (window.history.state?.sedulurView !== invite.game) {
+      window.history.pushState({ sedulurView: invite.game }, '');
+    }
+    setActiveView(invite.game);
+  }, [user, gameDates, earlyAccessConfig]);
+
   const handleLogout = () => {
     localStorage.clear();
     sessionStorage.clear();
@@ -630,10 +664,27 @@ export default function GameDashboard() {
   if (activeView === 'face') return renderSubView(FaceGame);
   if (activeView === 'kapsul') return renderSubView(FormKapsulWaktu, { userLocal: user });
   if (activeView === 'wheel') return renderSubView(WheelOfFamily);
-  if (activeView === 'monopoli') return renderSubView(MonopoliBoard, { myAvatarConfig: avatarConfig });
-  if (activeView === 'dosenkiller') return renderSubView(DosenKillerGame);
-  if (activeView === 'unobrutal') return renderSubView(UnoBrutalGame);
-  if (activeView === 'athlete' && hasTestAccess) return renderSubView(MagicalAthleteGame);
+  if (activeView === 'monopoli') {
+    return renderSubView(MonopoliBoard, {
+      myAvatarConfig: avatarConfig,
+      initialRoomCode: pendingJoinCode?.game === 'monopoli' ? pendingJoinCode.code : ''
+    });
+  }
+  if (activeView === 'dosenkiller') {
+    return renderSubView(DosenKillerGame, {
+      initialRoomCode: pendingJoinCode?.game === 'dosenkiller' ? pendingJoinCode.code : ''
+    });
+  }
+  if (activeView === 'unobrutal') {
+    return renderSubView(UnoBrutalGame, {
+      initialRoomCode: pendingJoinCode?.game === 'unobrutal' ? pendingJoinCode.code : ''
+    });
+  }
+  if (activeView === 'athlete' && hasTestAccess) {
+    return renderSubView(MagicalAthleteGame, {
+      initialRoomCode: pendingJoinCode?.game === 'athlete' ? pendingJoinCode.code : ''
+    });
+  }
 
   if (activeView === 'updates') {
     return (

@@ -88,6 +88,41 @@ function getCategoryScore(person, sortKey, isMonopoliUnlocked, isWerewolfUnlocke
   return getTotalScore(person, isMonopoliUnlocked, isWerewolfUnlocked);
 }
 
+export function computeCategoryAwards(alumniList, { isMonopoliUnlocked = false, isWerewolfUnlocked = false } = {}) {
+  if (!Array.isArray(alumniList) || alumniList.length === 0) return [];
+
+  const specs = [
+    { id: 'peta', title: 'Paling Hafal Jogja', field: 'skor_peta', categoryLabel: 'Peta' },
+    { id: 'muka', title: 'Paling Hafal Wajah Angkatan', field: 'skor_muka', categoryLabel: 'Foto' }
+  ];
+  if (isMonopoliUnlocked) {
+    specs.push({ id: 'monopoli', title: 'Sultan Kampus', field: 'skor_monopoli', categoryLabel: 'Monopoli' });
+  }
+  if (isWerewolfUnlocked) {
+    specs.push({ id: 'werewolf', title: 'Detektif Sidang', field: 'skor_werewolf', categoryLabel: 'Dosen Killer' });
+  }
+
+  const awards = [];
+  for (const spec of specs) {
+    let best = 0;
+    let holders = [];
+    for (const person of alumniList) {
+      const val = Number(person[spec.field] || 0);
+      if (val <= 0) continue;
+      if (val > best) {
+        best = val;
+        holders = [person];
+      } else if (val === best) {
+        holders.push(person);
+      }
+    }
+    if (best > 0 && holders.length > 0) {
+      awards.push({ ...spec, bestScore: best, holders });
+    }
+  }
+  return awards;
+}
+
 export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null }) {
   const [alumni, setAlumni] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -246,6 +281,11 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
   const activeScorerCount = useMemo(() => {
     return rankedAlumni.filter((person) => person._activeScore > 0).length;
   }, [rankedAlumni]);
+
+  const categoryAwards = useMemo(() => {
+    if (!shouldReveal) return [];
+    return computeCategoryAwards(alumni, { isMonopoliUnlocked, isWerewolfUnlocked });
+  }, [shouldReveal, alumni, isMonopoliUnlocked, isWerewolfUnlocked]);
 
   const resolveAvatar = (person) => {
     if (person.nim === currentNim && currentAvatarConfig) return currentAvatarConfig;
@@ -604,6 +644,68 @@ export default function ScoreBoard({ currentNim = '', currentAvatarConfig = null
               )}
             </div>
           </div>
+
+          {/* Sorotan Gelar Kategori Otomatis (hanya tampil saat klasemen dibuka) */}
+          {shouldReveal && categoryAwards.length > 0 && !isFiltering && (
+            <div
+              aria-label="Pemegang gelar kategori tertinggi"
+              className="rounded-xl border border-[#DED8CA] bg-[#F8F6F1] overflow-hidden"
+            >
+              <div className="px-4 py-2.5 bg-[#F1ECE0] border-b border-[#DED8CA] flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-zinc-900">
+                  Gelar Pemegang Rekor Bidang
+                </span>
+                <span className="text-[11px] font-mono text-zinc-600">
+                  Klik gelar untuk urutkan bidangnya
+                </span>
+              </div>
+              <div
+                className={`grid grid-cols-1 ${
+                  categoryAwards.length === 2
+                    ? 'sm:grid-cols-2'
+                    : categoryAwards.length === 3
+                      ? 'sm:grid-cols-3'
+                      : 'sm:grid-cols-2 lg:grid-cols-4'
+                } divide-y sm:divide-y-0 sm:divide-x divide-[#E5DFD2]`}
+              >
+                {categoryAwards.map((award) => {
+                  const primary = award.holders[0];
+                  const extraCount = award.holders.length - 1;
+                  const isActiveSort = sortBy === award.id;
+                  return (
+                    <button
+                      key={award.id}
+                      type="button"
+                      onClick={() => setSortBy(award.id)}
+                      className={`text-left p-3.5 min-h-[44px] transition-colors flex flex-col justify-between gap-1.5 ${
+                        isActiveSort ? 'bg-[#FEF7E6]' : 'hover:bg-[#FFFDF9]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-[#B45309] leading-tight">
+                          {award.title}
+                        </span>
+                        <span className="font-mono text-xs font-bold text-[#14532D] shrink-0">
+                          {award.bestScore}
+                        </span>
+                      </div>
+                      <div className="text-xs font-bold text-zinc-900 truncate">
+                        {primary.nama}
+                        {extraCount > 0 && (
+                          <span className="font-mono font-semibold text-zinc-600 ml-1">
+                            (+{extraCount})
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] font-mono text-zinc-600">
+                        Skor {award.categoryLabel} tertinggi
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Podium 3 Besar (DOM & mobile berurutan 1-2-3, desktop tangga 2-1-3) */}
           {topThree.length > 0 && (

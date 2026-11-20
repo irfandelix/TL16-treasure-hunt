@@ -8,13 +8,15 @@ import LayarDiskusi from './LayarDiskusi';
 import LayarVoting from './LayarVoting';
 import LayarEksekusi from './LayarEksekusi';
 import StoryShareButton from './StoryShareButton';
+import InviteLinkButton from './InviteLinkButton';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
 
-export default function DosenKillerGame({ onBack }) {
+export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
   const [roomCode, setRoomCode] = useState(''); 
   const [inputRoomCode, setInputRoomCode] = useState('');
   const [isInRoom, setIsInRoom] = useState(false);
+  const autoJoinedRef = useRef(false);
   const [showAdminWarning, setShowAdminWarning] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
@@ -459,14 +461,22 @@ export default function DosenKillerGame({ onBack }) {
     else setLobbyError("Gagal membuat kelas baru. Silakan coba lagi.");
   };
 
-  const handleJoinRoom = async () => {
+  const handleJoinRoom = async (codeOverride) => {
     setLobbyError('');
-    const kodeBersih = inputRoomCode.trim().toUpperCase();
+    const rawCode = typeof codeOverride === 'string' ? codeOverride : inputRoomCode;
+    const kodeBersih = rawCode.trim().toUpperCase();
     if (!kodeBersih) return setLobbyError("Masukkan kode kelas terlebih dahulu!");
     const { data } = await supabase.from('dosen_killer_state').select('*').eq('room_code', kodeBersih).single();
     if (data) { setRoomCode(kodeBersih); setIsInRoom(true); } 
     else setLobbyError("Kode kelas tidak ditemukan.");
   };
+
+  useEffect(() => {
+    if (!initialRoomCode || autoJoinedRef.current || isInRoom || !currentUser.nim) return;
+    autoJoinedRef.current = true;
+    setInputRoomCode(initialRoomCode);
+    handleJoinRoom(initialRoomCode);
+  }, [initialRoomCode, isInRoom]);
 
   const mulaiGame = async () => {
     const totalPemain = pemain.length;
@@ -616,22 +626,25 @@ export default function DosenKillerGame({ onBack }) {
             Malam Keakraban TL 2016
           </h1>
 
-          <button 
-            type="button"
-            onClick={() => {
-              navigator.clipboard.writeText(roomCode);
-              setCopySuccess(true);
-              setTimeout(() => setCopySuccess(false), 2500);
-            }}
-            className="bg-white border-2 border-dashed border-amber-400/70 hover:border-amber-400 p-6 md:p-8 rounded-2xl inline-block mb-8 shadow-md transition-colors group"
-          >
-            <span className="block text-xs md:text-sm text-stone-800 font-bold tracking-wider mb-2 uppercase">
-              {copySuccess ? 'Kode Kelas Berhasil Disalin!' : 'Kode Kelas (Klik untuk Salin)'}
-            </span>
-            <span className="block text-4xl md:text-6xl font-bold text-amber-700 tracking-widest font-mono">
-              {roomCode}
-            </span>
-          </button>
+          <div className="flex flex-col items-center gap-3 mb-8">
+            <button 
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(roomCode);
+                setCopySuccess(true);
+                setTimeout(() => setCopySuccess(false), 2500);
+              }}
+              className="bg-white border-2 border-dashed border-amber-400/70 hover:border-amber-400 p-6 md:p-8 rounded-2xl inline-block shadow-md transition-colors group"
+            >
+              <span className="block text-xs md:text-sm text-stone-800 font-bold tracking-wider mb-2 uppercase">
+                {copySuccess ? 'Kode Kelas Berhasil Disalin!' : 'Kode Kelas (Klik untuk Salin)'}
+              </span>
+              <span className="block text-4xl md:text-6xl font-bold text-amber-700 tracking-widest font-mono">
+                {roomCode}
+              </span>
+            </button>
+            <InviteLinkButton gameKey="dosenkiller" roomCode={roomCode} />
+          </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 font-mono text-xs">
             <div className="bg-white p-3 rounded-xl border border-[#DED6C6] text-center">

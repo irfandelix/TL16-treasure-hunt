@@ -7,6 +7,7 @@ import {
   mergeEarlyAccessIntoPatchNotes,
   getEarlyAccessWindowStatus
 } from '../lib/earlyAccess';
+import { copyTextToClipboard } from '../lib/roomInvite';
 
 function toLocalDateTimeInput(isoStr) {
   if (!isoStr) return '';
@@ -40,6 +41,9 @@ export default function AdminDashboard({ onBack }) {
   const [earlyAccessStart, setEarlyAccessStart] = useState('');
   const [earlyAccessEnd, setEarlyAccessEnd] = useState('');
   const [earlyAccessSearch, setEarlyAccessSearch] = useState('');
+  const [capsuleFilter, setCapsuleFilter] = useState('unfilled');
+  const [capsuleSearch, setCapsuleSearch] = useState('');
+  const [copiedUnfilled, setCopiedUnfilled] = useState(false);
 
   const fetchSettings = async () => {
     setIsLoading(true);
@@ -47,7 +51,7 @@ export default function AdminDashboard({ onBack }) {
     try {
       const [{ data, error }, { data: rosterData, error: rosterErr }] = await Promise.all([
         supabase.from('app_settings').select('*').eq('id', 1).single(),
-        supabase.from('alumni').select('nim, nama').order('nama', { ascending: true })
+        supabase.from('alumni').select('nim, nama, foto_now, pesan_anniv').order('nama', { ascending: true })
       ]);
 
       if (error) throw error;
@@ -188,6 +192,47 @@ export default function AdminDashboard({ onBack }) {
   }, [alumniRoster, earlyAccessSearch]);
 
   const earlyAccessStatus = getEarlyAccessWindowStatus(buildCurrentEarlyAccessPayload());
+
+  const capsuleStats = useMemo(() => {
+    const filled = [];
+    const unfilled = [];
+    for (const person of alumniRoster) {
+      const hasPhoto = Boolean(person.foto_now && String(person.foto_now).trim());
+      const hasMsg = Boolean(person.pesan_anniv && String(person.pesan_anniv).trim());
+      if (hasPhoto || hasMsg) {
+        filled.push({ ...person, hasPhoto, hasMsg });
+      } else {
+        unfilled.push({ ...person, hasPhoto: false, hasMsg: false });
+      }
+    }
+    const total = alumniRoster.length;
+    const pct = total > 0 ? Math.round((filled.length / total) * 100) : 0;
+    return { filled, unfilled, total, pct };
+  }, [alumniRoster]);
+
+  const displayedCapsuleList = useMemo(() => {
+    const source = capsuleFilter === 'filled' ? capsuleStats.filled : capsuleStats.unfilled;
+    const q = capsuleSearch.trim().toLowerCase();
+    if (!q) return source;
+    return source.filter(
+      (p) => (p.nama || '').toLowerCase().includes(q) || (p.nim || '').toLowerCase().includes(q)
+    );
+  }, [capsuleStats, capsuleFilter, capsuleSearch]);
+
+  const handleCopyUnfilledList = async () => {
+    if (capsuleStats.unfilled.length === 0) return;
+    const lines = [
+      `Pengingat Kapsul Waktu 1 Dekade TL 2016 (${capsuleStats.filled.length}/${capsuleStats.total} sudah mengisi):`,
+      '',
+      'Daftar yang belum mengirim foto dan pesan:',
+      ...capsuleStats.unfilled.map((p, idx) => `${idx + 1}. ${p.nama}`)
+    ];
+    const ok = await copyTextToClipboard(lines.join('\n'));
+    if (ok) {
+      setCopiedUnfilled(true);
+      setTimeout(() => setCopiedUnfilled(false), 2500);
+    }
+  };
 
   const handleClearDate = () => setUnlockDate('');
   const handleClearMonopoliDate = () => setMonopoliDate('');
@@ -818,6 +863,139 @@ export default function AdminDashboard({ onBack }) {
               </div>
             </div>
 
+          </div>
+
+          <div className="bg-[#FAF6EE] p-6 rounded-xl border border-[#DED6C6] w-full mb-8 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-stone-900">
+                  Pemantau Pengisian Kapsul Waktu
+                </h2>
+                <p className="text-xs text-stone-600 mt-0.5">
+                  Pantau progres alumni yang sudah dan belum mengirim foto 2026 beserta pesan angkatan sebelum hari H.
+                </p>
+              </div>
+              <div className="flex items-baseline gap-2 shrink-0">
+                <span className="font-mono font-bold text-2xl text-[#14532D]">
+                  {capsuleStats.filled.length}/{capsuleStats.total}
+                </span>
+                <span className="text-xs font-mono font-semibold text-stone-600">
+                  ({capsuleStats.pct}% terisi)
+                </span>
+              </div>
+            </div>
+
+            <div
+              aria-label={`Progres kapsul waktu ${capsuleStats.pct} persen`}
+              className="w-full h-2.5 rounded-full bg-[#E5DFD2] overflow-hidden"
+            >
+              <div
+                className="h-full rounded-full bg-[#14532D] transition-[width] duration-300"
+                style={{ width: `${capsuleStats.pct}%` }}
+              />
+            </div>
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div role="group" aria-label="Filter status kapsul waktu" className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  aria-pressed={capsuleFilter === 'unfilled'}
+                  onClick={() => setCapsuleFilter('unfilled')}
+                  className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                    capsuleFilter === 'unfilled'
+                      ? 'bg-[#14532D] text-white border-[#14532D]'
+                      : 'bg-white text-stone-800 border-[#DED6C6] hover:bg-[#F3EDE0]'
+                  }`}
+                >
+                  Belum Mengisi ({capsuleStats.unfilled.length})
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={capsuleFilter === 'filled'}
+                  onClick={() => setCapsuleFilter('filled')}
+                  className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                    capsuleFilter === 'filled'
+                      ? 'bg-[#14532D] text-white border-[#14532D]'
+                      : 'bg-white text-stone-800 border-[#DED6C6] hover:bg-[#F3EDE0]'
+                  }`}
+                >
+                  Sudah Mengisi ({capsuleStats.filled.length})
+                </button>
+                {capsuleStats.unfilled.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleCopyUnfilledList}
+                    className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                      copiedUnfilled
+                        ? 'bg-green-100 border-green-300 text-green-900'
+                        : 'bg-white hover:bg-[#F3EDE0] border-[#C7BDA8] text-amber-800'
+                    }`}
+                  >
+                    {copiedUnfilled ? 'Daftar Disalin untuk WA!' : 'Salin Daftar Belum Mengisi'}
+                  </button>
+                )}
+              </div>
+
+              <div className="w-full md:w-64">
+                <label htmlFor="capsule-search-input" className="sr-only">
+                  Cari alumni di pemantau kapsul waktu
+                </label>
+                <input
+                  id="capsule-search-input"
+                  type="text"
+                  value={capsuleSearch}
+                  onChange={(e) => setCapsuleSearch(e.target.value)}
+                  placeholder="Cari nama atau NIM..."
+                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-white border border-[#C7BDA8] text-sm text-stone-900 placeholder:text-stone-500"
+                />
+              </div>
+            </div>
+
+            <div className="bg-white border border-[#DED6C6] rounded-xl max-h-60 overflow-y-auto divide-y divide-[#EDE6D8]">
+              {displayedCapsuleList.length === 0 ? (
+                <p className="p-5 text-center text-xs text-stone-600">
+                  {capsuleSearch.trim()
+                    ? 'Tidak ada nama yang cocok dengan kata kunci pencarian.'
+                    : capsuleFilter === 'unfilled'
+                      ? 'Semua alumni sudah mengisi Kapsul Waktu!'
+                      : 'Belum ada alumni yang mengirim Kapsul Waktu.'}
+                </p>
+              ) : (
+                displayedCapsuleList.map((person, idx) => (
+                  <div
+                    key={person.nim}
+                    className="px-4 py-3 flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-bold text-stone-900 truncate">
+                        <span className="font-mono text-stone-500 mr-2">{idx + 1}.</span>
+                        {person.nama}
+                      </div>
+                      <div className="text-[11px] font-mono text-stone-600">
+                        NIM {person.nim}
+                      </div>
+                    </div>
+                    <span
+                      className={`text-[11px] font-mono font-bold px-2.5 py-1 rounded-md border shrink-0 ${
+                        person.hasPhoto && person.hasMsg
+                          ? 'bg-green-50 text-green-900 border-green-300'
+                          : person.hasPhoto || person.hasMsg
+                            ? 'bg-amber-50 text-amber-900 border-amber-300'
+                            : 'bg-[#FAF6EE] text-stone-700 border-[#DED6C6]'
+                      }`}
+                    >
+                      {person.hasPhoto && person.hasMsg
+                        ? 'Foto & Pesan'
+                        : person.hasPhoto
+                          ? 'Baru Foto'
+                          : person.hasMsg
+                            ? 'Baru Pesan'
+                            : 'Belum Isi'}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           <div className="bg-[#FAF6EE] p-6 rounded-xl border border-[#DED6C6] w-full mb-8">

@@ -1,5 +1,32 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-031',
+    date: '20 November 2026',
+    version: 'v2.9.0',
+    category: 'Fitur Baru',
+    title: 'Link Undangan Ruangan Multiplayer & Gelar Pemegang Rekor Klasemen',
+    commit: 'latest',
+    summary: 'Menambahkan tombol Salin Link Undangan (?join=...) di ruang tunggu multiplayer agar teman langsung masuk ke ruangan tanpa mengetik kode, serta sorotan Gelar Pemegang Rekor Bidang otomatis di papan klasemen.',
+    changes: [
+      'Membuat modul roomInvite.js dan komponen InviteLinkButton.jsx untuk menghasilkan dan menyalin tautan undangan ruangan (?join=...) dengan fallback clipboard untuk browser HP.',
+      'Menambahkan penangkapan parameter ?join=... di GameDashboard.jsx (tersimpan melewati layar masuk) dan gabung ruangan otomatis di MonopoliBoard.jsx, DosenKillerGame.jsx, UnoBrutalGame.jsx, serta MagicalAthleteGame.jsx sesuai jadwal akses masing-masing mode.',
+      'Menambahkan strip Gelar Pemegang Rekor Bidang otomatis di ScoreBoard.jsx (Paling Hafal Jogja, Paling Hafal Wajah Angkatan, dan gelar mode lain saat sudah terbuka) yang langsung mengurutkan klasemen ke kategori terkait saat diklik.'
+    ],
+    docs: {
+      files: [
+        'src/lib/roomInvite.js',
+        'src/components/InviteLinkButton.jsx',
+        'src/components/GameDashboard.jsx',
+        'src/components/ScoreBoard.jsx',
+        'src/components/MonopoliBoard.jsx',
+        'src/components/DosenKillerGame.jsx',
+        'src/components/UnoBrutalGame.jsx',
+        'src/components/MagicalAthleteGame.jsx'
+      ],
+      notes: 'Tautan undangan tetap memeriksa jadwal rilis publik atau akses uji coba sebelum membuka permainan, dan gelar rekor baru tampil saat papan klasemen sudah dibuka dan skor tertinggi lebih dari nol.'
+    }
+  },
+  {
     id: 'upd-030',
     date: '19 November 2026',
     version: 'v2.8.2',

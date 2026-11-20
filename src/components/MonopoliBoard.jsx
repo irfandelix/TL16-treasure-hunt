@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useRoomConnection } from '../lib/useRoomConnection';
 import PlayerAvatar from './PlayerAvatar';
 import StoryShareButton from './StoryShareButton';
+import InviteLinkButton from './InviteLinkButton';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
 
@@ -115,10 +116,11 @@ const PLAYER_RING_COLOR = {
   'bg-pink-500': 'ring-pink-500'
 };
 
-export default function MonopoliBoard({ myAvatarConfig = null }) {
+export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode = '' }) {
   const [appState, setAppState] = useState('lobby');
   const [currentRoom, setCurrentRoom] = useState(null);
   const [joinCode, setJoinCode] = useState('');
+  const autoJoinedRef = useRef(false);
   const [currentUser, setCurrentUser] = useState({ nim: '', nama: '', points: 0 });
   const [players, setPlayers] = useState([]);
   const [playerAvatars, setPlayerAvatars] = useState({});
@@ -242,7 +244,7 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
           );
 
           const savedRoomId = localStorage.getItem(`monopoli_room_${user.nim}`);
-          if (savedRoomId) {
+          if (savedRoomId && !initialRoomCode) {
             const { data: savedRoom } = await supabase
               .from('monopoli_rooms')
               .select('*')
@@ -410,6 +412,13 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
     setCurrentRoom(room);
     setAppState(room.status === 'playing' ? 'game' : 'room');
   };
+
+  useEffect(() => {
+    if (!initialRoomCode || autoJoinedRef.current || !currentUser.nim || appState !== 'lobby') return;
+    autoJoinedRef.current = true;
+    setJoinCode(initialRoomCode);
+    joinRoom(initialRoomCode);
+  }, [initialRoomCode, currentUser.nim, appState]);
 
   const startGame = async () => {
     if (players.length < 4) { if (!window.confirm('Pemain kurang dari 4 orang. Lanjutkan mulai permainan?')) return; }
@@ -1093,9 +1102,10 @@ export default function MonopoliBoard({ myAvatarConfig = null }) {
           <p className="text-amber-700 font-mono font-bold mb-2 uppercase text-xs tracking-wider">
             Kode Ruangan Monopoli
           </p>
-          <h1 className="text-5xl font-mono font-bold text-stone-900 tracking-widest mb-6 bg-[#FAF6EE] py-4 rounded-xl border border-[#DED6C6]">
+          <h1 className="text-5xl font-mono font-bold text-stone-900 tracking-widest mb-4 bg-[#FAF6EE] py-4 rounded-xl border border-[#DED6C6]">
             {currentRoom.id}
           </h1>
+          <InviteLinkButton gameKey="monopoli" roomCode={currentRoom.id} className="w-full mb-6" />
           <h2 className="text-left font-bold text-green-800 text-sm mb-3">
             Pemain Bergabung ({players.length}/6):
           </h2>

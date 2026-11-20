@@ -5,6 +5,7 @@ import { useRoomConnection, pickActiveCoordinator, shouldBotControlPlayer } from
 import { ATHLETE_CHARACTERS, TRACK_TILES, PLAYER_COLORS } from '../data/athleteCharacters';
 import confetti from 'canvas-confetti';
 import StoryShareButton from './StoryShareButton';
+import InviteLinkButton from './InviteLinkButton';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
 const TRACK_LOOP_COORDS = {
@@ -35,7 +36,7 @@ const TRACK_LOOP_COORDS = {
   24: { col: 1, row: 1, dir: 'Finish' },
 };
 
-export default function MagicalAthleteGame({ onBack }) {
+export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
   const [currentUser, setCurrentUser] = useState({
     nim: '',
     nama: '',
@@ -71,6 +72,7 @@ export default function MagicalAthleteGame({ onBack }) {
   const playersRef = useRef([]);
   const isBotThinkingRef = useRef(false);
   const bonusRollsRef = useRef({ slot: null, count: 0 });
+  const autoJoinedRef = useRef(false);
 
   useEffect(() => {
     roomDataRef.current = roomData;
@@ -255,9 +257,10 @@ export default function MagicalAthleteGame({ onBack }) {
     setIsInRoom(true);
   };
 
-  const handleJoinRoom = async (e) => {
+  const handleJoinRoom = async (e, codeOverride) => {
     e?.preventDefault();
-    const code = inputRoomCode.trim().toUpperCase();
+    const rawCode = typeof codeOverride === 'string' ? codeOverride : inputRoomCode;
+    const code = rawCode.trim().toUpperCase();
     if (!code) return;
 
     const { data: room, error } = await supabase
@@ -274,6 +277,13 @@ export default function MagicalAthleteGame({ onBack }) {
     setRoomCode(code);
     setIsInRoom(true);
   };
+
+  useEffect(() => {
+    if (!initialRoomCode || autoJoinedRef.current || !isLoggedIn || isInRoom) return;
+    autoJoinedRef.current = true;
+    setInputRoomCode(initialRoomCode);
+    handleJoinRoom(null, initialRoomCode);
+  }, [initialRoomCode, isLoggedIn, isInRoom]);
 
   const loadGameData = useCallback(async () => {
     if (!isInRoom || !roomCode) return;
@@ -1128,7 +1138,10 @@ export default function MagicalAthleteGame({ onBack }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            {roomData?.status === 'LOBBY' && (
+              <InviteLinkButton gameKey="athlete" roomCode={roomCode} />
+            )}
             {connectionStatus !== 'online' && (
               <span className="px-2.5 py-1 rounded-lg bg-amber-100 border border-amber-300 text-amber-900 text-xs font-mono font-bold">
                 {connectionStatus === 'offline' ? 'Koneksi terputus' : 'Menyinkronkan...'}

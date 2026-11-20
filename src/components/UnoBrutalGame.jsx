@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRoomConnection, pickActiveCoordinator, shouldBotControlPlayer } from '../lib/useRoomConnection';
 import StoryShareButton from './StoryShareButton';
+import InviteLinkButton from './InviteLinkButton';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
 const CARD_COLORS = [
@@ -32,10 +33,11 @@ const pickFairUnoCard = (hand = [], topCard) => {
   return regularCard || playable[0];
 };
 
-export default function UnoBrutalGame() {
+export default function UnoBrutalGame({ initialRoomCode = '' }) {
   const [user, setUser] = useState(null);
   const [roomCode, setRoomCode] = useState('');
   const [currentRoom, setCurrentRoom] = useState(null);
+  const autoJoinedRef = useRef(false);
   const [roomStatus, setRoomStatus] = useState('waiting');
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -54,7 +56,7 @@ export default function UnoBrutalGame() {
     if (nim && nama) {
       setUser({ nim, nama });
       const savedUnoRoom = localStorage.getItem(`uno_room_${nim}`);
-      if (savedUnoRoom) {
+      if (savedUnoRoom && !initialRoomCode) {
         supabase
           .from('uno_players')
           .select('room_code')
@@ -174,9 +176,9 @@ export default function UnoBrutalGame() {
     }
   };
 
-  const joinRoom = async (e) => {
-    e.preventDefault();
-    if (!roomCode || !user) return;
+  const joinRoomByCode = async (rawCode) => {
+    const cleanCode = String(rawCode || '').trim().toUpperCase();
+    if (!cleanCode || !user) return;
     setLoading(true);
     setErrorMsg('');
 
@@ -184,7 +186,7 @@ export default function UnoBrutalGame() {
       const { data: roomData, error: roomError } = await supabase
         .from('uno_rooms')
         .select('status')
-        .eq('room_code', roomCode)
+        .eq('room_code', cleanCode)
         .single();
 
       if (roomError || !roomData) throw new Error('Meja tidak ditemukan. Periksa kembali kode meja.');
@@ -192,13 +194,13 @@ export default function UnoBrutalGame() {
 
       const { error: playerError } = await supabase
         .from('uno_players')
-        .insert([{ room_code: roomCode, nim: user.nim, nama: user.nama, is_host: false, hand: [] }]);
+        .insert([{ room_code: cleanCode, nim: user.nim, nama: user.nama, is_host: false, hand: [] }]);
 
       if (playerError && playerError.code !== '23505') throw playerError;
 
-      localStorage.setItem(`uno_room_${user.nim}`, roomCode);
+      localStorage.setItem(`uno_room_${user.nim}`, cleanCode);
       setRoomStatus(roomData.status);
-      setCurrentRoom(roomCode);
+      setCurrentRoom(cleanCode);
     } catch (err) {
       console.error(err);
       setErrorMsg(err.message || 'Gagal bergabung ke meja.');
@@ -206,6 +208,18 @@ export default function UnoBrutalGame() {
       setLoading(false);
     }
   };
+
+  const joinRoom = async (e) => {
+    e.preventDefault();
+    await joinRoomByCode(roomCode);
+  };
+
+  useEffect(() => {
+    if (!initialRoomCode || autoJoinedRef.current || !user?.nim || currentRoom) return;
+    autoJoinedRef.current = true;
+    setRoomCode(initialRoomCode);
+    joinRoomByCode(initialRoomCode);
+  }, [initialRoomCode, user?.nim, currentRoom]);
 
   const startGame = async () => {
     if (!currentRoom) return;
@@ -629,13 +643,18 @@ export default function UnoBrutalGame() {
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={leaveRoom}
-          className="text-xs bg-white text-stone-800 border border-[#C7BDA8] hover:bg-rose-700 hover:text-white hover:border-rose-600 px-4 py-2 min-h-[44px] rounded-xl transition-colors font-bold"
-        >
-          Keluar Meja
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {roomStatus === 'waiting' && (
+            <InviteLinkButton gameKey="unobrutal" roomCode={currentRoom} />
+          )}
+          <button
+            type="button"
+            onClick={leaveRoom}
+            className="text-xs bg-white text-stone-800 border border-[#C7BDA8] hover:bg-rose-700 hover:text-white hover:border-rose-600 px-4 py-2 min-h-[44px] rounded-xl transition-colors font-bold"
+          >
+            Keluar Meja
+          </button>
+        </div>
       </div>
 
       {errorMsg && (
