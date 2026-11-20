@@ -77,13 +77,13 @@ function renderRedactedText(text, unlockedModes) {
   return parts;
 }
 
-const CATEGORIES = ['Semua', 'Fitur Baru', 'Perbaikan Bug', 'Desain & UI', 'Keamanan & Akses'];
+const CATEGORIES = ['Semua', 'Fitur Baru', 'Perbaikan', 'Tampilan', 'Keamanan'];
 
 const CATEGORY_STYLE = {
   'Fitur Baru': 'bg-green-100 text-green-900 border-green-300',
-  'Perbaikan Bug': 'bg-rose-50 text-rose-800 border-rose-300',
-  'Desain & UI': 'bg-amber-100 text-amber-900 border-amber-300',
-  'Keamanan & Akses': 'bg-stone-200 text-stone-800 border-stone-300',
+  'Perbaikan': 'bg-rose-50 text-rose-800 border-rose-300',
+  'Tampilan': 'bg-amber-100 text-amber-900 border-amber-300',
+  'Keamanan': 'bg-stone-200 text-stone-800 border-stone-300',
 };
 
 export default function UpdatesPage({ onBack }) {
@@ -199,7 +199,7 @@ export default function UpdatesPage({ onBack }) {
                 Catatan Update &amp; Dokumentasi
               </h1>
               <p className="text-stone-600 text-sm md:text-base mt-1">
-                Riwayat setiap pembaruan fitur, perbaikan bug, dan dokumentasi teknis Portal 1 Dekade TL 2016.
+                Semua fitur baru, perbaikan, dan pembaruan tampilan di Portal 1 Dekade TL 2016.
               </p>
             </div>
           </div>
@@ -273,19 +273,19 @@ export default function UpdatesPage({ onBack }) {
                     onClick={() => toggleDoc(item.id)}
                     className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#FAF6EE] hover:bg-[#F3EDE0] border border-[#DED6C6] text-xs font-bold text-stone-800 transition-colors"
                   >
-                    {isExpanded ? 'Sembunyikan Dokumentasi Teknis' : 'Lihat Dokumentasi Teknis'}
+                    {isExpanded ? 'Sembunyikan Detail' : 'Lihat Detail Lengkap'}
                   </button>
 
                   {isExpanded && item.docs && (
                     <div className="mt-4 bg-[#FAF6EE] border border-[#DED6C6] rounded-xl p-4 space-y-3 text-xs">
                       <div>
-                        <p className="font-bold text-stone-900 mb-1">Catatan Implementasi:</p>
+                        <p className="font-bold text-stone-900 mb-1">Penjelasan Tambahan:</p>
                         <p className="text-stone-700 leading-relaxed">
                           {renderRedactedText(item.docs.notes, unlockedModes)}
                         </p>
                       </div>
                       <div>
-                        <p className="font-bold text-stone-900 mb-1.5">File Terkait:</p>
+                        <p className="font-bold text-stone-900 mb-1.5">Bagian yang Diperbarui:</p>
                         <div className="flex flex-wrap gap-1.5">
                           {item.docs.files.map((filePath, fIdx) =>
                             isPathLocked(filePath, unlockedModes) ? (
