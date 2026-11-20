@@ -1,5 +1,29 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-033',
+    date: '20 November 2026',
+    version: 'v2.9.2',
+    category: 'Fitur Baru',
+    title: 'Tombol Batalkan/Keluar Ruangan & Halaman Status Ruangan Multiplayer',
+    commit: 'latest',
+    summary: 'Menambahkan tombol Batalkan atau Keluar Ruangan di seluruh ruang tunggu multiplayer serta halaman khusus saat ruangan tidak ditemukan, sudah selesai, kedaluwarsa, penuh, atau dibatalkan.',
+    changes: [
+      'Membuat komponen RoomStatusScreen.jsx untuk menampilkan status ruangan secara jelas (tidak ditemukan, permainan selesai, kedaluwarsa, sedang berlangsung, penuh, atau dibatalkan) lengkap dengan tombol kembali ke lobi dan beranda.',
+      'Menambahkan tombol Batalkan Ruangan / Keluar dari Ruangan pada ruang tunggu MonopoliBoard.jsx, DosenKillerGame.jsx, UnoBrutalGame.jsx, dan MagicalAthleteGame.jsx yang otomatis menghapus ruangan kosong saat pemain terakhir keluar.',
+      'Menghubungkan pengecekan masuk ruangan dan sinkronisasi ruangan di seluruh permainan multiplayer agar menampilkan RoomStatusScreen menggantikan dialog alert bawaan browser.'
+    ],
+    docs: {
+      files: [
+        'src/components/RoomStatusScreen.jsx',
+        'src/components/MonopoliBoard.jsx',
+        'src/components/DosenKillerGame.jsx',
+        'src/components/UnoBrutalGame.jsx',
+        'src/components/MagicalAthleteGame.jsx'
+      ],
+      notes: 'Jika pembuat ruangan membatalkan sesi sebelum permainan dimulai, pemain lain yang masih berada di ruang tunggu atau membuka tautan undangan lama otomatis diarahkan ke layar status ruangan dibatalkan/tidak ditemukan.'
+    }
+  },
+  {
     id: 'upd-032',
     date: '20 November 2026',
     version: 'v2.9.1',

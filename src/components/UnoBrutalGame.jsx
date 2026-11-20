@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useRoomConnection, pickActiveCoordinator, shouldBotControlPlayer } from '../lib/useRoomConnection';
 import StoryShareButton from './StoryShareButton';
 import InviteLinkButton from './InviteLinkButton';
+import RoomStatusScreen from './RoomStatusScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
 const CARD_COLORS = [
@@ -33,10 +34,11 @@ const pickFairUnoCard = (hand = [], topCard) => {
   return regularCard || playable[0];
 };
 
-export default function UnoBrutalGame({ initialRoomCode = '' }) {
+export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
   const [user, setUser] = useState(null);
   const [roomCode, setRoomCode] = useState('');
   const [currentRoom, setCurrentRoom] = useState(null);
+  const [roomIssue, setRoomIssue] = useState(null);
   const autoJoinedRef = useRef(false);
   const [roomStatus, setRoomStatus] = useState('waiting');
   const [players, setPlayers] = useState([]);
@@ -98,6 +100,15 @@ export default function UnoBrutalGame({ initialRoomCode = '' }) {
       if (rData.top_card) setTopCard(rData.top_card);
       setCurrentTurn(rData.current_turn || null);
       if (rData.direction) setDirection(rData.direction);
+    } else {
+      const nimKey = user?.nim || localStorage.getItem('user_nim');
+      if (nimKey) localStorage.removeItem(`uno_room_${nimKey}`);
+      const missingCode = currentRoom;
+      setCurrentRoom(null);
+      setPlayers([]);
+      setMyHand([]);
+      setRoomStatus('waiting');
+      setRoomIssue({ status: 'cancelled', code: missingCode });
     }
   }, [currentRoom, user?.nim]);
 
@@ -181,6 +192,7 @@ export default function UnoBrutalGame({ initialRoomCode = '' }) {
     if (!cleanCode || !user) return;
     setLoading(true);
     setErrorMsg('');
+    setRoomIssue(null);
 
     try {
       const { data: roomData, error: roomError } = await supabase
@@ -189,8 +201,18 @@ export default function UnoBrutalGame({ initialRoomCode = '' }) {
         .eq('room_code', cleanCode)
         .single();
 
-      if (roomError || !roomData) throw new Error('Meja tidak ditemukan. Periksa kembali kode meja.');
-      if (roomData.status !== 'waiting') throw new Error('Permainan di meja ini sudah dimulai atau selesai.');
+      if (roomError || !roomData) {
+        setRoomIssue({ status: 'not_found', code: cleanCode });
+        return;
+      }
+      if (roomData.status === 'finished') {
+        setRoomIssue({ status: 'finished', code: cleanCode });
+        return;
+      }
+      if (roomData.status !== 'waiting') {
+        setRoomIssue({ status: 'started', code: cleanCode });
+        return;
+      }
 
       const { error: playerError } = await supabase
         .from('uno_players')
@@ -398,6 +420,15 @@ export default function UnoBrutalGame({ initialRoomCode = '' }) {
         }
       }
       await supabase.from('uno_players').delete().match({ room_code: currentRoom, nim: user.nim });
+      if (roomStatus === 'waiting') {
+        const { data: remaining } = await supabase
+          .from('uno_players')
+          .select('nim')
+          .eq('room_code', currentRoom);
+        if (!remaining || remaining.length === 0) {
+          await supabase.from('uno_rooms').delete().eq('room_code', currentRoom);
+        }
+      }
       localStorage.removeItem(`uno_room_${user.nim}`);
     }
     setPendingWildCard(null);
@@ -409,6 +440,22 @@ export default function UnoBrutalGame({ initialRoomCode = '' }) {
     setRoomCode('');
     setErrorMsg('');
   };
+
+  if (roomIssue) {
+    return (
+      <RoomStatusScreen
+        gameName="UNO Sedulur 16"
+        status={roomIssue.status}
+        roomCode={roomIssue.code}
+        onBackToLobby={() => {
+          setRoomIssue(null);
+          setRoomCode('');
+          setErrorMsg('');
+        }}
+        onBackHome={onBack}
+      />
+    );
+  }
 
   if (!currentRoom) {
     return (
@@ -650,9 +697,9 @@ export default function UnoBrutalGame({ initialRoomCode = '' }) {
           <button
             type="button"
             onClick={leaveRoom}
-            className="text-xs bg-white text-stone-800 border border-[#C7BDA8] hover:bg-rose-700 hover:text-white hover:border-rose-600 px-4 py-2 min-h-[44px] rounded-xl transition-colors font-bold"
+            className="text-xs bg-white text-rose-700 border border-rose-300 hover:bg-rose-700 hover:text-white hover:border-rose-600 px-4 py-2 min-h-[44px] rounded-xl transition-colors font-bold"
           >
-            Keluar Meja
+            {roomStatus === 'waiting' && players.length <= 1 ? 'Batalkan Meja' : 'Keluar Meja'}
           </button>
         </div>
       </div>

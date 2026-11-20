@@ -4,6 +4,7 @@ import { useRoomConnection } from '../lib/useRoomConnection';
 import PlayerAvatar from './PlayerAvatar';
 import StoryShareButton from './StoryShareButton';
 import InviteLinkButton from './InviteLinkButton';
+import RoomStatusScreen from './RoomStatusScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
 
@@ -116,10 +117,11 @@ const PLAYER_RING_COLOR = {
   'bg-pink-500': 'ring-pink-500'
 };
 
-export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode = '' }) {
+export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode = '', onBack }) {
   const [appState, setAppState] = useState('lobby');
   const [currentRoom, setCurrentRoom] = useState(null);
   const [joinCode, setJoinCode] = useState('');
+  const [roomIssue, setRoomIssue] = useState(null);
   const autoJoinedRef = useRef(false);
   const [currentUser, setCurrentUser] = useState({ nim: '', nama: '', points: 0 });
   const [players, setPlayers] = useState([]);
@@ -370,16 +372,27 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
     const rCode = (code || joinCode).trim();
     if (!rCode) return alert('Masukkan kode ruangan 4 angka terlebih dahulu!');
     if (!currentUser.nim) return alert('Data profil belum siap, silakan muat ulang halaman.');
+    setRoomIssue(null);
 
     const { data: room } = await supabase.from('monopoli_rooms').select('*').eq('id', rCode).single();
-    if (!room) return alert('Ruangan tidak ditemukan!');
+    if (!room) {
+      setRoomIssue({ status: 'not_found', code: rCode });
+      return;
+    }
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    if (new Date(room.last_active) < oneHourAgo) return alert('Sesi ruangan sudah kedaluwarsa. Silakan buat ruangan baru.');
-    if (room.status === 'finished') return alert('Permainan di ruangan ini sudah selesai!');
+    if (new Date(room.last_active) < oneHourAgo) {
+      setRoomIssue({ status: 'expired', code: rCode });
+      return;
+    }
+    if (room.status === 'finished') {
+      setRoomIssue({ status: 'finished', code: rCode });
+      return;
+    }
     const { data: ep } = await supabase.from('monopoli_players').select('*').eq('room_id', rCode);
     const existingPlayers = ep || [];
     if (existingPlayers.length >= 6 && !existingPlayers.find(p => p.nim === currentUser.nim)) {
-      return alert('Ruangan penuh! Maksimal 6 pemain.');
+      setRoomIssue({ status: 'full', code: rCode });
+      return;
     }
 
     // Pastikan NIM terdaftar di monopoli_users sebelum insert ke monopoli_players
@@ -461,11 +474,20 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
   const loadGameData = useCallback(async () => {
     if (isTransacting.current || !currentRoom) return;
     const { data: room } = await supabase.from('monopoli_rooms').select('*').eq('id', currentRoom.id).single();
-    if (room) {
-      setCurrentRoom(room);
-      if (room.status === 'finished') setAppState('result');
-      else if (room.status === 'playing') setAppState('game');
+    if (!room) {
+      if (currentUser.nim) localStorage.removeItem(`monopoli_room_${currentUser.nim}`);
+      const missingCode = currentRoom.id;
+      setCurrentRoom(null);
+      setMyState(null);
+      setPlayers([]);
+      setProperties([]);
+      setAppState('lobby');
+      setRoomIssue({ status: 'cancelled', code: missingCode });
+      return;
     }
+    setCurrentRoom(room);
+    if (room.status === 'finished') setAppState('result');
+    else if (room.status === 'playing') setAppState('game');
     const { data: p } = await supabase.from('monopoli_players').select('*').eq('room_id', currentRoom.id);
     const { data: prop } = await supabase.from('monopoli_properties').select('*').eq('room_id', currentRoom.id);
     if (p) {
@@ -968,6 +990,22 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
     return {};
   };
 
+  if (roomIssue) {
+    return (
+      <RoomStatusScreen
+        gameName="Monopoli TL16"
+        status={roomIssue.status}
+        roomCode={roomIssue.code}
+        onBackToLobby={() => {
+          setRoomIssue(null);
+          setJoinCode('');
+          setAppState('lobby');
+        }}
+        onBackHome={onBack}
+      />
+    );
+  }
+
   if (appState === 'lobby') {
     return (
       <div className="flex flex-col items-center justify-center w-full min-h-[75vh] p-4">
@@ -1130,6 +1168,13 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
             className="w-full min-h-[48px] py-3.5 px-6 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-base shadow-md transition-colors"
           >
             Mulai Permainan
+          </button>
+          <button
+            type="button"
+            onClick={exitGame}
+            className="w-full min-h-[46px] mt-3 py-3 px-6 bg-[#FAF6EE] hover:bg-rose-50 text-rose-700 border border-rose-300 font-bold rounded-xl text-sm transition-colors"
+          >
+            {players.length <= 1 ? 'Batalkan Ruangan' : 'Keluar dari Ruangan'}
           </button>
         </div>
       </div>

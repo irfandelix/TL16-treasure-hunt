@@ -9,6 +9,7 @@ import LayarVoting from './LayarVoting';
 import LayarEksekusi from './LayarEksekusi';
 import StoryShareButton from './StoryShareButton';
 import InviteLinkButton from './InviteLinkButton';
+import RoomStatusScreen from './RoomStatusScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
 
@@ -16,6 +17,7 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
   const [roomCode, setRoomCode] = useState(''); 
   const [inputRoomCode, setInputRoomCode] = useState('');
   const [isInRoom, setIsInRoom] = useState(false);
+  const [roomIssue, setRoomIssue] = useState(null);
   const autoJoinedRef = useRef(false);
   const [showAdminWarning, setShowAdminWarning] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -67,7 +69,7 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
   useEffect(() => {
     if (!currentUser.nim) return;
     const savedDkRoom = localStorage.getItem(`dk_room_${currentUser.nim}`);
-    if (savedDkRoom && !isInRoom) {
+    if (savedDkRoom && !isInRoom && !initialRoomCode) {
       supabase
         .from('dosen_killer_state')
         .select('room_code')
@@ -94,6 +96,15 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
     if (stateData) {
       setFaseGame(stateData.fase_game);
       dbStateRef.current = stateData;
+    } else {
+      if (currentUser.nim) localStorage.removeItem(`dk_room_${currentUser.nim}`);
+      const missingCode = roomCode;
+      setIsInRoom(false);
+      setRoomCode('');
+      setPemain([]);
+      setFaseGame('LOBBY');
+      setRoomIssue({ status: 'cancelled', code: missingCode });
+      return;
     }
 
     const { data: pemainData } = await supabase
@@ -463,12 +474,51 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
 
   const handleJoinRoom = async (codeOverride) => {
     setLobbyError('');
+    setRoomIssue(null);
     const rawCode = typeof codeOverride === 'string' ? codeOverride : inputRoomCode;
     const kodeBersih = rawCode.trim().toUpperCase();
     if (!kodeBersih) return setLobbyError("Masukkan kode kelas terlebih dahulu!");
     const { data } = await supabase.from('dosen_killer_state').select('*').eq('room_code', kodeBersih).single();
-    if (data) { setRoomCode(kodeBersih); setIsInRoom(true); } 
-    else setLobbyError("Kode kelas tidak ditemukan.");
+    if (!data) {
+      setRoomIssue({ status: 'not_found', code: kodeBersih });
+      return;
+    }
+    if (data.fase_game === 'SELESAI') {
+      setRoomIssue({ status: 'finished', code: kodeBersih });
+      return;
+    }
+    setRoomCode(kodeBersih);
+    setIsInRoom(true);
+  };
+
+  const handleLeaveRoom = async () => {
+    const leavingCode = roomCode;
+    if (currentUser.nim) {
+      localStorage.removeItem(`dk_room_${currentUser.nim}`);
+    }
+    if (leavingCode && currentUser.nim) {
+      await supabase
+        .from('mahasiswa_roles')
+        .delete()
+        .match({ room_code: leavingCode, nim: currentUser.nim });
+
+      if (faseGame === 'LOBBY') {
+        const { data: remaining } = await supabase
+          .from('mahasiswa_roles')
+          .select('nim')
+          .eq('room_code', leavingCode);
+        if (!remaining || remaining.length === 0) {
+          await supabase.from('dosen_killer_state').delete().eq('room_code', leavingCode);
+        }
+      }
+    }
+    setIsInRoom(false);
+    setRoomCode('');
+    setInputRoomCode('');
+    setPemain([]);
+    setFaseGame('LOBBY');
+    setPeranKu(null);
+    setIsHidup(true);
   };
 
   useEffect(() => {
@@ -512,6 +562,22 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
       fase_game: 'MALAM', ronde: 1, waktu_berakhir: waktuSelesaiMalam, pesan_pengumuman: pengumumanAwal
     }).eq('room_code', roomCode);
   };
+
+  if (roomIssue) {
+    return (
+      <RoomStatusScreen
+        gameName="Dosen Killer"
+        status={roomIssue.status}
+        roomCode={roomIssue.code}
+        onBackToLobby={() => {
+          setRoomIssue(null);
+          setInputRoomCode('');
+          setIsInRoom(false);
+        }}
+        onBackHome={onBack}
+      />
+    );
+  }
 
   if (!isInRoom) {
     return (
@@ -721,6 +787,13 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
               Bagikan Peran & Mulai Sesi Kelas
             </button>
           )}
+          <button
+            type="button"
+            onClick={handleLeaveRoom}
+            className="w-full min-h-[46px] mt-3 py-3 px-6 bg-[#FAF6EE] hover:bg-rose-50 text-rose-700 border border-rose-300 font-bold rounded-xl text-sm transition-colors"
+          >
+            {pemain.length <= 1 ? 'Batalkan Kelas' : 'Keluar dari Kelas'}
+          </button>
         </div>
       </>
     );

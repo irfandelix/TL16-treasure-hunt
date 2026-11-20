@@ -6,6 +6,7 @@ import { ATHLETE_CHARACTERS, TRACK_TILES, PLAYER_COLORS } from '../data/athleteC
 import confetti from 'canvas-confetti';
 import StoryShareButton from './StoryShareButton';
 import InviteLinkButton from './InviteLinkButton';
+import RoomStatusScreen from './RoomStatusScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 
 const TRACK_LOOP_COORDS = {
@@ -52,6 +53,7 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
   const [roomCode, setRoomCode] = useState('');
   const [inputRoomCode, setInputRoomCode] = useState('');
   const [isInRoom, setIsInRoom] = useState(false);
+  const [roomIssue, setRoomIssue] = useState(null);
   const [roomData, setRoomData] = useState(null);
   const [players, setPlayers] = useState([]);
   const [alumniList, setAlumniList] = useState([]);
@@ -259,6 +261,7 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
 
   const handleJoinRoom = async (e, codeOverride) => {
     e?.preventDefault();
+    setRoomIssue(null);
     const rawCode = typeof codeOverride === 'string' ? codeOverride : inputRoomCode;
     const code = rawCode.trim().toUpperCase();
     if (!code) return;
@@ -270,12 +273,39 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
       .single();
 
     if (error || !room) {
-      alert('Ruangan tidak ditemukan! Pastikan kode ruangan benar.');
+      setRoomIssue({ status: 'not_found', code });
+      return;
+    }
+    if (room.status === 'GAME_OVER') {
+      setRoomIssue({ status: 'finished', code });
       return;
     }
 
     setRoomCode(code);
     setIsInRoom(true);
+  };
+
+  const handleLeaveRoom = async () => {
+    const leavingCode = roomCode;
+    if (leavingCode && currentUser.nim && roomData?.status === 'LOBBY') {
+      await supabase
+        .from('athlete_players')
+        .delete()
+        .match({ room_code: leavingCode, nim: currentUser.nim });
+
+      const { data: remaining } = await supabase
+        .from('athlete_players')
+        .select('id')
+        .eq('room_code', leavingCode);
+      if (!remaining || remaining.length === 0) {
+        await supabase.from('athlete_rooms').delete().eq('room_code', leavingCode);
+      }
+    }
+    setIsInRoom(false);
+    setRoomCode('');
+    setInputRoomCode('');
+    setRoomData(null);
+    setPlayers([]);
   };
 
   useEffect(() => {
@@ -292,7 +322,17 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
       .select('*')
       .eq('room_code', roomCode)
       .single();
-    if (room) setRoomData(room);
+    if (room) {
+      setRoomData(room);
+    } else {
+      const missingCode = roomCode;
+      setIsInRoom(false);
+      setRoomCode('');
+      setRoomData(null);
+      setPlayers([]);
+      setRoomIssue({ status: 'cancelled', code: missingCode });
+      return;
+    }
 
     const { data: plyrs } = await supabase
       .from('athlete_players')
@@ -1025,6 +1065,22 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
     );
   }
 
+  if (roomIssue) {
+    return (
+      <RoomStatusScreen
+        gameName="Magical Athlete TL16"
+        status={roomIssue.status}
+        roomCode={roomIssue.code}
+        onBackToLobby={() => {
+          setRoomIssue(null);
+          setInputRoomCode('');
+          setIsInRoom(false);
+        }}
+        onBackHome={onBack}
+      />
+    );
+  }
+
   if (!isInRoom) {
     return (
       <div className="min-h-screen bg-[#FAF6EE] text-stone-900 flex flex-col items-center justify-center p-4">
@@ -1140,7 +1196,16 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
 
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             {roomData?.status === 'LOBBY' && (
-              <InviteLinkButton gameKey="athlete" roomCode={roomCode} />
+              <>
+                <InviteLinkButton gameKey="athlete" roomCode={roomCode} />
+                <button
+                  type="button"
+                  onClick={handleLeaveRoom}
+                  className="px-3.5 py-2 min-h-[44px] bg-white hover:bg-rose-50 text-rose-700 border border-rose-300 rounded-xl text-xs font-bold transition-colors"
+                >
+                  {players.length <= 1 ? 'Batalkan Ruangan' : 'Keluar Ruangan'}
+                </button>
+              </>
             )}
             {connectionStatus !== 'online' && (
               <span className="px-2.5 py-1 rounded-lg bg-amber-100 border border-amber-300 text-amber-900 text-xs font-mono font-bold">
