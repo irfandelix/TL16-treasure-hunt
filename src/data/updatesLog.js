@@ -1,5 +1,30 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-037',
+    date: '20 November 2026',
+    version: 'v2.9.6',
+    category: 'Tampilan',
+    title: 'Panduan Cara Main Lengkap di Seluruh Permainan Portal',
+    commit: 'latest',
+    summary: 'Seluruh permainan di portal kini dilengkapi panduan aturan main, isi permainan, dan hitungan poin dalam bahasa sehari-hari supaya semua alumni bisa langsung paham sebelum bermain.',
+    changes: [
+      'Menambahkan penjelasan aturan dan hadiah poin di halaman masuk Monopoli TL16 serta memperbarui penjelasan aturan di UNO Sedulur 16 agar sesuai mekanik aslinya.',
+      'Menambahkan panduan alur, cara menang, dan daftar tokoh di halaman masuk Magical Athlete TL16.',
+      'Menambahkan panduan lipat Cara Main & Hitungan Skor pada Napak Tilas Peta dan Tebak Foto Kenangan, serta penjelasan singkat cara kerja Wheel of Family.'
+    ],
+    docs: {
+      files: [
+        'src/components/MonopoliBoard.jsx',
+        'src/components/UnoBrutalGame.jsx',
+        'src/components/MagicalAthleteGame.jsx',
+        'src/components/TreasureHunt.jsx',
+        'src/components/FaceGame.jsx',
+        'src/components/WheelOfFamily.jsx'
+      ],
+      notes: 'Seluruh panduan ditulis dengan bahasa yang ringan agar mudah diikuti teman seangkatan yang baru pertama kali mencoba.'
+    }
+  },
+  {
     id: 'upd-036',
     date: '20 November 2026',
     version: 'v2.9.5',

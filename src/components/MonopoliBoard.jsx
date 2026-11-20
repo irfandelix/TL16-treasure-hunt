@@ -1002,21 +1002,21 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
 
   if (appState === 'lobby') {
     return (
-      <div className="flex flex-col items-center justify-center w-full min-h-[75vh] p-4">
-        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          <div className="w-full bg-white p-8 rounded-3xl border border-slate-200 text-center shadow-sm">
+      <div className="w-full max-w-4xl mx-auto py-4 sm:py-6 px-2 sm:px-4 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          <div className="w-full bg-[#FFFDF9] p-6 sm:p-8 rounded-2xl border border-[#DED8CA] text-center shadow-sm">
             <div className="flex justify-center mb-3">
               <PlayerAvatar
                 config={getPlayerAvatarConfig(currentUser.nim)}
                 seed={currentUser.nim}
-                className="w-16 h-16 border-2 border-slate-900"
+                className="w-16 h-16 border-2 border-zinc-900"
                 alt={currentUser.nama}
               />
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Monopoli UPN TL 2016</h1>
-            <p className="text-slate-700 mb-6 text-sm">
-              Halo, <span className="font-bold text-slate-900">{currentUser.nama}</span>!
-              <span className="block text-emerald-700 font-mono font-bold mt-1">
+            <h1 className="text-3xl font-bold text-zinc-900 mb-2">Monopoli UPN TL 2016</h1>
+            <p className="text-zinc-700 mb-6 text-sm">
+              Halo, <span className="font-bold text-zinc-900">{currentUser.nama}</span>!
+              <span className="block text-emerald-800 font-mono font-bold mt-1">
                 Total Poin Monopoli: {currentUser.points}
               </span>
             </p>
@@ -1053,8 +1053,8 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
             </button>
           </div>
 
-          <div className="w-full bg-white p-6 sm:p-8 rounded-2xl border border-[#DED6C6]">
-            <div className="flex items-center justify-between gap-2 pb-4 mb-4 border-b border-[#DED6C6]">
+          <div className="w-full bg-[#FFFDF9] p-6 sm:p-8 rounded-2xl border border-[#DED8CA]">
+            <div className="flex items-center justify-between gap-2 pb-4 mb-4 border-b border-[#DED8CA]">
               <div>
                 <h2 className="text-xl font-bold text-stone-900">Ruangan Aktif</h2>
                 <p className="text-xs text-stone-600">Pilih ruangan yang sedang dibuka untuk langsung bergabung.</p>
@@ -1123,6 +1123,44 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
             )}
           </div>
         </div>
+
+        <section aria-labelledby="mono-guide-heading" className="bg-[#FFFDF9] rounded-2xl border border-[#DED8CA] overflow-hidden">
+          <div className="px-6 py-4 bg-[#FAF6EE] border-b border-[#DED8CA] flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="mono-guide-heading" className="text-lg font-bold text-zinc-900">
+              Cara Main dan Isi Papan Monopoli TL 2016
+            </h2>
+            <span className="text-xs text-zinc-600">
+              2 sampai 6 pemain per ruangan (40 petak kenangan kampus)
+            </span>
+          </div>
+
+          <div className="divide-y divide-[#EDE6D8] text-sm text-zinc-700">
+            <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-5">
+              <strong className="sm:w-52 shrink-0 text-zinc-900">Properti Kampus (28 Petak)</strong>
+              <p className="leading-relaxed">
+                Kelilingi tempat kenangan kuliah mulai dari Lapangan Rektorat, Taman TL, Kontrakan TL 1 sampai 3, RM Anggrek, sampai Halaman TL. Kalau mampir di petak kosong, kamu bisa membelinya. Mampir lagi di properti sendiri bisa ditingkatkan sampai level 5 (biaya setengah harga beli) biar uang sewanya naik hingga 5 kali lipat. Saat saldo mepet, properti juga bisa dijual kembali seharga 75 persen dari harga beli.
+              </p>
+            </div>
+            <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-5">
+              <strong className="sm:w-52 shrink-0 text-zinc-900">4 Petak Sudut</strong>
+              <p className="leading-relaxed">
+                <strong>START</strong> memberi bonus KRS-an +Rp 200k tiap selesai satu putaran penuh. <strong>Sekre Himpunan</strong> jadi tempat singgah aman tanpa bayar. Hati-hati kalau berhenti di <strong>Titip Absen</strong>, kamu langsung digiring ke <strong>Ruang Interogasi</strong>.
+              </p>
+            </div>
+            <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-5">
+              <strong className="sm:w-52 shrink-0 text-zinc-900">Petak Kejutan, Pajak, &amp; ToD</strong>
+              <p className="leading-relaxed">
+                <strong>Dana Umum</strong> dan <strong>Kesempatan</strong> membuka kartu acak (bisa dapat uang, kena denda, atau disuruh mundur). <strong>Loket UKT</strong>, <strong>Ruang Dosen</strong>, dan <strong>Hal. Perpus</strong> memotong biaya pajak. Berhenti di <strong>Lab Lingkungan (ToD)</strong> berarti waktunya terima tantangan Truth or Dare bareng teman satu ruangan.
+              </p>
+            </div>
+            <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-5">
+              <strong className="sm:w-52 shrink-0 text-zinc-900">Cara Menang &amp; Poin</strong>
+              <p className="leading-relaxed">
+                Pemain yang saldonya habis atau minus dinyatakan bangkrut dan semua propertinya kembali bebas. Pemain yang bertahan paling akhir jadi pemenang. Hadiah klasemen: <strong>Juara #1 +3.000 poin</strong>, <strong>Juara #2 +1.500 poin</strong>, dan <strong>Juara #3 +750 poin</strong> (kecuali saat mode uji coba).
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
     );
   }

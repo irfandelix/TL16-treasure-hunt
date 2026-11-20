@@ -173,6 +173,17 @@ export default function WheelOfFamily() {
           >
             {mustSpin ? 'Memutar Roda Kenangan...' : 'Putar Roda Sekarang'}
           </button>
+
+          <section aria-labelledby="wheel-guide-heading" className="mt-8 w-full bg-[#FAF6EE] border border-[#DED8CA] rounded-2xl p-5 text-left space-y-2">
+            <h3 id="wheel-guide-heading" className="text-sm font-bold text-zinc-900">
+              Cara Kerja Wheel of Family
+            </h3>
+            <ul className="list-disc list-inside space-y-1.5 text-xs sm:text-sm text-zinc-700 leading-relaxed">
+              <li>Roda ini otomatis diisi nama seluruh teman TL 2016 yang sudah mengirim foto dan pesan lewat menu <strong>Kapsul Waktu</strong>.</li>
+              <li>Begitu roda berhenti, foto zaman kuliah 2016, foto terbaru, dan pesan reuni teman yang terpilih langsung terbuka untuk dibaca bersama.</li>
+              <li>Nama yang sudah keluar tidak akan terpilih lagi di putaran berikutnya supaya semua dapat giliran merata. Jika semuanya sudah kebagian, daftar bisa diulang dari awal.</li>
+            </ul>
+          </section>
         </div>
 
       </div>

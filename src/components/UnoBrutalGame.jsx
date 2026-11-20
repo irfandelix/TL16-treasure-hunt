@@ -536,31 +536,49 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
           </div>
         </div>
         
-        <div className="mt-8 bg-white border border-[#DED6C6] rounded-2xl p-6">
-          <h3 className="text-amber-700 font-bold mb-4 text-base">
-            Aturan Seru UNO Sedulur 16
-          </h3>
-          <div className="grid sm:grid-cols-3 gap-4 text-sm">
-            <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
-              <h4 className="font-bold text-stone-900 mb-1">Tumpuk Kartu +2</h4>
-              <p className="text-stone-600 text-xs leading-relaxed">
-                Kartu +2 dapat ditumpuk dengan kartu +2 lainnya agar giliran berikutnya menarik lebih banyak kartu.
+        <section aria-labelledby="uno-guide-heading" className="mt-8 bg-[#FFFDF9] border border-[#DED8CA] rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 bg-[#FAF6EE] border-b border-[#DED8CA] flex flex-wrap items-baseline justify-between gap-2">
+            <h3 id="uno-guide-heading" className="text-lg font-bold text-zinc-900">
+              Jenis Kartu dan Cara Main UNO Sedulur 16
+            </h3>
+            <span className="text-xs text-zinc-600">
+              Minimal 2 pemain, masing-masing mulai dengan 5 kartu
+            </span>
+          </div>
+
+          <div className="divide-y divide-[#EDE6D8] text-sm text-zinc-700">
+            <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-5">
+              <strong className="sm:w-48 shrink-0 text-zinc-900">Kartu Angka (1 sampai 9)</strong>
+              <p className="leading-relaxed">
+                Keluarkan kartu yang warnanya sama (Merah, Kuning, Hijau, atau Biru) atau angkanya sama dengan kartu teratas di meja. Kalau tidak ada yang cocok, ambil 1 kartu dari tumpukan dan giliran berpindah ke teman berikutnya.
               </p>
             </div>
-            <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
-              <h4 className="font-bold text-stone-900 mb-1">Cocok Warna atau Angka</h4>
-              <p className="text-stone-600 text-xs leading-relaxed">
-                Keluarkan kartu yang memiliki warna atau nilai yang sama dengan kartu teratas di meja.
+            <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-5">
+              <strong className="sm:w-48 shrink-0 text-amber-800">Kartu Skip</strong>
+              <p className="leading-relaxed">
+                Langsung melewati giliran pemain tepat setelahmu, jadi mereka harus menunggu putaran berikutnya.
               </p>
             </div>
-            <div className="bg-[#FAF6EE] p-4 rounded-xl border border-[#DED6C6]">
-              <h4 className="font-bold text-stone-900 mb-1">Kartu Titip Absen</h4>
-              <p className="text-stone-600 text-xs leading-relaxed">
-                Kartu bebas (Wild) khas anak kuliah yang dapat dimainkan di atas warna kartu apa saja.
+            <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-5">
+              <strong className="sm:w-48 shrink-0 text-rose-800">Kartu +2</strong>
+              <p className="leading-relaxed">
+                Pemain berikutnya langsung mendapat tambahan 2 kartu hukuman sekaligus dilewati gilirannya.
+              </p>
+            </div>
+            <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-5">
+              <strong className="sm:w-48 shrink-0 text-[#14532D]">Kartu Titip Absen</strong>
+              <p className="leading-relaxed">
+                Kartu bebas yang bisa diturunkan di atas warna apa saja. Setelah mengeluarkannya, kamu bebas memilih warna apa yang harus diikuti pemain berikutnya.
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-[#FAF6EE]/60 flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-5">
+              <strong className="sm:w-48 shrink-0 text-zinc-900">Cara Menang</strong>
+              <p className="leading-relaxed">
+                Siapa pun yang berhasil menghabiskan seluruh kartu di tangannya paling duluan langsung keluar sebagai pemenang meja.
               </p>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     );
   }

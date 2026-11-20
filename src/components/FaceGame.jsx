@@ -360,10 +360,29 @@ export default function FaceGame({ onBack }) {
         )}
       </div>
 
-      <div className="bg-[#FAF6EE] border border-[#DED6C6] rounded-xl px-4 py-3 mb-6 text-center">
+      <div className="bg-[#FAF6EE] border border-[#DED6C6] rounded-xl px-4 py-3 mb-4 text-center">
         <p className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-0.5">Petunjuk</p>
         <p className="text-stone-700 text-sm">{currentPerson.hint || "Teman seangkatan Teknik Lingkungan 2016"}</p>
       </div>
+
+      <details className="mb-5 bg-[#FFFDF9] border border-[#DED8CA] rounded-xl overflow-hidden group text-left">
+        <summary className="cursor-pointer select-none px-4 py-3 min-h-[44px] flex items-center justify-between text-xs font-bold text-[#14532D] hover:bg-[#FAF6EE] transition-colors">
+          <span>Cara Main &amp; Hitungan Skor Tebak Foto</span>
+          <span className="font-mono text-xs text-zinc-600 group-open:hidden">Buka</span>
+          <span className="font-mono text-xs text-zinc-600 hidden group-open:inline">Tutup</span>
+        </summary>
+        <div className="px-4 pb-4 pt-2 border-t border-[#EDE6D8] text-xs text-zinc-700 space-y-2 leading-relaxed">
+          <p>
+            Ada <strong>20 foto masa kuliah 2016</strong> yang awalnya buram dan perlahan makin jelas tiap 10 detik. Kamu punya <strong>60 detik</strong> untuk memilih 1 dari 3 nama teman seangkatan.
+          </p>
+          <p>
+            <strong>Makin cepat menebak, makin besar poinnya:</strong> sisa waktu &gt;50 dtk (<strong>100 poin</strong>), &gt;40 dtk (<strong>90 poin</strong>), &gt;30 dtk (<strong>80 poin</strong>), &gt;20 dtk (<strong>70 poin</strong>), &gt;10 dtk (<strong>60 poin</strong>), dan di bawah 10 dtk (<strong>50 poin</strong>). Salah tebak atau waktu habis dapat 0 poin.
+          </p>
+          <p className="text-zinc-600">
+            Hanya skor tertinggimu yang disimpan ke klasemen.
+          </p>
+        </div>
+      </details>
 
       <div className="space-y-3">
         {!isRevealed ? (

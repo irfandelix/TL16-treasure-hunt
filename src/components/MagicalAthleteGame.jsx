@@ -1094,89 +1094,178 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
 
   if (!isInRoom) {
     return (
-      <div className="min-h-screen bg-[#FAF6EE] text-stone-900 flex flex-col items-center justify-center p-4">
-        <div className="bg-white border border-[#DED6C6] p-8 rounded-2xl max-w-lg w-full shadow-md text-center">
-          <p className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider mb-1">
-            Edisi Reuni 1 Dekade TL 2016
-          </p>
-          <h1 className="text-3xl font-bold tracking-tight text-stone-900 mb-2">
-            Magical Athlete TL 2016
-          </h1>
-          <p className="text-sm text-stone-600 mb-6">
-            Balap Karakter Sains Lingkungan dan Geologi FTM bersama Sedulur 16.
-          </p>
+      <div className="min-h-screen bg-[#FAF6EE] text-zinc-900 py-4 sm:py-6 px-4">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <section className="bg-[#FFFDF9] border border-[#DED8CA] p-6 sm:p-8 rounded-2xl shadow-sm">
+            <div className="grid md:grid-cols-12 gap-6 md:gap-8 items-center">
+              <div className="md:col-span-7 space-y-3 text-left">
+                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-900">
+                  Magical Athlete TL 2016
+                </h1>
+                <p className="text-sm sm:text-base text-zinc-700 leading-relaxed">
+                  Balapan 4 ronde seru bertema ilmu Teknik Lingkungan dan Geologi. Setiap pemain memilih tim berisi 4 tokoh berjurus unik, lalu mengadu mereka di lintasan 24 petak penuh rintangan dan dorongan arus.
+                </p>
+                <div className="inline-flex items-center gap-3 bg-[#FAF6EE] border border-[#DED8CA] rounded-xl px-4 py-2.5 text-left">
+                  <div>
+                    <div className="text-xs text-zinc-600">Masuk sebagai</div>
+                    <div className="font-bold text-sm text-zinc-900">
+                      {currentUser.nama} <span className="font-mono font-normal text-xs text-emerald-800">({currentUser.nim})</span>
+                    </div>
+                  </div>
+                  {currentUser.isAdmin && (
+                    <span className="px-2.5 py-1 bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold rounded-lg">
+                      Panitia
+                    </span>
+                  )}
+                </div>
+              </div>
 
-          <div className="bg-[#FAF6EE] border border-[#DED6C6] rounded-xl p-4 mb-6 text-left flex items-center justify-between">
-            <div>
-              <div className="text-xs text-stone-600 font-mono">Pemain Aktif</div>
-              <div className="font-bold text-stone-900">{currentUser.nama}</div>
-              <div className="text-xs text-green-800 font-mono">NIM: {currentUser.nim}</div>
-            </div>
-            {currentUser.isAdmin && (
-              <span className="px-2.5 py-1 bg-amber-400 text-slate-950 text-xs font-bold rounded-lg uppercase tracking-wider">
-                Admin / Host
-              </span>
-            )}
-          </div>
+              <div className="md:col-span-5 bg-[#FAF6EE] border border-[#DED8CA] rounded-2xl p-5 space-y-4">
+                {currentUser.isAdmin ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleCreateRoom}
+                      className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 px-6 rounded-xl text-sm sm:text-base transition-colors"
+                    >
+                      Buat Ruang Balapan Baru
+                    </button>
+                    <p className="text-xs text-zinc-700 leading-relaxed">
+                      Di dalam lobi kamu bisa mengisi 2 sampai 4 slot dengan alumni berdasarkan NIM atau menambahkan Bot untuk latihan.
+                    </p>
+                  </>
+                ) : (
+                  <form onSubmit={handleJoinRoom} className="space-y-3">
+                    <label htmlFor="athlete-room-code" className="block text-xs font-bold text-zinc-800">
+                      Gabung ke Ruang Balapan
+                    </label>
+                    <input
+                      id="athlete-room-code"
+                      type="text"
+                      value={inputRoomCode}
+                      onChange={(e) => setInputRoomCode(e.target.value)}
+                      placeholder="CONTOH: ENV123"
+                      className="w-full min-h-[48px] bg-white border border-[#C7BDA8] focus:border-amber-500 rounded-xl px-4 py-3 text-zinc-900 font-mono font-bold text-center uppercase tracking-widest placeholder:text-zinc-500"
+                    />
+                    <button
+                      type="submit"
+                      className="w-full min-h-[48px] bg-[#14532D] hover:bg-[#166534] text-white font-bold py-3.5 rounded-xl transition-colors text-sm sm:text-base"
+                    >
+                      Gabung Ruang Balapan
+                    </button>
+                  </form>
+                )}
 
-          {currentUser.isAdmin ? (
-            <div className="space-y-4">
-              <button
-                type="button"
-                onClick={handleCreateRoom}
-                className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 px-6 rounded-xl text-base transition-colors shadow-md"
-              >
-                Buat Ruang Balapan Baru
-              </button>
-              <div className="text-xs text-stone-600 font-mono">
-                Sebagai Admin, Anda bisa memilih 2 sampai 4 alumni berdasarkan NIM atau menguji coba dengan Bot.
+                <div className="pt-3 border-t border-[#DED8CA] flex items-center justify-center gap-1 text-xs text-zinc-600">
+                  <span>Kembali ke</span>
+                  {onBack ? (
+                    <button
+                      type="button"
+                      onClick={onBack}
+                      className="min-h-[44px] px-2 text-amber-800 font-bold hover:underline"
+                    >
+                      Beranda Utama
+                    </button>
+                  ) : (
+                    <a
+                      href="/"
+                      onClick={() => {
+                        const nim = localStorage.getItem('user_nim');
+                        if (nim) localStorage.removeItem(`active_view_${nim}`);
+                      }}
+                      className="inline-flex items-center min-h-[44px] px-2 text-amber-800 font-bold hover:underline"
+                    >
+                      Beranda Utama
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
-          ) : (
-            <form onSubmit={handleJoinRoom} className="space-y-4">
-              <label htmlFor="athlete-room-code" className="sr-only">
-                Kode Ruangan Balapan
-              </label>
-              <input
-                id="athlete-room-code"
-                type="text"
-                value={inputRoomCode}
-                onChange={(e) => setInputRoomCode(e.target.value)}
-                placeholder="Masukkan Kode Ruangan (misal: ENV123)"
-                className="w-full min-h-[48px] bg-[#FAF6EE] border border-[#C7BDA8] focus:border-amber-400 rounded-xl px-4 py-3 text-stone-900 font-mono text-center uppercase tracking-widest"
-              />
-              <button
-                type="submit"
-                className="w-full min-h-[48px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition-colors"
-              >
-                Gabung Ruang Balapan
-              </button>
-            </form>
-          )}
+          </section>
 
-          <div className="mt-8 pt-4 border-t border-[#DED6C6] flex items-center justify-center gap-2 text-xs text-stone-600">
-            <span>Kembali ke</span>
-            {onBack ? (
-              <button
-                type="button"
-                onClick={onBack}
-                className="min-h-[44px] px-2 text-amber-700 font-bold hover:underline"
-              >
-                Beranda Utama
-              </button>
-            ) : (
-              <a
-                href="/"
-                onClick={() => {
-                  const nim = localStorage.getItem('user_nim');
-                  if (nim) localStorage.removeItem(`active_view_${nim}`);
-                }}
-                className="inline-flex items-center min-h-[44px] px-2 text-amber-700 font-bold hover:underline"
-              >
-                Beranda Utama
-              </a>
-            )}
+          <div className="grid md:grid-cols-2 gap-6">
+            <section aria-labelledby="ath-flow-heading" className="bg-[#FFFDF9] rounded-2xl border border-[#DED8CA] p-6 space-y-4">
+              <h2 id="ath-flow-heading" className="text-lg font-bold text-zinc-900">
+                Alur Turnamen 4 Ronde
+              </h2>
+              <ol className="space-y-3 text-sm text-zinc-700">
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-lg bg-[#F1ECE0] border border-[#DED8CA] text-zinc-900 font-mono text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    1
+                  </span>
+                  <div>
+                    <strong className="text-zinc-900 block">Pilih 4 Karakter di Bursa Draft</strong>
+                    <span>Semua pemain bergantian merebut 4 tokoh dari 16 pilihan yang tersedia. Pilih kombinasi pelari cepat, pengganggu lawan, dan pelari kebal jebakan.</span>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-lg bg-[#F1ECE0] border border-[#DED8CA] text-zinc-900 font-mono text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    2
+                  </span>
+                  <div>
+                    <strong className="text-zinc-900 block">Turunkan 1 Karakter per Ronde</strong>
+                    <span>Di awal tiap ronde, pilih secara rahasia 1 karakter dari timmu untuk berlomba. Setiap karakter hanya bisa turun sekali sepanjang 4 ronde.</span>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-lg bg-[#F1ECE0] border border-[#DED8CA] text-zinc-900 font-mono text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    3
+                  </span>
+                  <div>
+                    <strong className="text-zinc-900 block">Adu Dadu di Lintasan 24 Petak</strong>
+                    <span>Lempar dadu bergantian menuju petak 24. Manfaatkan petak dorongan (+2 langkah: Arus Deras, Turbulensi Oksigen, Sesar Gravitasi) dan waspadai petak jebakan (-2 langkah: Lumpur Limbah, Gas Beracun, Retakan Tanah).</span>
+                  </div>
+                </li>
+              </ol>
+            </section>
+
+            <section aria-labelledby="ath-win-heading" className="bg-[#FFFDF9] rounded-2xl border border-[#DED8CA] p-6 space-y-4">
+              <h2 id="ath-win-heading" className="text-lg font-bold text-zinc-900">
+                Hitungan Medali dan Cara Menang
+              </h2>
+              <div className="space-y-3 text-sm text-zinc-700 leading-relaxed">
+                <div className="p-3.5 rounded-xl bg-[#FAF6EE] border border-[#DED8CA]">
+                  <strong className="text-zinc-900 block mb-0.5">Ronde 1 sampai 3</strong>
+                  <span>Pemain pertama yang menyentuh garis Finish (petak 24) membawa pulang <strong>5 Medali</strong>.</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200">
+                  <strong className="text-amber-900 block mb-0.5">Ronde 4 (Babak Penentuan)</strong>
+                  <span>Poin digandakan! Pemenang ronde terakhir langsung meraih <strong>10 Medali</strong>, jadi masih ada peluang membalikkan keadaan di akhir.</span>
+                </div>
+                <p className="text-xs sm:text-sm text-zinc-700">
+                  Setelah 4 ronde selesai, pemain dengan total medali terbanyak keluar sebagai juara turnamen.
+                </p>
+              </div>
+            </section>
           </div>
+
+          <section aria-labelledby="ath-roster-heading" className="bg-[#FFFDF9] rounded-2xl border border-[#DED8CA] overflow-hidden">
+            <div className="px-6 py-4 bg-[#FAF6EE] border-b border-[#DED8CA] flex flex-wrap items-baseline justify-between gap-2">
+              <h2 id="ath-roster-heading" className="text-lg font-bold text-zinc-900">
+                Daftar 16 Tokoh dan Jurusnya
+              </h2>
+              <span className="text-xs text-zinc-600">
+                Intip kemampuan tiap karakter sebelum bursa draft dimulai
+              </span>
+            </div>
+            <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:gap-px bg-[#EDE6D8]">
+              {ATHLETE_CHARACTERS.map((char) => (
+                <div key={char.id} className="bg-[#FFFDF9] p-4 space-y-1">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h3 className="text-sm font-bold text-zinc-900">
+                      {char.name} <span className="font-normal text-xs text-zinc-600">({char.subname})</span>
+                    </h3>
+                    <span className="text-[11px] font-mono font-bold text-[#14532D] bg-[#F1ECE0] px-2 py-0.5 rounded">
+                      {char.division}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-700 leading-relaxed">
+                    <strong className="text-amber-800">{char.skillName}:</strong> {char.skillDesc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
       </div>
     );

@@ -305,10 +305,29 @@ export default function TreasureHunt({ onBack }) {
         </div>
       </div>
 
-      <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6] mb-6">
+      <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6] mb-4">
         <p className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-1">Petunjuk Lokasi</p>
         <p className="text-stone-900 text-base md:text-lg leading-relaxed">{mission?.clue}</p>
       </div>
+
+      <details className="mb-6 bg-[#FFFDF9] border border-[#DED8CA] rounded-xl overflow-hidden group">
+        <summary className="cursor-pointer select-none px-4 py-3 min-h-[44px] flex items-center justify-between text-xs sm:text-sm font-bold text-[#14532D] hover:bg-[#FAF6EE] transition-colors">
+          <span>Cara Main &amp; Hitungan Skor Napak Tilas</span>
+          <span className="font-mono text-xs text-zinc-600 group-open:hidden">Buka</span>
+          <span className="font-mono text-xs text-zinc-600 hidden group-open:inline">Tutup</span>
+        </summary>
+        <div className="px-4 pb-4 pt-2 border-t border-[#EDE6D8] text-xs sm:text-sm text-zinc-700 space-y-2 leading-relaxed">
+          <p>
+            Ada <strong>20 titik kenangan</strong> kampus dan tongkrongan Jogja. Baca petunjuknya, geser dan perbesar peta, sentuh titik yang kamu kira benar untuk menaruh pin, lalu tekan <strong>Kunci Titik Lokasi Ini</strong>.
+          </p>
+          <p>
+            <strong>Poin per titik:</strong> meleset maksimal 50 m dapat <strong>100 poin</strong>, maksimal 250 m dapat <strong>80 poin</strong>, maksimal 1 km dapat <strong>50 poin</strong>, maksimal 5 km dapat <strong>20 poin</strong>, dan lewat 5 km dapat <strong>0 poin</strong>.
+          </p>
+          <p className="text-zinc-600">
+            Hanya skor tertinggimu yang tercatat di klasemen, jadi aman kalau mau main ulang lagi nanti.
+          </p>
+        </div>
+      </details>
 
       <div className="h-[46dvh] min-h-[300px] max-h-[500px] md:h-[500px] w-full rounded-xl overflow-hidden border border-[#DED6C6] relative z-0 mb-6">
         <MapContainer 
