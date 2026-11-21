@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import confetti from 'canvas-confetti';
 import StoryShareButton from './StoryShareButton';
+import SoloGamePrepScreen from './SoloGamePrepScreen';
 import { fetchSoloQuizStoryContext } from '../lib/storyCardGenerator';
 
 export default function FaceGame({ onBack }) {
@@ -11,6 +12,7 @@ export default function FaceGame({ onBack }) {
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [hasStarted, setHasStarted] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [lastPoints, setLastPoints] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
@@ -31,6 +33,7 @@ export default function FaceGame({ onBack }) {
   }, []);
 
   useEffect(() => {
+    if (!hasStarted) return undefined;
     let interval = null;
     if (timerActive && timeLeft > 0 && !isRevealed) {
       interval = setInterval(() => {
@@ -40,7 +43,7 @@ export default function FaceGame({ onBack }) {
       handleTimeOut();
     }
     return () => clearInterval(interval);
-  }, [timerActive, timeLeft, isRevealed]);
+  }, [hasStarted, timerActive, timeLeft, isRevealed]);
 
   const generateOptions = (correctPerson, allData) => {
     let sameGenderList = allData.filter(p => 
@@ -245,6 +248,7 @@ export default function FaceGame({ onBack }) {
   const handleRestartQuiz = () => {
     const userNim = localStorage.getItem('user_nim');
     if (userNim) localStorage.removeItem(`session_face_${userNim}`);
+    setHasStarted(true);
     initGame();
   };
 
@@ -304,6 +308,45 @@ export default function FaceGame({ onBack }) {
           </button>
         </div>
       </div>
+    );
+  }
+
+  if (!hasStarted) {
+    const isResuming = currentIndex > 0 || score > 0 || timeLeft < 60;
+    return (
+      <SoloGamePrepScreen
+        title="Tebak Muka Blur 2016"
+        subtitle="Uji seberapa hafal kamu dengan wajah teman-teman seangkatan tahun 2016. Timer 60 detik baru berjalan setelah kamu menekan tombol mulai."
+        artworkSrc="/games/tebak-wajah.webp"
+        artworkAlt="Ilustrasi kartu foto blur dan stopwatch Tebak Muka Blur TL 2016"
+        stats={[
+          { value: '20', label: 'Foto Maba' },
+          { value: '60 dtk', label: 'Per Foto' },
+          { value: '100', label: 'Maks. Poin' }
+        ]}
+        steps={[
+          'Setiap foto maba 2016 awalnya sangat buram dan perlahan semakin jelas setiap 10 detik.',
+          'Baca petunjuk singkat di bawah foto, lalu pilih 1 dari 3 nama teman seangkatan sebelum waktu habis.',
+          'Semakin cepat kamu menebak dengan benar, semakin besar poin yang kamu kumpulkan.'
+        ]}
+        scoringTiers={[
+          { condition: 'Sisa > 50 dtk', points: '100 poin' },
+          { condition: 'Sisa > 40 dtk', points: '90 poin' },
+          { condition: 'Sisa > 30 dtk', points: '80 poin' },
+          { condition: 'Sisa > 20 dtk', points: '70 poin' },
+          { condition: 'Sisa > 10 dtk', points: '60 poin' },
+          { condition: 'Sisa <= 10 dtk', points: '50 poin' }
+        ]}
+        scoringNote="Salah menebak atau waktu habis mendapat 0 poin. Hanya skor tertinggimu yang disimpan ke papan klasemen."
+        resumeBanner={
+          isResuming
+            ? `Sesi sebelumnya tersimpan di Foto ${currentIndex + 1} dari 20 (sisa ${timeLeft} detik, skor sementara ${score} poin).`
+            : null
+        }
+        startLabel={isResuming ? `Lanjutkan dari Foto ${currentIndex + 1}/20` : 'Mulai Tebak Foto'}
+        onStart={() => setHasStarted(true)}
+        onBack={handleGoHome}
+      />
     );
   }
 

@@ -3,6 +3,7 @@ import { UPDATES_LOG } from '../data/updatesLog';
 import { supabase } from '../lib/supabaseClient';
 import { isAdminSession } from '../lib/adminAuth';
 import { copyTextToClipboard } from '../lib/roomInvite';
+import { extractComingSoonConfig, resolveGameStage } from '../lib/earlyAccess';
 import RedactedText from './RedactedText';
 
 const SECRET_MODE_RULES = [
@@ -10,19 +11,19 @@ const SECRET_MODE_RULES = [
     key: 'monopoli',
     widthClass: 'w-20',
     pattern:
-      'bidak Monopoli(?: TL16)?|bidak[^,.]*|papan Monopoli(?: TL16)?|Monopoli TL16|MonopoliBoard(?:\\.jsx)?|MonopoliDice|monopoli_room_\\{nim\\}|monopoli_rooms|monopoli_players|monopoli_properties|monopoli_users|skor_monopoli|\\bMonopoli\\b|Daftar Petak(?: Papan)?|Detail Petak|kotak angka dadu|2 Dadu Bergoyang|kocokan dadu|lemparan dadu|petak tujuan|petak 11x11|papan 11x11|perbesar papan[^,.]*|TELEPORT/MUNDUR|bonus START|\\bKE_START\\b|\\bSTART\\b|properti kontrakan|Truth or Dare|uang sewa|kas sewa|IconBoard|\\blobi\\b',
+      'public/games/monopoli\\.webp|bidak Monopoli(?: TL16)?|bidak[^,.]*|papan Monopoli(?: TL16)?|Monopoli TL16|MonopoliBoard(?:\\.jsx)?|MonopoliDice|monopoli_room_\\{nim\\}|monopoli_rooms|monopoli_players|monopoli_properties|monopoli_users|skor_monopoli|\\bMonopoli\\b|Daftar Petak(?: Papan)?|Detail Petak|kotak angka dadu|2 Dadu Bergoyang|kocokan dadu|lemparan dadu|petak tujuan|petak 11x11|papan 11x11|perbesar papan[^,.]*|TELEPORT/MUNDUR|bonus START|\\bKE_START\\b|\\bSTART\\b|properti kontrakan|Truth or Dare|uang sewa|kas sewa|IconBoard|\\blobi\\b',
   },
   {
     key: 'werewolf',
     widthClass: 'w-24',
     pattern:
-      'Sidang Dosen Killer|Dosen Killer|DosenKillerGame(?:\\.jsx)?|DosenKiller|LayarDiskusi(?:\\.jsx)?|LayarMalam(?:\\.jsx)?|LayarVoting(?:\\.jsx)?|LayarEksekusi(?:\\.jsx)?|dk_room_\\{nim\\}|skor_werewolf|\\bwerewolf\\b|fase malam|kebocoran chat|petunjuk Intel|catatan Intel|kekebalan Uptodate|IconClass|remedial',
+      'public/games/dosen-killer\\.webp|Sidang Dosen Killer|Dosen Killer|DosenKillerGame(?:\\.jsx)?|DosenKiller|LayarDiskusi(?:\\.jsx)?|LayarMalam(?:\\.jsx)?|LayarVoting(?:\\.jsx)?|LayarEksekusi(?:\\.jsx)?|dk_room_\\{nim\\}|skor_werewolf|\\bwerewolf\\b|fase malam|kebocoran chat|petunjuk Intel|catatan Intel|kekebalan Uptodate|IconClass|remedial',
   },
   {
     key: 'uno',
     widthClass: 'w-20',
     pattern:
-      'UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|skor_uno|Juara Kartu UNO|\\bUNO\\b|Titip Absen|4 warna|top_card|current_turn|tumpuk kartu|meja kartu|keluar meja|kartu Skip dan \\+2|IconCards',
+      'public/games/uno\\.webp|UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|skor_uno|Juara Kartu UNO|\\bUNO\\b|Titip Absen|4 warna|top_card|current_turn|tumpuk kartu|meja kartu|keluar meja|kartu Skip dan \\+2|IconCards',
   },
   {
     key: 'wheel',
@@ -34,7 +35,7 @@ const SECRET_MODE_RULES = [
     key: 'athlete',
     widthClass: 'w-24',
     pattern:
-      'src/pages/lock/magical-athlete\\.astro|/lock/magical-athlete|magical-athlete|Magical Athlete TL16|Magical Athlete|MagicalAthleteGame(?:\\.jsx)?|athlete_rooms|athlete_players|athlete_schema\\.sql|scores_uno_athlete_schema\\.sql|athleteCharacters\\.js|skor_athlete|Pelari Tercepat|\\b5 Permainan\\b|hak Host [^,.]*',
+      'public/games/magical-athlete\\.webp|src/pages/lock/magical-athlete\\.astro|/lock/magical-athlete|magical-athlete|Magical Athlete TL16|Magical Athlete|MagicalAthleteGame(?:\\.jsx)?|athlete_rooms|athlete_players|athlete_schema\\.sql|scores_uno_athlete_schema\\.sql|athleteCharacters\\.js|skor_athlete|Pelari Tercepat|\\b5 Permainan\\b|hak Host [^,.]*',
   },
 ];
 
@@ -121,18 +122,20 @@ export default function UpdatesPage({ onBack }) {
       try {
         const { data, error } = await supabase
           .from('app_settings')
-          .select('monopoli_unlock_date, werewolf_unlock_date, uno_unlock_date, wheel_unlock_date')
+          .select('monopoli_unlock_date, werewolf_unlock_date, uno_unlock_date, wheel_unlock_date, patch_notes')
           .eq('id', 1)
           .single();
 
         if (error || !data || !active) return;
         const now = Date.now();
+        const comingSoonCfg = extractComingSoonConfig(data);
+        const overrides = comingSoonCfg.overrides || {};
         setUnlockedModes({
-          monopoli: Boolean(data.monopoli_unlock_date && now >= new Date(data.monopoli_unlock_date).getTime()),
-          werewolf: Boolean(data.werewolf_unlock_date && now >= new Date(data.werewolf_unlock_date).getTime()),
-          uno: Boolean(data.uno_unlock_date && now >= new Date(data.uno_unlock_date).getTime()),
+          monopoli: resolveGameStage(data.monopoli_unlock_date, overrides.monopoli, now) === 'open',
+          werewolf: resolveGameStage(data.werewolf_unlock_date, overrides.werewolf, now) === 'open',
+          uno: resolveGameStage(data.uno_unlock_date, overrides.uno, now) === 'open',
           wheel: Boolean(data.wheel_unlock_date && now >= new Date(data.wheel_unlock_date).getTime()),
-          athlete: false,
+          athlete: resolveGameStage(comingSoonCfg.athlete_unlock_date, overrides.athlete, now) === 'open',
           adminOnly: false,
         });
       } catch {

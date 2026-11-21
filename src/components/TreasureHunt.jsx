@@ -5,6 +5,7 @@ import L from 'leaflet';
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabaseClient';
 import StoryShareButton from './StoryShareButton';
+import SoloGamePrepScreen from './SoloGamePrepScreen';
 import { fetchSoloQuizStoryContext } from '../lib/storyCardGenerator';
 
 const defaultIcon = new L.Icon({
@@ -44,6 +45,7 @@ export default function TreasureHunt({ onBack }) {
   const [totalScore, setTotalScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [hasStarted, setHasStarted] = useState(false);
   
   const [userGuess, setUserGuess] = useState(null);
   const [isRevealed, setIsRevealed] = useState(false);
@@ -267,6 +269,7 @@ export default function TreasureHunt({ onBack }) {
                 localStorage.removeItem(`hunt_completed_${userNim}`);
                 localStorage.removeItem(`hunt_final_score_${userNim}`);
                 localStorage.removeItem(`session_hunt_${userNim}`);
+                setHasStarted(true);
                 initGame();
               }}
               className="inline-flex items-center justify-center bg-green-900 hover:bg-green-800 px-6 py-3.5 min-h-[48px] rounded-xl font-bold text-white transition-colors flex-1"
@@ -283,6 +286,44 @@ export default function TreasureHunt({ onBack }) {
           </div>
         </div>
       </div>
+    );
+  }
+
+  if (!hasStarted) {
+    const isResuming = currentIdx > 0 || totalScore > 0;
+    return (
+      <SoloGamePrepScreen
+        title="Napak Tilas Kampus & Jogja"
+        subtitle="Telusuri kembali 20 titik kenangan di sekitar kampus dan tongkrongan legendaris angkatan Teknik Lingkungan 2016."
+        artworkSrc="/games/treasure-hunt.webp"
+        artworkAlt="Ilustrasi papan peta Digital Treasure Hunt Napak Tilas TL 2016"
+        stats={[
+          { value: '20', label: 'Titik Lokasi' },
+          { value: '100', label: 'Maks. Poin' },
+          { value: 'Santai', label: 'Tanpa Timer' }
+        ]}
+        steps={[
+          'Baca petunjuk lokasi kenangan yang muncul di bagian atas peta.',
+          'Geser dan perbesar peta satelit, lalu sentuh titik yang kamu kira benar untuk menaruh pin tebakan.',
+          'Tekan Kunci Titik Lokasi Ini untuk melihat seberapa dekat tebakanmu dan mengumpulkan poin.'
+        ]}
+        scoringTiers={[
+          { condition: 'Meleset <= 50 m', points: '100 poin' },
+          { condition: 'Meleset <= 250 m', points: '80 poin' },
+          { condition: 'Meleset <= 1 km', points: '50 poin' },
+          { condition: 'Meleset <= 5 km', points: '20 poin' },
+          { condition: 'Lewat 5 km', points: '0 poin' }
+        ]}
+        scoringNote="Hanya skor tertinggimu yang tercatat di papan klasemen, jadi aman kalau ingin mengulang lagi nanti."
+        resumeBanner={
+          isResuming
+            ? `Sesi sebelumnya tersimpan di Titik ${currentIdx + 1} dari 20 dengan skor sementara ${totalScore} poin.`
+            : null
+        }
+        startLabel={isResuming ? `Lanjutkan dari Titik ${currentIdx + 1}/20` : 'Mulai Napak Tilas'}
+        onStart={() => setHasStarted(true)}
+        onBack={handleGoHome}
+      />
     );
   }
 

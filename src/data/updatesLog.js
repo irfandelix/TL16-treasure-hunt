@@ -1,5 +1,57 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-043',
+    date: '22 November 2026',
+    version: 'v2.9.12',
+    category: 'Tampilan',
+    title: 'Halaman Persiapan Sebelum Bermain Napak Tilas & Tebak Foto',
+    commit: 'latest',
+    summary: 'Sebelum masuk ke peta Napak Tilas atau kuis Tebak Muka Blur, kini tampil layar persiapan lengkap dengan ilustrasi khusus, langkah bermain, dan tabel hitungan poin.',
+    changes: [
+      'Menambahkan layar persiapan sebelum bermain pada Digital Treasure Hunt dan Tebak Muka Blur lengkap dengan ilustrasi vektor baru dan ringkasan poin.',
+      'Menahan hitungan mundur 60 detik pada Tebak Muka Blur selama berada di layar persiapan agar waktu baru berjalan saat pemain menekan tombol mulai.',
+      'Menampilkan info sesi tersimpan pada layar persiapan bila pemain melanjutkan permainan yang sempat dijeda.'
+    ],
+    docs: {
+      files: [
+        'src/components/SoloGamePrepScreen.jsx',
+        'src/components/TreasureHunt.jsx',
+        'src/components/FaceGame.jsx',
+        'public/games/treasure-hunt.webp',
+        'public/games/tebak-wajah.webp'
+      ],
+      notes: 'Jika 20 soal sudah selesai dikerjakan, halaman tetap langsung menampilkan layar skor akhir dan tombol bagikan ke IG Story.'
+    }
+  },
+  {
+    id: 'upd-042',
+    date: '22 November 2026',
+    version: 'v2.9.11',
+    category: 'Fitur Baru',
+    title: 'Pop-Up Kejutan Coming Soon 4 Permainan Baru & Kontrol Tahap Panitia',
+    commit: 'latest',
+    summary: 'Menambahkan banner pemicu di beranda yang membuka pop-up ledakan Coming Soon untuk 4 permainan bersama (Monopoli TL16, Dosen Killer, UNO Seru TL16, dan Magical Athlete TL16) secara bertahap.',
+    changes: [
+      'Menambahkan banner pemicu tepat di bawah Tombol Misteri yang membuka pop-up ledakan konfeti dengan 4 permainan menyebar mengelilingi stiker Coming Soon.',
+      'Mendukung 3 tahap kemunculan bertahap: segel misterius, siluet mengintip beranimasi dengan tanggal rilis di bawah sensor judul, hingga terbuka penuh saat waktunya tiba.',
+      'Menambahkan pengaturan jadwal rilis Magical Athlete TL16 serta tombol paksa tahap (Otomatis, Misterius, Mengintip, Terbuka) per permainan di Ruang Panitia.'
+    ],
+    docs: {
+      files: [
+        'src/components/ComingSoonExplosion.jsx',
+        'src/components/GameDashboard.jsx',
+        'src/components/AdminDashboard.jsx',
+        'src/lib/earlyAccess.js',
+        'src/styles/global.css',
+        'public/games/monopoli.webp',
+        'public/games/dosen-killer.webp',
+        'public/games/uno.webp',
+        'public/games/magical-athlete.webp'
+      ],
+      notes: 'Begitu keempat permainan sudah terbuka untuk seluruh alumni, banner Coming Soon otomatis hilang karena semuanya sudah tampil di daftar Arena Main Bareng.'
+    }
+  },
+  {
     id: 'upd-041',
     date: '21 November 2026',
     version: 'v2.9.10',
