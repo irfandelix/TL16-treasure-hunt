@@ -7,6 +7,7 @@ import PlayerAvatar from './PlayerAvatar';
 import AvatarDesigner from './AvatarDesigner';
 import RedactedText from './RedactedText';
 import RoomStatusScreen from './RoomStatusScreen';
+import ComingSoonExplosion from './ComingSoonExplosion';
 import {
   getLocalAvatarConfig,
   loadPlayerAvatar,
@@ -19,9 +20,11 @@ import { isAdminSession, setAdminSessionVerified } from '../lib/adminAuth';
 import {
   extractEarlyAccessConfig,
   extractKapsulConfig,
+  extractComingSoonConfig,
   hasActiveEarlyAccess,
   isKapsulPubliclyOpen,
-  isPubliclyReleased
+  isPubliclyReleased,
+  resolveGameStage
 } from '../lib/earlyAccess';
 import { captureInviteFromUrl, readPendingInvite, clearPendingInvite } from '../lib/roomInvite';
 
@@ -154,13 +157,17 @@ export default function GameDashboard() {
   const [isMonopoliUnlocked, setIsMonopoliUnlocked] = useState(false);
   const [isWerewolfUnlocked, setIsWerewolfUnlocked] = useState(false);
   const [isUnoUnlocked, setIsUnoUnlocked] = useState(false);
-
-  const [monopoliApproaching, setMonopoliApproaching] = useState(false);
-  const [werewolfApproaching, setWerewolfApproaching] = useState(false);
-  const [unoApproaching, setUnoApproaching] = useState(false);
+  const [isAthleteUnlocked, setIsAthleteUnlocked] = useState(false);
+  const [publicStages, setPublicStages] = useState({
+    monopoli: 'mystery',
+    werewolf: 'mystery',
+    uno: 'mystery',
+    athlete: 'mystery'
+  });
   const [gameDates, setGameDates] = useState(null);
   const [earlyAccessConfig, setEarlyAccessConfig] = useState(null);
   const [kapsulConfig, setKapsulConfig] = useState(null);
+  const [comingSoonConfig, setComingSoonConfig] = useState(null);
   const [isKapsulUnlocked, setIsKapsulUnlocked] = useState(false);
   const [isEarlyAccessActive, setIsEarlyAccessActive] = useState(false);
   const [pendingJoinCode, setPendingJoinCode] = useState(null);
@@ -533,10 +540,13 @@ export default function GameDashboard() {
       setTargetDate(data.wheel_unlock_date ? new Date(data.wheel_unlock_date) : null);
       if (!data.wheel_unlock_date) setWheelUnlocked(false);
 
+      const csCfg = extractComingSoonConfig(data);
+      setComingSoonConfig(csCfg);
       setGameDates({
         monopoli: data.monopoli_unlock_date,
         werewolf: data.werewolf_unlock_date,
-        uno: data.uno_unlock_date
+        uno: data.uno_unlock_date,
+        athlete: csCfg.athlete_unlock_date
       });
       setEarlyAccessConfig(extractEarlyAccessConfig(data));
       setKapsulConfig(extractKapsulConfig(data));
@@ -608,54 +618,30 @@ export default function GameDashboard() {
 
     const checkLocalTime = () => {
       const now = Date.now();
-      const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
       const eaActive = !user.is_admin && hasActiveEarlyAccess(earlyAccessConfig, user.nim, now);
       setIsEarlyAccessActive(eaActive);
       const hasPreviewAccess = Boolean(user.is_admin || eaActive);
+      const overrides = comingSoonConfig?.overrides || {};
 
-      if (hasPreviewAccess) {
-        setIsMonopoliUnlocked(true);
-        setMonopoliApproaching(false);
-      } else if (gameDates.monopoli) {
-        const unlockTimeMono = new Date(gameDates.monopoli).getTime();
-        setIsMonopoliUnlocked(now >= unlockTimeMono);
-        setMonopoliApproaching(now < unlockTimeMono && unlockTimeMono - now <= THIRTY_DAYS_MS);
-      } else {
-        setIsMonopoliUnlocked(false);
-        setMonopoliApproaching(false);
-      }
+      const nextStages = {
+        monopoli: resolveGameStage(gameDates.monopoli, overrides.monopoli, now),
+        werewolf: resolveGameStage(gameDates.werewolf, overrides.werewolf, now),
+        uno: resolveGameStage(gameDates.uno, overrides.uno, now),
+        athlete: resolveGameStage(gameDates.athlete, overrides.athlete, now)
+      };
+      setPublicStages(nextStages);
 
-      if (hasPreviewAccess) {
-        setIsWerewolfUnlocked(true);
-        setWerewolfApproaching(false);
-      } else if (gameDates.werewolf) {
-        const unlockTimeWolf = new Date(gameDates.werewolf).getTime();
-        setIsWerewolfUnlocked(now >= unlockTimeWolf);
-        setWerewolfApproaching(now < unlockTimeWolf && unlockTimeWolf - now <= THIRTY_DAYS_MS);
-      } else {
-        setIsWerewolfUnlocked(false);
-        setWerewolfApproaching(false);
-      }
-
-      if (hasPreviewAccess) {
-        setIsUnoUnlocked(true);
-        setUnoApproaching(false);
-      } else if (gameDates.uno) {
-        const unlockTimeUno = new Date(gameDates.uno).getTime();
-        setIsUnoUnlocked(now >= unlockTimeUno);
-        setUnoApproaching(now < unlockTimeUno && unlockTimeUno - now <= THIRTY_DAYS_MS);
-      } else {
-        setIsUnoUnlocked(false);
-        setUnoApproaching(false);
-      }
-
+      setIsMonopoliUnlocked(hasPreviewAccess || nextStages.monopoli === 'open');
+      setIsWerewolfUnlocked(hasPreviewAccess || nextStages.werewolf === 'open');
+      setIsUnoUnlocked(hasPreviewAccess || nextStages.uno === 'open');
+      setIsAthleteUnlocked(hasPreviewAccess || nextStages.athlete === 'open');
       setIsKapsulUnlocked(isKapsulPubliclyOpen(kapsulConfig, now));
     };
 
     checkLocalTime();
     const interval = setInterval(checkLocalTime, 1000);
     return () => clearInterval(interval);
-  }, [user, gameDates, earlyAccessConfig, kapsulConfig]);
+  }, [user, gameDates, earlyAccessConfig, kapsulConfig, comingSoonConfig]);
 
   useEffect(() => {
     if (!user || !gameDates) return;
@@ -666,11 +652,12 @@ export default function GameDashboard() {
     const now = Date.now();
     const eaActive = !user.is_admin && hasActiveEarlyAccess(earlyAccessConfig, user.nim, now);
     const hasPreview = Boolean(user.is_admin || eaActive);
+    const overrides = comingSoonConfig?.overrides || {};
     const allowed =
-      (invite.game === 'monopoli' && (hasPreview || isPubliclyReleased(gameDates.monopoli, now))) ||
-      (invite.game === 'dosenkiller' && (hasPreview || isPubliclyReleased(gameDates.werewolf, now))) ||
-      (invite.game === 'unobrutal' && (hasPreview || isPubliclyReleased(gameDates.uno, now))) ||
-      (invite.game === 'athlete' && hasPreview);
+      (invite.game === 'monopoli' && (hasPreview || resolveGameStage(gameDates.monopoli, overrides.monopoli, now) === 'open')) ||
+      (invite.game === 'dosenkiller' && (hasPreview || resolveGameStage(gameDates.werewolf, overrides.werewolf, now) === 'open')) ||
+      (invite.game === 'unobrutal' && (hasPreview || resolveGameStage(gameDates.uno, overrides.uno, now) === 'open')) ||
+      (invite.game === 'athlete' && (hasPreview || resolveGameStage(gameDates.athlete, overrides.athlete, now) === 'open'));
 
     if (!allowed) {
       const releaseIso =
@@ -680,6 +667,8 @@ export default function GameDashboard() {
           ? gameDates.werewolf
           : invite.game === 'unobrutal'
           ? gameDates.uno
+          : invite.game === 'athlete'
+          ? gameDates.athlete
           : null;
       setAccessDeniedInfo({
         releaseDateLabel: formatReleaseDateId(releaseIso)
@@ -697,7 +686,7 @@ export default function GameDashboard() {
       needsGestureAnchorRef.current = true;
     }
     setActiveView(invite.game);
-  }, [user, gameDates, earlyAccessConfig]);
+  }, [user, gameDates, earlyAccessConfig, comingSoonConfig]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -757,9 +746,10 @@ export default function GameDashboard() {
     user.is_admin || isEarlyAccessActive || hasActiveEarlyAccess(earlyAccessConfig, user.nim)
   );
   const canOpenKapsul = hasTestAccess || isKapsulUnlocked || isKapsulPubliclyOpen(kapsulConfig);
-  const canOpenMonopoli = hasTestAccess || isMonopoliUnlocked || isPubliclyReleased(gameDates?.monopoli);
-  const canOpenWerewolf = hasTestAccess || isWerewolfUnlocked || isPubliclyReleased(gameDates?.werewolf);
-  const canOpenUno = hasTestAccess || isUnoUnlocked || isPubliclyReleased(gameDates?.uno);
+  const canOpenMonopoli = hasTestAccess || isMonopoliUnlocked || publicStages.monopoli === 'open';
+  const canOpenWerewolf = hasTestAccess || isWerewolfUnlocked || publicStages.werewolf === 'open';
+  const canOpenUno = hasTestAccess || isUnoUnlocked || publicStages.uno === 'open';
+  const canOpenAthlete = hasTestAccess || isAthleteUnlocked || publicStages.athlete === 'open';
   const canOpenWheel = hasTestAccess || wheelUnlocked || isPubliclyReleased(targetDate);
 
   const renderAccessDenied = (releaseDateValue = null, featureName = 'Agenda Kejutan TL 2016') => (
@@ -826,7 +816,7 @@ export default function GameDashboard() {
     });
   }
   if (activeView === 'athlete') {
-    if (!hasTestAccess) return renderAccessDenied(null);
+    if (!canOpenAthlete) return renderAccessDenied(gameDates?.athlete);
     return renderSubView(MagicalAthleteGame, {
       initialRoomCode: pendingJoinCode?.game === 'athlete' ? pendingJoinCode.code : ''
     });
@@ -849,69 +839,44 @@ export default function GameDashboard() {
     );
   }
 
-  const redactedDetail = (
-    <span className="inline-flex flex-wrap items-center gap-1.5 pt-0.5">
-      <RedactedText revealed={false} widthClass="w-52" srLabel="detail permainan dirahasiakan" />
-      <RedactedText revealed={false} widthClass="w-32" srLabel="" />
-    </span>
-  );
-
   const multiplayerGames = [];
-  if (isMonopoliUnlocked || monopoliApproaching) {
+  if (isMonopoliUnlocked) {
     multiplayerGames.push({
       id: 'monopoli',
-      title: (
-        <>
-          <RedactedText revealed={isMonopoliUnlocked} widthClass="w-20">
-            Monopoli
-          </RedactedText>{' '}
-          TL16
-        </>
-      ),
-      unlocked: isMonopoliUnlocked,
+      title: 'Monopoli TL16',
+      unlocked: true,
       icon: <IconBoard />,
-      description: isMonopoliUnlocked
-        ? 'Kelilingi petak kampus memakai bidak karaktermu, beli properti kontrakan, dan jawab tantangan Truth or Dare.'
-        : redactedDetail,
+      description:
+        'Kelilingi petak kampus memakai bidak karaktermu, beli properti kontrakan, dan jawab tantangan Truth or Dare.',
       ctaLabel: 'Buka Papan Monopoli',
       onClick: () => navigateToView('monopoli')
     });
   }
-  if (isWerewolfUnlocked || werewolfApproaching) {
+  if (isWerewolfUnlocked) {
     multiplayerGames.push({
       id: 'dosenkiller',
-      title: (
-        <RedactedText revealed={isWerewolfUnlocked} widthClass="w-28">
-          Dosen Killer
-        </RedactedText>
-      ),
-      unlocked: isWerewolfUnlocked,
+      title: 'Dosen Killer',
+      unlocked: true,
       icon: <IconClass />,
-      description: isWerewolfUnlocked
-        ? 'Permainan tebak peran ala kelas kuliah: temukan siapa Dosen Killer sebelum satu kelas kena remedial.'
-        : redactedDetail,
+      description:
+        'Permainan tebak peran ala kelas kuliah: temukan siapa Dosen Killer sebelum satu kelas kena remedial.',
       ctaLabel: 'Masuk Ruang Kelas',
       onClick: () => navigateToView('dosenkiller')
     });
   }
-  if (isUnoUnlocked || unoApproaching) {
+  if (isUnoUnlocked) {
     multiplayerGames.push({
       id: 'unobrutal',
-      title: (
-        <RedactedText revealed={isUnoUnlocked} widthClass="w-28">
-          UNO Seru TL16
-        </RedactedText>
-      ),
-      unlocked: isUnoUnlocked,
+      title: 'UNO Seru TL16',
+      unlocked: true,
       icon: <IconCards />,
-      description: isUnoUnlocked
-        ? 'Buka meja kartu bersama teman-teman angkatan dengan aturan tumpuk kartu yang meriah.'
-        : redactedDetail,
+      description:
+        'Buka meja kartu bersama teman-teman angkatan dengan aturan tumpuk kartu yang meriah.',
       ctaLabel: 'Gabung Meja Kartu',
       onClick: () => navigateToView('unobrutal')
     });
   }
-  if (hasTestAccess) {
+  if (isAthleteUnlocked) {
     multiplayerGames.push({
       id: 'athlete',
       title: 'Magical Athlete TL16',
@@ -1308,6 +1273,11 @@ export default function GameDashboard() {
               {mysteryLocked ? 'Sudah Digunakan & Terkunci' : 'Buka Tombol Misteri'}
             </button>
           </section>
+
+          {/* BANNER TRIGGER POP-UP LEDAKAN COMING SOON 4 GAME */}
+          {gameDates && (
+            <ComingSoonExplosion publicStages={publicStages} gameDates={gameDates} />
+          )}
 
           {/* BAGIAN 2: KUIS KENANGAN KAMPUS (PEMBAGIAN 2-KOLOM DALAM SATU LEMBAR) */}
           <section aria-labelledby="solo-games-heading" className="space-y-4">

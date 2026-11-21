@@ -5,6 +5,10 @@ export const EARLY_ACCESS_RECORD_TYPE = 'early_access';
 export const EARLY_ACCESS_RECORD_ID = '__early_access_config__';
 export const KAPSUL_RECORD_TYPE = 'kapsul_schedule';
 export const KAPSUL_RECORD_ID = '__kapsul_schedule_config__';
+export const COMING_SOON_RECORD_TYPE = 'coming_soon_games';
+export const COMING_SOON_RECORD_ID = '__coming_soon_games_config__';
+export const DEFAULT_CLUE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+export const COMING_SOON_STAGE_MODES = ['auto', 'mystery', 'clue', 'open'];
 
 export const DEFAULT_EARLY_ACCESS_CONFIG = {
   nims: [],
@@ -17,10 +21,24 @@ export const DEFAULT_KAPSUL_CONFIG = {
   unlock_at: null
 };
 
+export const DEFAULT_COMING_SOON_CONFIG = {
+  athlete_unlock_date: null,
+  overrides: {
+    monopoli: 'auto',
+    werewolf: 'auto',
+    uno: 'auto',
+    athlete: 'auto'
+  }
+};
+
 function normalizeValidIso(value) {
   if (typeof value !== 'string' || !value.trim()) return null;
   const ts = new Date(value).getTime();
   return Number.isNaN(ts) ? null : value;
+}
+
+function normalizeStageOverride(value) {
+  return COMING_SOON_STAGE_MODES.includes(value) ? value : 'auto';
 }
 
 function isInternalConfigRecord(item) {
@@ -29,7 +47,9 @@ function isInternalConfigRecord(item) {
     item.__type === EARLY_ACCESS_RECORD_TYPE ||
     item.id === EARLY_ACCESS_RECORD_ID ||
     item.__type === KAPSUL_RECORD_TYPE ||
-    item.id === KAPSUL_RECORD_ID
+    item.id === KAPSUL_RECORD_ID ||
+    item.__type === COMING_SOON_RECORD_TYPE ||
+    item.id === COMING_SOON_RECORD_ID
   );
 }
 
@@ -73,6 +93,29 @@ export function extractKapsulConfig(settingsRow) {
   };
 }
 
+export function extractComingSoonConfig(settingsRow) {
+  const notes = Array.isArray(settingsRow?.patch_notes) ? settingsRow.patch_notes : [];
+  const raw = notes.find(
+    (item) => item && (item.__type === COMING_SOON_RECORD_TYPE || item.id === COMING_SOON_RECORD_ID)
+  );
+  if (!raw || typeof raw !== 'object') {
+    return {
+      athlete_unlock_date: null,
+      overrides: { ...DEFAULT_COMING_SOON_CONFIG.overrides }
+    };
+  }
+  const rawOverrides = raw.overrides && typeof raw.overrides === 'object' ? raw.overrides : {};
+  return {
+    athlete_unlock_date: normalizeValidIso(raw.athlete_unlock_date),
+    overrides: {
+      monopoli: normalizeStageOverride(rawOverrides.monopoli),
+      werewolf: normalizeStageOverride(rawOverrides.werewolf),
+      uno: normalizeStageOverride(rawOverrides.uno),
+      athlete: normalizeStageOverride(rawOverrides.athlete)
+    }
+  };
+}
+
 /**
  * Return only user-visible panitia patch notes (filtering out internal config records).
  */
@@ -85,10 +128,11 @@ export function filterVisiblePatchNotes(patchNotes) {
  * Merge internal app configuration records into patch_notes while preserving visible notes
  * and any existing config omitted from the partial update.
  */
-export function mergeAppConfigsIntoPatchNotes(existingPatchNotes, { earlyAccess, kapsul } = {}) {
+export function mergeAppConfigsIntoPatchNotes(existingPatchNotes, { earlyAccess, kapsul, comingSoon } = {}) {
   const visible = filterVisiblePatchNotes(existingPatchNotes);
   const resolvedEa = earlyAccess ?? extractEarlyAccessConfig({ patch_notes: existingPatchNotes });
   const resolvedKapsul = kapsul ?? extractKapsulConfig({ patch_notes: existingPatchNotes });
+  const resolvedComingSoon = comingSoon ?? extractComingSoonConfig({ patch_notes: existingPatchNotes });
 
   const cleanNims = Array.isArray(resolvedEa?.nims)
     ? [...new Set(resolvedEa.nims.map((n) => String(n || '').trim()).filter(Boolean))]
@@ -109,7 +153,50 @@ export function mergeAppConfigsIntoPatchNotes(existingPatchNotes, { earlyAccess,
     unlock_at: normalizeValidIso(resolvedKapsul?.unlock_at)
   };
 
-  return [eaRecord, kapsulRecord, ...visible];
+  const rawOverrides = resolvedComingSoon?.overrides && typeof resolvedComingSoon.overrides === 'object'
+    ? resolvedComingSoon.overrides
+    : {};
+  const comingSoonRecord = {
+    id: COMING_SOON_RECORD_ID,
+    __type: COMING_SOON_RECORD_TYPE,
+    athlete_unlock_date: normalizeValidIso(resolvedComingSoon?.athlete_unlock_date),
+    overrides: {
+      monopoli: normalizeStageOverride(rawOverrides.monopoli),
+      werewolf: normalizeStageOverride(rawOverrides.werewolf),
+      uno: normalizeStageOverride(rawOverrides.uno),
+      athlete: normalizeStageOverride(rawOverrides.athlete)
+    }
+  };
+
+  return [eaRecord, kapsulRecord, comingSoonRecord, ...visible];
+}
+
+export function resolveGameStage(
+  unlockDateIso,
+  overrideMode = 'auto',
+  now = Date.now(),
+  clueWindowMs = DEFAULT_CLUE_WINDOW_MS
+) {
+  if (overrideMode === 'mystery' || overrideMode === 'clue' || overrideMode === 'open') {
+    return overrideMode;
+  }
+  if (!unlockDateIso) return 'mystery';
+  const unlockTime = new Date(unlockDateIso).getTime();
+  if (Number.isNaN(unlockTime)) return 'mystery';
+  if (now >= unlockTime) return 'open';
+  if (unlockTime - now <= clueWindowMs) return 'clue';
+  return 'mystery';
+}
+
+export function formatShortReleaseDateId(isoString) {
+  if (!isoString) return 'Menyusul';
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return 'Menyusul';
+  return d.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
 }
 
 /**
@@ -215,6 +302,7 @@ export async function checkShouldSkipRoomScoring(gameColumn, participantNims = [
     }
 
     const eaConfig = extractEarlyAccessConfig(data);
+    const comingSoonCfg = extractComingSoonConfig(data);
     const unlockDateIso =
       gameColumn === 'monopoli'
         ? data.monopoli_unlock_date
@@ -222,10 +310,14 @@ export async function checkShouldSkipRoomScoring(gameColumn, participantNims = [
         ? data.werewolf_unlock_date
         : gameColumn === 'uno'
         ? data.uno_unlock_date
+        : gameColumn === 'athlete'
+        ? comingSoonCfg.athlete_unlock_date
         : null;
+    const overrideMode = comingSoonCfg.overrides?.[gameColumn] || 'auto';
+    const isEffectivelyOpen = resolveGameStage(unlockDateIso, overrideMode) === 'open';
 
     return shouldSkipScoreWrite({
-      unlockDateIso,
+      unlockDateIso: isEffectivelyOpen ? new Date(0).toISOString() : null,
       earlyAccessConfig: eaConfig,
       participantNims,
       isAdminActor: isAdminSession()

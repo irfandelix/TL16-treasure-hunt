@@ -4,12 +4,61 @@ import { UPDATES_LOG } from '../data/updatesLog';
 import {
   extractEarlyAccessConfig,
   extractKapsulConfig,
+  extractComingSoonConfig,
+  DEFAULT_COMING_SOON_CONFIG,
   filterVisiblePatchNotes,
   mergeAppConfigsIntoPatchNotes,
   getEarlyAccessWindowStatus,
-  getKapsulScheduleStatus
+  getKapsulScheduleStatus,
+  resolveGameStage
 } from '../lib/earlyAccess';
 import { copyTextToClipboard } from '../lib/roomInvite';
+
+const STAGE_MODE_OPTIONS = [
+  { id: 'auto', label: 'Otomatis' },
+  { id: 'mystery', label: 'Misterius' },
+  { id: 'clue', label: 'Mengintip' },
+  { id: 'open', label: 'Terbuka' }
+];
+
+const STAGE_LABEL_ID = {
+  mystery: 'Tahap 1: Misterius',
+  clue: 'Tahap 2: Mengintip',
+  open: 'Tahap 3: Terbuka'
+};
+
+function StageOverrideSelector({ gameLabel, value, effectiveStage, onChange }) {
+  return (
+    <div className="pt-2 border-t border-[#E6DFD2] space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
+        <span className="text-xs font-bold text-stone-700">Tahap Teaser Pop-Up</span>
+        <span className="text-[11px] font-mono font-semibold text-green-800">
+          Tampil: {STAGE_LABEL_ID[effectiveStage] || 'Tahap 1: Misterius'}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5" role="group" aria-label={`Tahap teaser ${gameLabel}`}>
+        {STAGE_MODE_OPTIONS.map((opt) => {
+          const active = value === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onChange(opt.id)}
+              className={`min-h-[44px] px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                active
+                  ? 'bg-[#14532D] text-white border-[#14532D]'
+                  : 'bg-white text-stone-700 border-[#C7BDA8] hover:bg-[#F1ECE0]'
+              }`}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function toLocalDateTimeInput(isoStr) {
   if (!isoStr) return '';
@@ -23,6 +72,8 @@ export default function AdminDashboard({ onBack }) {
   const [monopoliDate, setMonopoliDate] = useState(''); 
   const [werewolfDate, setWerewolfDate] = useState(''); 
   const [unoDate, setUnoDate] = useState('');
+  const [athleteDate, setAthleteDate] = useState('');
+  const [stageOverrides, setStageOverrides] = useState({ ...DEFAULT_COMING_SOON_CONFIG.overrides });
   const [showScoreboard, setShowScoreboard] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -85,6 +136,10 @@ export default function AdminDashboard({ onBack }) {
         setKapsulEnabled(Boolean(kapsulCfg.enabled));
         setKapsulUnlockDate(toLocalDateTimeInput(kapsulCfg.unlock_at));
 
+        const comingSoonCfg = extractComingSoonConfig(data);
+        setAthleteDate(toLocalDateTimeInput(comingSoonCfg.athlete_unlock_date));
+        setStageOverrides(comingSoonCfg.overrides);
+
         setUnlockDate(toLocalDateTimeInput(data.wheel_unlock_date));
         setMonopoliDate(toLocalDateTimeInput(data.monopoli_unlock_date));
         setWerewolfDate(toLocalDateTimeInput(data.werewolf_unlock_date));
@@ -113,6 +168,15 @@ export default function AdminDashboard({ onBack }) {
     unlock_at: kapsulUnlockDate ? new Date(kapsulUnlockDate).toISOString() : null
   });
 
+  const buildCurrentComingSoonPayload = () => ({
+    athlete_unlock_date: athleteDate ? new Date(athleteDate).toISOString() : null,
+    overrides: stageOverrides
+  });
+
+  const setGameOverride = (gameKey, nextMode) => {
+    setStageOverrides((prev) => ({ ...prev, [gameKey]: nextMode }));
+  };
+
   const handleSave = async () => {
     if (earlyAccessStart && earlyAccessEnd && new Date(earlyAccessEnd).getTime() < new Date(earlyAccessStart).getTime()) {
       setSaveStatus('Tanggal berakhir Early Access tidak boleh lebih awal dari tanggal mulai.');
@@ -129,7 +193,8 @@ export default function AdminDashboard({ onBack }) {
       const dbUnoDate = unoDate ? new Date(unoDate).toISOString() : null;
       const mergedPatchNotes = mergeAppConfigsIntoPatchNotes(patchNotes, {
         earlyAccess: buildCurrentEarlyAccessPayload(),
-        kapsul: buildCurrentKapsulPayload()
+        kapsul: buildCurrentKapsulPayload(),
+        comingSoon: buildCurrentComingSoonPayload()
       });
 
       const { error } = await supabase
@@ -169,7 +234,8 @@ export default function AdminDashboard({ onBack }) {
       setNoteError('');
       const merged = mergeAppConfigsIntoPatchNotes(updatedNotes, {
         earlyAccess: buildCurrentEarlyAccessPayload(),
-        kapsul: buildCurrentKapsulPayload()
+        kapsul: buildCurrentKapsulPayload(),
+        comingSoon: buildCurrentComingSoonPayload()
       });
       const { error } = await supabase.from('app_settings').update({ patch_notes: merged }).eq('id', 1);
       if (error) throw error;
@@ -188,7 +254,8 @@ export default function AdminDashboard({ onBack }) {
       setNoteError('');
       const merged = mergeAppConfigsIntoPatchNotes(updatedNotes, {
         earlyAccess: buildCurrentEarlyAccessPayload(),
-        kapsul: buildCurrentKapsulPayload()
+        kapsul: buildCurrentKapsulPayload(),
+        comingSoon: buildCurrentComingSoonPayload()
       });
       const { error } = await supabase.from('app_settings').update({ patch_notes: merged }).eq('id', 1);
       if (error) throw error;
@@ -261,6 +328,15 @@ export default function AdminDashboard({ onBack }) {
   const handleClearMonopoliDate = () => setMonopoliDate('');
   const handleClearWerewolfDate = () => setWerewolfDate('');
   const handleClearUnoDate = () => setUnoDate('');
+  const handleClearAthleteDate = () => setAthleteDate('');
+
+  const toIsoOrNull = (val) => (val ? new Date(val).toISOString() : null);
+  const previewStages = {
+    monopoli: resolveGameStage(toIsoOrNull(monopoliDate), stageOverrides.monopoli),
+    werewolf: resolveGameStage(toIsoOrNull(werewolfDate), stageOverrides.werewolf),
+    uno: resolveGameStage(toIsoOrNull(unoDate), stageOverrides.uno),
+    athlete: resolveGameStage(toIsoOrNull(athleteDate), stageOverrides.athlete)
+  };
 
   const getAutoSchedule = (dateStr) => {
     if (!dateStr) return { month: 'Segera', week: '-', status: 'secret' };
@@ -637,76 +713,129 @@ export default function AdminDashboard({ onBack }) {
                   <span className="text-xs font-mono text-stone-600">
                     {monopoliDate ? 'Status: Terjadwal Aktif' : 'Status: Menunggu Jadwal'}
                   </span>
-                  {monopoliDate && (
-                    <button
-                      type="button"
-                      onClick={handleClearMonopoliDate}
-                      className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 transition-colors"
-                    >
-                      Reset Jadwal
-                    </button>
-                  )}
+                    {monopoliDate && (
+                      <button
+                        type="button"
+                        onClick={handleClearMonopoliDate}
+                        className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 transition-colors"
+                      >
+                        Reset Jadwal
+                      </button>
+                    )}
+                  </div>
+                  <StageOverrideSelector
+                    gameLabel="Monopoli TL16"
+                    value={stageOverrides.monopoli}
+                    effectiveStage={previewStages.monopoli}
+                    onChange={(mode) => setGameOverride('monopoli', mode)}
+                  />
                 </div>
               </div>
-            </div>
 
-            <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6]">
-              <label htmlFor="schedule-werewolf" className="block text-lg font-bold text-amber-700 mb-2">
-                Jadwal Sidang Dosen Killer
-              </label>
-              <div className="flex flex-col gap-3 mt-2">
-                <input 
-                  id="schedule-werewolf"
-                  type="datetime-local" 
-                  value={werewolfDate}
-                  onChange={(e) => setWerewolfDate(e.target.value)}
-                  className="w-full min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-amber-400"
-                />
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs font-mono text-stone-600">
-                    {werewolfDate ? 'Status: Terjadwal Aktif' : 'Status: Menunggu Jadwal'}
-                  </span>
-                  {werewolfDate && (
-                    <button
-                      type="button"
-                      onClick={handleClearWerewolfDate}
-                      className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 transition-colors"
-                    >
-                      Reset Jadwal
-                    </button>
-                  )}
+              <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6]">
+                <label htmlFor="schedule-werewolf" className="block text-lg font-bold text-amber-700 mb-2">
+                  Jadwal Sidang Dosen Killer
+                </label>
+                <div className="flex flex-col gap-3 mt-2">
+                  <input 
+                    id="schedule-werewolf"
+                    type="datetime-local" 
+                    value={werewolfDate}
+                    onChange={(e) => setWerewolfDate(e.target.value)}
+                    className="w-full min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-amber-400"
+                  />
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-xs font-mono text-stone-600">
+                      {werewolfDate ? 'Status: Terjadwal Aktif' : 'Status: Menunggu Jadwal'}
+                    </span>
+                    {werewolfDate && (
+                      <button
+                        type="button"
+                        onClick={handleClearWerewolfDate}
+                        className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 transition-colors"
+                      >
+                        Reset Jadwal
+                      </button>
+                    )}
+                  </div>
+                  <StageOverrideSelector
+                    gameLabel="Sidang Dosen Killer"
+                    value={stageOverrides.werewolf}
+                    effectiveStage={previewStages.werewolf}
+                    onChange={(mode) => setGameOverride('werewolf', mode)}
+                  />
                 </div>
               </div>
-            </div>
 
-            <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6]">
-              <label htmlFor="schedule-uno" className="block text-lg font-bold text-green-800 mb-2">
-                Jadwal UNO Sedulur 16
-              </label>
-              <div className="flex flex-col gap-3 mt-2">
-                <input 
-                  id="schedule-uno"
-                  type="datetime-local" 
-                  value={unoDate}
-                  onChange={(e) => setUnoDate(e.target.value)}
-                  className="w-full min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-amber-400"
-                />
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs font-mono text-stone-600">
-                    {unoDate ? 'Status: Terjadwal Aktif' : 'Status: Menunggu Jadwal'}
-                  </span>
-                  {unoDate && (
-                    <button
-                      type="button"
-                      onClick={handleClearUnoDate}
-                      className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 transition-colors"
-                    >
-                      Reset Jadwal
-                    </button>
-                  )}
+              <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6]">
+                <label htmlFor="schedule-uno" className="block text-lg font-bold text-green-800 mb-2">
+                  Jadwal UNO Sedulur 16
+                </label>
+                <div className="flex flex-col gap-3 mt-2">
+                  <input 
+                    id="schedule-uno"
+                    type="datetime-local" 
+                    value={unoDate}
+                    onChange={(e) => setUnoDate(e.target.value)}
+                    className="w-full min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-amber-400"
+                  />
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-xs font-mono text-stone-600">
+                      {unoDate ? 'Status: Terjadwal Aktif' : 'Status: Menunggu Jadwal'}
+                    </span>
+                    {unoDate && (
+                      <button
+                        type="button"
+                        onClick={handleClearUnoDate}
+                        className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 transition-colors"
+                      >
+                        Reset Jadwal
+                      </button>
+                    )}
+                  </div>
+                  <StageOverrideSelector
+                    gameLabel="UNO Sedulur 16"
+                    value={stageOverrides.uno}
+                    effectiveStage={previewStages.uno}
+                    onChange={(mode) => setGameOverride('uno', mode)}
+                  />
                 </div>
               </div>
-            </div>
+
+              <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6] md:col-span-2">
+                <label htmlFor="schedule-athlete" className="block text-lg font-bold text-green-900 mb-2">
+                  Jadwal Magical Athlete TL16
+                </label>
+                <div className="flex flex-col gap-3 mt-2">
+                  <input
+                    id="schedule-athlete"
+                    type="datetime-local"
+                    value={athleteDate}
+                    onChange={(e) => setAthleteDate(e.target.value)}
+                    className="w-full min-h-[44px] bg-white border border-[#C7BDA8] rounded-xl p-3 text-stone-900 focus:border-amber-400"
+                  />
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-xs font-mono text-stone-600">
+                      {athleteDate ? 'Status: Terjadwal Aktif' : 'Status: Menunggu Jadwal'}
+                    </span>
+                    {athleteDate && (
+                      <button
+                        type="button"
+                        onClick={handleClearAthleteDate}
+                        className="text-xs font-bold text-rose-700 hover:text-white px-3 py-2 min-h-[44px] rounded-lg bg-white hover:bg-rose-700 transition-colors"
+                      >
+                        Reset Jadwal
+                      </button>
+                    )}
+                  </div>
+                  <StageOverrideSelector
+                    gameLabel="Magical Athlete TL16"
+                    value={stageOverrides.athlete}
+                    effectiveStage={previewStages.athlete}
+                    onChange={(mode) => setGameOverride('athlete', mode)}
+                  />
+                </div>
+              </div>
 
             <div className="bg-[#FAF6EE] p-5 rounded-xl border border-[#DED6C6] md:col-span-2 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
