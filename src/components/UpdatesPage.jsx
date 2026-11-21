@@ -35,7 +35,7 @@ const SECRET_MODE_RULES = [
     key: 'athlete',
     widthClass: 'w-24',
     pattern:
-      'public/games/magical-athlete\\.webp|src/pages/lock/magical-athlete\\.astro|/lock/magical-athlete|magical-athlete|Magical Athlete TL 2016|Magical Athlete TL16|Magical Athlete|MagicalAthleteGame(?:\\.jsx)?|athlete_rooms|athlete_players|athlete_schema\\.sql|scores_uno_athlete_schema\\.sql|athleteCharacters\\.js|skor_athlete|Pelari Tercepat|\\b5 Permainan\\b|hak Host [^,.]*',
+      'public/games/athletes[^,]*|public/games/magical-athlete\\.webp|src/pages/lock/magical-athlete\\.astro|/lock/magical-athlete|magical-athlete|Magical Athlete TL 2016|Magical Athlete TL16|Magical Athlete|MagicalAthleteGame(?:\\.jsx)?|athlete_rooms|athlete_players|athlete_schema\\.sql|scores_uno_athlete_schema\\.sql|athleteCharacters\\.js|skor_athlete|Pelari Tercepat|\\b5 Permainan\\b|hak Host [^,.]*',
   },
 ];
 

@@ -1,5 +1,27 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-045',
+    date: '22 November 2026',
+    version: 'v2.9.14',
+    category: 'Tampilan',
+    title: 'Ilustrasi 16 Karakter Khusus Pada Magical Athlete TL16',
+    commit: 'latest',
+    summary: 'Menambahkan 16 ilustrasi maskot khusus bertema Teknik Lingkungan dan Geologi pada Magical Athlete TL16 agar pemain lebih mudah mengenali dan memilih tokoh saat bursa draft maupun balapan.',
+    changes: [
+      'Menambahkan 16 gambar maskot transparan pada daftar 16 tokoh di halaman lobi Magical Athlete TL16.',
+      'Menampilkan ilustrasi karakter yang sama di kartu bursa draft, daftar tokoh terpilih tiap pemain, layar pilihan rahasia tiap ronde, kartu status pemain, penanda giliran dadu, serta bidak pelari di papan lintasan.'
+    ],
+    docs: {
+      files: [
+        'src/data/athleteCharacters.js',
+        'src/components/MagicalAthleteGame.jsx',
+        'public/games/athletes/*.webp',
+        'src/components/UpdatesPage.jsx'
+      ],
+      notes: 'Setiap gambar maskot memakai format WebP ringan berukuran sekitar 11-19 KB dengan lazy loading.'
+    }
+  },
+  {
     id: 'upd-044',
     date: '22 November 2026',
     version: 'v2.9.13',

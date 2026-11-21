@@ -40,6 +40,22 @@ const TRACK_LOOP_COORDS = {
   24: { col: 1, row: 1, dir: 'Finish' },
 };
 
+function AthleteMascot({ char, className = 'w-12 h-12', fallback = '🏃' }) {
+  if (!char?.image) {
+    return <span className="leading-none">{char?.emoji || fallback}</span>;
+  }
+  return (
+    <img
+      src={char.image}
+      alt={char.name}
+      width="96"
+      height="96"
+      loading="lazy"
+      className={`${className} object-contain shrink-0 select-none`}
+    />
+  );
+}
+
 export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
   const [hasPassedPrep, setHasPassedPrep] = useState(() => Boolean(initialRoomCode));
   const [currentUser, setCurrentUser] = useState({
@@ -1364,18 +1380,23 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
             </div>
             <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:gap-px bg-[#EDE6D8]">
               {ATHLETE_CHARACTERS.map((char) => (
-                <div key={char.id} className="bg-[#FFFDF9] p-4 space-y-1">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h3 className="text-sm font-bold text-zinc-900">
-                      {char.name} <span className="font-normal text-xs text-zinc-600">({char.subname})</span>
-                    </h3>
-                    <span className="text-[11px] font-mono font-bold text-[#14532D] bg-[#F1ECE0] px-2 py-0.5 rounded">
-                      {char.division}
-                    </span>
+                <div key={char.id} className="bg-[#FFFDF9] p-4 flex items-start gap-3.5">
+                  <div className="w-16 h-16 rounded-xl bg-[#FAF6EE] border border-[#E5DFD2] p-1.5 flex items-center justify-center shrink-0">
+                    <AthleteMascot char={char} className="w-13 h-13" />
                   </div>
-                  <p className="text-xs text-zinc-700 leading-relaxed">
-                    <strong className="text-amber-800">{char.skillName}:</strong> {char.skillDesc}
-                  </p>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <h3 className="text-sm font-bold text-zinc-900">
+                        {char.name} <span className="font-normal text-xs text-zinc-600">({char.subname})</span>
+                      </h3>
+                      <span className="text-[11px] font-mono font-bold text-[#14532D] bg-[#F1ECE0] px-2 py-0.5 rounded">
+                        {char.division}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-700 leading-relaxed">
+                      <strong className="text-amber-800">{char.skillName}:</strong> {char.skillDesc}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1630,8 +1651,10 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                   }`}
                 >
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-2xl p-1.5 bg-[#FAF6EE] rounded-xl">{char.emoji}</span>
+                    <div className="flex items-start justify-between gap-2 mb-2.5">
+                      <div className="w-16 h-16 p-1.5 bg-[#FAF6EE] border border-[#E5DFD2] rounded-xl flex items-center justify-center shrink-0">
+                        <AthleteMascot char={char} className="w-14 h-14" />
+                      </div>
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#FAF6EE] text-stone-600 uppercase">
                         {char.division}
                       </span>
@@ -1687,8 +1710,8 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                       {(p.drafted_characters || []).map(cid => {
                         const c = ATHLETE_CHARACTERS.find(x => x.id === cid);
                         return (
-                          <span key={cid} className="px-2 py-1 bg-white border border-[#DED6C6] rounded-lg text-xs font-mono flex items-center gap-1 text-stone-800">
-                            <span>{c?.emoji}</span>
+                          <span key={cid} className="px-2 py-1 bg-white border border-[#DED6C6] rounded-lg text-xs font-mono flex items-center gap-1.5 text-stone-800">
+                            <AthleteMascot char={c} className="w-5 h-5" />
                             <span className="truncate max-w-[90px]">{c?.name}</span>
                           </span>
                         );
@@ -1764,7 +1787,9 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                         }`}
                       >
                         <div>
-                          <div className="text-3xl mb-2">{c?.emoji}</div>
+                          <div className="w-16 h-16 mb-2.5 p-1.5 rounded-xl bg-white border border-[#DED6C6] flex items-center justify-center">
+                            <AthleteMascot char={c} className="w-14 h-14" />
+                          </div>
                           <div className="font-bold text-sm text-stone-900">{c?.name}</div>
                           <div className="text-xs font-mono text-green-800 mb-2">{c?.subname}</div>
                           <div className="text-xs text-stone-600 leading-snug">{c?.skillDesc}</div>
@@ -1889,8 +1914,10 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
 
                   {char && (
                     <div className="p-3 bg-[#FAF6EE] border border-[#DED6C6] rounded-xl">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xl">{char.emoji}</span>
+                      <div className="flex items-center gap-2.5 mb-1">
+                        <div className="w-11 h-11 rounded-lg bg-white border border-[#E5DFD2] p-1 flex items-center justify-center shrink-0">
+                          <AthleteMascot char={char} className="w-9 h-9" />
+                        </div>
                         <div>
                           <div className="text-xs font-bold text-stone-900">{char.name}</div>
                           <div className="text-xs font-mono text-green-800">{char.skillName}</div>
@@ -2103,7 +2130,7 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                 <div className="text-xs sm:text-sm font-mono text-stone-800 flex flex-wrap items-center justify-center gap-2">
                   <span>Giliran:</span>
                   <strong className="text-stone-900 bg-white px-3 py-1 rounded-xl border border-[#DED6C6] flex items-center gap-1.5">
-                    <span>{activeChar?.emoji || '🏃'}</span>
+                    <AthleteMascot char={activeChar} className="w-6 h-6" />
                     <span>{activePlayer?.nama}</span>
                     <span className="text-xs text-stone-600 font-normal">({activeChar?.name || `Slot ${activePlayer?.slot_number}`})</span>
                   </strong>
@@ -2278,11 +2305,11 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
               <div
                 key={p.id}
                 title={`${p.nama} (${char?.name})${hasFinished ? ' - FINISH!' : ''}`}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm sm:text-base border-2 transition-transform duration-200 z-10 relative ${colorConfig.badge} ${colorConfig.border} ${
-                  isMoving ? 'ring-2 ring-white scale-110 z-20' : ''
+                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-white p-0.5 border-2 shadow-sm transition-transform duration-200 z-10 relative ${colorConfig.border} ${
+                  isMoving ? 'ring-2 ring-amber-400 scale-115 z-20' : ''
                 }`}
               >
-                {char?.emoji || '🏃'}
+                <AthleteMascot char={char} className="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
             );
           })}
