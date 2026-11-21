@@ -4,6 +4,7 @@ import { useRoomConnection, pickActiveCoordinator, shouldBotControlPlayer } from
 import StoryShareButton from './StoryShareButton';
 import InviteLinkButton from './InviteLinkButton';
 import RoomStatusScreen from './RoomStatusScreen';
+import SoloGamePrepScreen from './SoloGamePrepScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
 import { checkShouldSkipRoomScoring, awardAlumniPoints } from '../lib/earlyAccess';
@@ -37,6 +38,7 @@ const pickFairUnoCard = (hand = [], topCard) => {
 };
 
 export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
+  const [hasPassedPrep, setHasPassedPrep] = useState(() => Boolean(initialRoomCode));
   const [user, setUser] = useState(null);
   const [roomCode, setRoomCode] = useState('');
   const [currentRoom, setCurrentRoom] = useState(null);
@@ -473,6 +475,37 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
         }}
         onBackHome={onBack}
       />
+    );
+  }
+
+  if (!currentRoom && !hasPassedPrep && !initialRoomCode) {
+    return (
+      <div className="py-4 sm:py-6">
+        <SoloGamePrepScreen
+          title="UNO Sedulur 16"
+          subtitle="Adu cepat habiskan kartu di meja bareng teman satu angkatan dengan kartu spesial Skip, +2, dan Titip Absen."
+          artworkSrc="/games/uno.webp"
+          artworkAlt="Ilustrasi kartu UNO Sedulur 16"
+          stats={[
+            { value: '2+', label: 'Pemain' },
+            { value: '5', label: 'Kartu Awal' },
+            { value: '+3.000', label: 'Poin Menang' }
+          ]}
+          steps={[
+            'Buat meja baru lalu bagikan kode atau link undangan, atau masukkan kode meja dari temanmu.',
+            'Buang kartu yang warnanya atau angkanya cocok dengan kartu paling atas di tengah meja.',
+            'Pakai kartu Skip, +2, atau Titip Absen (pilih 4 warna) untuk menahan giliran lawan hingga kartumu habis duluan.'
+          ]}
+          scoringTiers={[
+            { condition: 'Pemenang Meja', points: '+3.000 poin' },
+            { condition: 'Kartu Aksi', points: 'Skip / +2 / Wild' }
+          ]}
+          scoringNote="Jika tidak punya kartu yang cocok saat giliranmu, ambil satu kartu dari tumpukan lalu giliran otomatis berlanjut."
+          startLabel="Masuk ke Lobi UNO"
+          onStart={() => setHasPassedPrep(true)}
+          onBack={onBack}
+        />
+      </div>
     );
   }
 

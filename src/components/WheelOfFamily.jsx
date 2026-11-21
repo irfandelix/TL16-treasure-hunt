@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Wheel } from 'react-custom-roulette';
 import confetti from 'canvas-confetti';
 import { supabase } from '../lib/supabaseClient';
+import SoloGamePrepScreen from './SoloGamePrepScreen';
 
-export default function WheelOfFamily() {
+export default function WheelOfFamily({ onBack }) {
+  const [hasPassedPrep, setHasPassedPrep] = useState(false);
   const [peserta, setPeserta] = useState([]);
   const [usedWinnerNims, setUsedWinnerNims] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,6 +87,32 @@ export default function WheelOfFamily() {
       });
     }
   };
+
+  if (!hasPassedPrep) {
+    return (
+      <div className="w-full py-4 sm:py-6">
+        <SoloGamePrepScreen
+          title="Wheel of Family"
+          subtitle="Putar roda kenangan untuk membuka transformasi foto 2016 ke 2026 serta pesan nostalgia dari teman-teman seangkatan secara acak."
+          artworkSrc="/games/wheel-of-family.webp"
+          artworkAlt="Ilustrasi roda kenangan Wheel of Family"
+          stats={[
+            { value: isLoading ? '...' : `${peserta.length}`, label: 'Kapsul Siap' },
+            { value: '1x', label: 'Per Siklus' },
+            { value: '2016-2026', label: 'Transformasi' }
+          ]}
+          steps={[
+            'Roda otomatis diisi oleh alumni TL 2016 yang sudah mengunggah foto terbaru dan pesan reuni.',
+            'Tekan tombol putar untuk memilih satu teman seangkatan secara acak dan melihat kilas balik fotonya.',
+            'Setiap nama hanya terpilih satu kali dalam satu putaran siklus sampai semua kapsul selesai dibuka.'
+          ]}
+          startLabel="Buka Roda Kenangan"
+          onStart={() => setHasPassedPrep(true)}
+          onBack={onBack}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center w-full text-stone-900 font-sans pb-16">

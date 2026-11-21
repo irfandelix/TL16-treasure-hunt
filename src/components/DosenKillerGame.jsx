@@ -10,6 +10,7 @@ import LayarEksekusi from './LayarEksekusi';
 import StoryShareButton from './StoryShareButton';
 import InviteLinkButton from './InviteLinkButton';
 import RoomStatusScreen from './RoomStatusScreen';
+import SoloGamePrepScreen from './SoloGamePrepScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
 import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
@@ -68,6 +69,7 @@ const DOSEN_KILLER_ROLES = [
 ];
 
 export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
+  const [hasPassedPrep, setHasPassedPrep] = useState(() => Boolean(initialRoomCode));
   const [roomCode, setRoomCode] = useState(''); 
   const [inputRoomCode, setInputRoomCode] = useState('');
   const [isInRoom, setIsInRoom] = useState(false);
@@ -636,6 +638,37 @@ export default function DosenKillerGame({ onBack, initialRoomCode = '' }) {
         }}
         onBackHome={onBack}
       />
+    );
+  }
+
+  if (!isInRoom && !hasPassedPrep && !initialRoomCode) {
+    return (
+      <div className="py-4 sm:py-6">
+        <SoloGamePrepScreen
+          title="Sidang Dosen Killer"
+          subtitle="Permainan tebak peran ramai-ramai versi kelas kuliah. Temukan siapa Dosen Killer yang menyamar sebelum seluruh mahasiswa terkena remedial."
+          artworkSrc="/games/dosen-killer.webp"
+          artworkAlt="Ilustrasi ruang sidang dan kaca pembesar Dosen Killer"
+          stats={[
+            { value: '5 Peran', label: 'Tokoh Kelas' },
+            { value: 'Malam-Siang', label: 'Fase Sidang' },
+            { value: '+3.000', label: 'Poin Menang' }
+          ]}
+          steps={[
+            'Buka kelas baru atau masukkan kode kelas teman; peran rahasia dibagikan acak begitu permainan dimulai.',
+            'Pada fase malam, Dosen Killer, Intel, Ahli, dan Uptodate menjalankan aksi rahasia masing-masing.',
+            'Pada fase siang, diskusikan kecurigaan bersama lalu lakukan voting untuk menyingkirkan Dosen Killer.'
+          ]}
+          scoringTiers={[
+            { condition: 'Tim Pemenang', points: '+3.000 poin' },
+            { condition: 'Kapasitas', points: 's/d 100 org' }
+          ]}
+          scoringNote="Setiap anggota tim pemenang menerima +3.000 poin klasemen saat jadwal resmi terbuka (sesi uji coba tidak dicatat)."
+          startLabel="Masuk ke Lobi Kelas"
+          onStart={() => setHasPassedPrep(true)}
+          onBack={onBack}
+        />
+      </div>
     );
   }
 

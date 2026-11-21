@@ -11,7 +11,7 @@ const SECRET_MODE_RULES = [
     key: 'monopoli',
     widthClass: 'w-20',
     pattern:
-      'public/games/monopoli\\.webp|bidak Monopoli(?: TL16)?|bidak[^,.]*|papan Monopoli(?: TL16)?|Monopoli TL16|MonopoliBoard(?:\\.jsx)?|MonopoliDice|monopoli_room_\\{nim\\}|monopoli_rooms|monopoli_players|monopoli_properties|monopoli_users|skor_monopoli|\\bMonopoli\\b|Daftar Petak(?: Papan)?|Detail Petak|kotak angka dadu|2 Dadu Bergoyang|kocokan dadu|lemparan dadu|petak tujuan|petak 11x11|papan 11x11|perbesar papan[^,.]*|TELEPORT/MUNDUR|bonus START|\\bKE_START\\b|\\bSTART\\b|properti kontrakan|Truth or Dare|uang sewa|kas sewa|IconBoard|\\blobi\\b',
+      'public/games/monopoli\\.webp|bidak Monopoli(?: TL16)?|bidak[^,.]*|papan Monopoli(?: TL16)?|Monopoli TL 2016|Monopoli TL16|MonopoliBoard(?:\\.jsx)?|MonopoliDice|monopoli_room_\\{nim\\}|monopoli_rooms|monopoli_players|monopoli_properties|monopoli_users|skor_monopoli|\\bMonopoli\\b|Daftar Petak(?: Papan)?|Detail Petak|kotak angka dadu|2 Dadu Bergoyang|kocokan dadu|lemparan dadu|petak tujuan|petak 11x11|papan 11x11|perbesar papan[^,.]*|TELEPORT/MUNDUR|bonus START|\\bKE_START\\b|\\bSTART\\b|properti kontrakan|Truth or Dare|uang sewa|kas sewa|IconBoard|\\blobi\\b',
   },
   {
     key: 'werewolf',
@@ -29,13 +29,13 @@ const SECRET_MODE_RULES = [
     key: 'wheel',
     widthClass: 'w-24',
     pattern:
-      'Wheel of Family|WheelOfFamily(?:\\.jsx)?|Roda Putar|Roda Kenangan|pemutaran kapsul kenangan|foto 2016[^,.]*|/2016/\\{nim\\}\\.webp|segmen [^,.]*',
+      'public/games/wheel-of-family\\.webp|Wheel of Family|WheelOfFamily(?:\\.jsx)?|Roda Putar|Roda Kenangan|pemutaran kapsul kenangan|foto 2016[^,.]*|/2016/\\{nim\\}\\.webp|segmen [^,.]*',
   },
   {
     key: 'athlete',
     widthClass: 'w-24',
     pattern:
-      'public/games/magical-athlete\\.webp|src/pages/lock/magical-athlete\\.astro|/lock/magical-athlete|magical-athlete|Magical Athlete TL16|Magical Athlete|MagicalAthleteGame(?:\\.jsx)?|athlete_rooms|athlete_players|athlete_schema\\.sql|scores_uno_athlete_schema\\.sql|athleteCharacters\\.js|skor_athlete|Pelari Tercepat|\\b5 Permainan\\b|hak Host [^,.]*',
+      'public/games/magical-athlete\\.webp|src/pages/lock/magical-athlete\\.astro|/lock/magical-athlete|magical-athlete|Magical Athlete TL 2016|Magical Athlete TL16|Magical Athlete|MagicalAthleteGame(?:\\.jsx)?|athlete_rooms|athlete_players|athlete_schema\\.sql|scores_uno_athlete_schema\\.sql|athleteCharacters\\.js|skor_athlete|Pelari Tercepat|\\b5 Permainan\\b|hak Host [^,.]*',
   },
 ];
 

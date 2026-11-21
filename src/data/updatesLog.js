@@ -1,5 +1,31 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-044',
+    date: '22 November 2026',
+    version: 'v2.9.13',
+    category: 'Tampilan',
+    title: 'Halaman Persiapan Untuk Seluruh Permainan Yang Akan Hadir',
+    commit: 'latest',
+    summary: 'Melengkapi halaman persiapan bergambar ilustrasi khusus sebelum masuk ke ruang permainan pada Monopoli TL16, Sidang Dosen Killer, UNO Sedulur 16, Magical Athlete TL16, dan Wheel of Family.',
+    changes: [
+      'Menambahkan layar persiapan berisi ilustrasi permainan, ringkasan aturan, dan poin kemenangan pada Monopoli TL16, Sidang Dosen Killer, UNO Sedulur 16, Magical Athlete TL16, serta Wheel of Family.',
+      'Menyiapkan ilustrasi khusus Wheel of Family agar seluruh 7 aktivitas reuni memakai tampilan persiapan yang seragam.',
+      'Melewati layar persiapan secara otomatis saat pemain langsung bergabung lewat link undangan ruangan teman agar tidak menghambat proses gabung.'
+    ],
+    docs: {
+      files: [
+        'src/components/MonopoliBoard.jsx',
+        'src/components/DosenKillerGame.jsx',
+        'src/components/UnoBrutalGame.jsx',
+        'src/components/MagicalAthleteGame.jsx',
+        'src/components/WheelOfFamily.jsx',
+        'public/games/wheel-of-family.webp',
+        'src/components/UpdatesPage.jsx'
+      ],
+      notes: 'Seluruh nama permainan yang belum terbuka untuk alumni tetap disensor otomatis pada catatan pembaruan ini sampai jadwal rilisnya tiba.'
+    }
+  },
+  {
     id: 'upd-043',
     date: '22 November 2026',
     version: 'v2.9.12',

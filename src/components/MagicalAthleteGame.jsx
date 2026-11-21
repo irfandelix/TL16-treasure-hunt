@@ -7,6 +7,7 @@ import confetti from 'canvas-confetti';
 import StoryShareButton from './StoryShareButton';
 import InviteLinkButton from './InviteLinkButton';
 import RoomStatusScreen from './RoomStatusScreen';
+import SoloGamePrepScreen from './SoloGamePrepScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
 import { checkShouldSkipRoomScoring, awardAlumniPoints, extractEarlyAccessConfig, hasActiveEarlyAccess } from '../lib/earlyAccess';
@@ -40,6 +41,7 @@ const TRACK_LOOP_COORDS = {
 };
 
 export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
+  const [hasPassedPrep, setHasPassedPrep] = useState(() => Boolean(initialRoomCode));
   const [currentUser, setCurrentUser] = useState({
     nim: '',
     nama: '',
@@ -1166,6 +1168,38 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
         }}
         onBackHome={onBack}
       />
+    );
+  }
+
+  if (!isInRoom && !hasPassedPrep && !initialRoomCode) {
+    return (
+      <div className="min-h-screen bg-[#FAF6EE] text-zinc-900 py-4 sm:py-6 px-4">
+        <SoloGamePrepScreen
+          title="Magical Athlete TL 2016"
+          subtitle="Bursa draft 4 tokoh berjurus unik dan balapan 4 ronde melintasi 24 petak penuh arus dan rintangan bersama teman atau bot."
+          artworkSrc="/games/magical-athlete.webp"
+          artworkAlt="Ilustrasi lintasan balap Magical Athlete TL 2016"
+          stats={[
+            { value: '2-4', label: 'Pemain / Bot' },
+            { value: '4 Ronde', label: '24 Petak' },
+            { value: '+3.000', label: 'Poin Juara 1' }
+          ]}
+          steps={[
+            'Buat ruang balap bersama teman seangkatan atau tambahkan bot untuk mulai langsung di lintasan.',
+            'Pilih 4 tokoh berjurus unik secara bergiliran dalam fase Snake Draft sebelum balapan dibuka.',
+            'Turunkan satu pembalap tiap ronde, lempar dadu, dan manfaatkan jurus khusus untuk merebut medali emas dan perak.'
+          ]}
+          scoringTiers={[
+            { condition: 'Juara #1', points: '+3.000 poin' },
+            { condition: 'Juara #2', points: '+1.500 poin' },
+            { condition: 'Juara #3', points: '+750 poin' }
+          ]}
+          scoringNote="Peringkat akhir ditentukan dari total nilai medali yang dikumpulkan sepanjang 4 ronde balapan."
+          startLabel="Masuk ke Lobi Balap"
+          onStart={() => setHasPassedPrep(true)}
+          onBack={onBack}
+        />
+      </div>
     );
   }
 

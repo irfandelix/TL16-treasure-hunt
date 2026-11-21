@@ -5,6 +5,7 @@ import PlayerAvatar from './PlayerAvatar';
 import StoryShareButton from './StoryShareButton';
 import InviteLinkButton from './InviteLinkButton';
 import RoomStatusScreen from './RoomStatusScreen';
+import SoloGamePrepScreen from './SoloGamePrepScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
 import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
@@ -119,6 +120,7 @@ const PLAYER_RING_COLOR = {
 };
 
 export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode = '', onBack }) {
+  const [hasPassedPrep, setHasPassedPrep] = useState(() => Boolean(initialRoomCode));
   const [appState, setAppState] = useState('lobby');
   const [currentRoom, setCurrentRoom] = useState(null);
   const [joinCode, setJoinCode] = useState('');
@@ -997,6 +999,38 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
         }}
         onBackHome={onBack}
       />
+    );
+  }
+
+  if (appState === 'lobby' && !hasPassedPrep && !initialRoomCode) {
+    return (
+      <div className="py-4 sm:py-6 px-2 sm:px-4">
+        <SoloGamePrepScreen
+          title="Monopoli TL 2016"
+          subtitle="Kelilingi 40 petak kenangan kampus memakai bidak karaktermu, bangun properti kontrakan, dan hadapi tantangan Truth or Dare bareng teman seangkatan."
+          artworkSrc="/games/monopoli.webp"
+          artworkAlt="Ilustrasi papan Monopoli TL 2016"
+          stats={[
+            { value: '2-6', label: 'Pemain' },
+            { value: '40', label: 'Petak Kampus' },
+            { value: '+3.000', label: 'Poin Juara 1' }
+          ]}
+          steps={[
+            'Buka ruangan baru atau masukkan kode ruangan teman untuk berkumpul di meja permainan.',
+            'Lempar dadu bergantian, beli properti kosong, dan tingkatkan hingga level 5 supaya uang sewanya makin tinggi.',
+            'Hadapi kartu Dana Umum, Kesempatan, dan Truth or Dare, lalu bertahan paling akhir tanpa bangkrut.'
+          ]}
+          scoringTiers={[
+            { condition: 'Juara #1', points: '+3.000 poin' },
+            { condition: 'Juara #2', points: '+1.500 poin' },
+            { condition: 'Juara #3', points: '+750 poin' }
+          ]}
+          scoringNote="Poin klasemen dicatat otomatis saat jadwal resmi terbuka (sesi uji coba tidak mengubah klasemen)."
+          startLabel="Masuk ke Lobi Monopoli"
+          onStart={() => setHasPassedPrep(true)}
+          onBack={onBack}
+        />
+      </div>
     );
   }
 
