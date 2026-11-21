@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PlayerAvatar from './PlayerAvatar';
 import RedactedText from './RedactedText';
 import {
@@ -89,18 +89,21 @@ export default function AvatarDesigner({
     initialConfig ? normalizeAvatarConfig(initialConfig) : generateSeedAvatarConfig(user?.nim || 'tl16')
   );
   const [saving, setSaving] = useState(false);
+  const hasEditedRef = useRef(false);
 
   useEffect(() => {
-    if (initialConfig) {
+    if (initialConfig && !hasEditedRef.current) {
       setConfig(normalizeAvatarConfig(initialConfig));
     }
   }, [initialConfig]);
 
   const updateField = (key, val) => {
+    hasEditedRef.current = true;
     setConfig((prev) => ({ ...prev, [key]: val }));
   };
 
   const handleRandomize = () => {
+    hasEditedRef.current = true;
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
     setConfig({
       skinColor: pick(SKIN_PALETTE).hex,

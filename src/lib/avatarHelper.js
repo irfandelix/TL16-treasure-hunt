@@ -65,9 +65,9 @@ export const GLASSES_CHOICES = [
 export const MOUTH_CHOICES = [
   { id: 'Laughing', label: 'Ketawa' },
   { id: 'Smile', label: 'Senyum' },
-  { id: 'Smirk', label: 'Miring' },
-  { id: 'Surprised', label: 'Kaget' },
-  { id: 'Pucker', label: 'Bibir O' },
+  { id: 'Smirk', label: 'Senyum Tipis' },
+  { id: 'Surprised', label: 'Kaget (O)' },
+  { id: 'Pucker', label: 'Mencucu' },
   { id: 'Nervous', label: 'Cemas' },
   { id: 'Frown', label: 'Cemberut' },
   { id: 'Sad', label: 'Sedih' }

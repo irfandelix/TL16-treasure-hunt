@@ -69,7 +69,14 @@ function buildElementPath(el) {
     const y = parseFloat(el.getAttribute('y') || '0');
     const w = parseFloat(el.getAttribute('width') || '0');
     const h = parseFloat(el.getAttribute('height') || '0');
-    p.rect(x, y, w, h);
+    const rx = parseFloat(el.getAttribute('rx') || el.getAttribute('ry') || '0');
+    const ry = parseFloat(el.getAttribute('ry') || el.getAttribute('rx') || '0');
+    const radius = Math.min(w / 2, h / 2, Math.max(rx, ry));
+    if (radius > 0 && typeof p.roundRect === 'function') {
+      p.roundRect(x, y, w, h, radius);
+    } else {
+      p.rect(x, y, w, h);
+    }
     return p;
   }
   return null;

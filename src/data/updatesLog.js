@@ -1,5 +1,27 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-041',
+    date: '21 November 2026',
+    version: 'v2.9.10',
+    category: 'Perbaikan',
+    title: 'Perbaikan Pilihan & Tampilan Ekspresi Mulut Karakter',
+    commit: 'latest',
+    summary: 'Label pilihan ekspresi mulut di halaman Desain Karakter kini sesuai dengan bentuk mulut yang ditampilkan, sekaligus mencegah perubahan awal tertimpa saat data profil selesai dimuat.',
+    changes: [
+      'Menyesuaikan label ekspresi mulut agar sesuai gambarnya (Senyum Tipis, Kaget (O), dan Mencucu) sambil tetap mempertahankan data karakter yang sudah pernah disimpan.',
+      'Menambahkan dukungan sudut membulat pada rendering kanvas avatar agar ekspresi mulut Cemas tampil persis seperti ilustrasi aslinya.',
+      'Menjaga pilihan karakter yang sedang diubah di editor tidak tertimpa ketika muatan profil awal dari server datang belakangan.'
+    ],
+    docs: {
+      files: [
+        'src/lib/avatarHelper.js',
+        'src/lib/avatarCanvas.js',
+        'src/components/AvatarDesigner.jsx'
+      ],
+      notes: 'ID internal masing-masing ekspresi tetap dipertahankan sehingga karakter alumni yang sudah tersimpan sebelumnya tidak perlu diatur ulang.'
+    }
+  },
+  {
     id: 'upd-040',
     date: '20 November 2026',
     version: 'v2.9.9',
