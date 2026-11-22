@@ -304,6 +304,32 @@
   }
 }
 
+@keyframes athBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes athModalPop {
+  0% { opacity: 0; transform: scale(0.86) translateY(16px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes athMascotEnter {
+  0% { opacity: 0; transform: scale(0.6) translateY(14px) rotate(-6deg); }
+  70% { opacity: 1; transform: scale(1.06) translateY(-4px) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
+}
+@keyframes athMascotFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(2.5deg); }
+}
+
+.ath-backdrop-in { animation: athBackdropIn 0.18s ease-out both; }
+.ath-modal-pop { animation: athModalPop 0.34s cubic-bezier(0.22, 1.28, 0.36, 1) both; }
+.ath-mascot-stage {
+  animation:
+    athMascotEnter 0.44s cubic-bezier(0.22, 1.32, 0.36, 1) both,
+    athMascotFloat 2.8s ease-in-out 0.46s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -341,7 +367,10 @@
   .cs-ath-peek,
   .cs-neon-1,
   .cs-neon-2,
-  .cs-sticker-char {
+  .cs-sticker-char,
+  .ath-backdrop-in,
+  .ath-modal-pop,
+  .ath-mascot-stage {
     animation: none !important;
   }
 

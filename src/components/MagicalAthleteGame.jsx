@@ -40,6 +40,15 @@ const TRACK_LOOP_COORDS = {
   24: { col: 1, row: 1, dir: 'Finish' },
 };
 
+const ATHLETE_TYPE_LABELS = {
+  DISRUPTOR: 'Pengganggu Lawan',
+  TANK: 'Tahan Banting',
+  SPEED: 'Pelari Cepat',
+  PARASITE: 'Menempel Lawan',
+  TACTIC: 'Taktik Dadu',
+  COMEBACK: 'Pembalik Keadaan'
+};
+
 function AthleteMascot({ char, className = 'w-12 h-12', fallback = '🏃' }) {
   if (!char?.image) {
     return <span className="leading-none">{char?.emoji || fallback}</span>;
@@ -58,6 +67,7 @@ function AthleteMascot({ char, className = 'w-12 h-12', fallback = '🏃' }) {
 
 export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
   const [hasPassedPrep, setHasPassedPrep] = useState(() => Boolean(initialRoomCode));
+  const [selectedRosterChar, setSelectedRosterChar] = useState(null);
   const [currentUser, setCurrentUser] = useState({
     nim: '',
     nama: '',
@@ -117,6 +127,23 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showAlumniModal]);
+
+  useEffect(() => {
+    if (!selectedRosterChar) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedRosterChar(null);
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const idx = ATHLETE_CHARACTERS.findIndex((c) => c.id === selectedRosterChar.id);
+        if (idx === -1) return;
+        const delta = e.key === 'ArrowRight' ? 1 : -1;
+        const nextIdx = (idx + delta + ATHLETE_CHARACTERS.length) % ATHLETE_CHARACTERS.length;
+        setSelectedRosterChar(ATHLETE_CHARACTERS[nextIdx]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedRosterChar]);
 
   useEffect(() => {
     if (roomData?.round_winners && typeof roomData.round_winners === 'object' && !Array.isArray(roomData.round_winners)) {
@@ -1375,18 +1402,26 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                 Daftar 16 Tokoh dan Jurusnya
               </h2>
               <span className="text-xs text-zinc-600">
-                Intip kemampuan tiap karakter sebelum bursa draft dimulai
+                Klik tokoh untuk membuka pop-up detail & animasi karakter
               </span>
             </div>
             <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:gap-px bg-[#EDE6D8]">
               {ATHLETE_CHARACTERS.map((char) => (
-                <div key={char.id} className="bg-[#FFFDF9] p-4 flex items-start gap-3.5">
-                  <div className="w-16 h-16 rounded-xl bg-[#FAF6EE] border border-[#E5DFD2] p-1.5 flex items-center justify-center shrink-0">
-                    <AthleteMascot char={char} className="w-13 h-13" />
+                <button
+                  key={char.id}
+                  type="button"
+                  onClick={() => setSelectedRosterChar(char)}
+                  className="group w-full text-left bg-[#FFFDF9] hover:bg-[#FAF6EE] active:scale-[0.99] p-4 flex items-start gap-3.5 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#14532D]"
+                >
+                  <div className="w-16 h-16 rounded-xl bg-[#FAF6EE] group-hover:bg-[#FFFDF9] border border-[#E5DFD2] group-hover:border-amber-400/70 p-1.5 flex items-center justify-center shrink-0 transition-colors">
+                    <AthleteMascot
+                      char={char}
+                      className="w-13 h-13 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-3"
+                    />
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <h3 className="text-sm font-bold text-zinc-900">
+                      <h3 className="text-sm font-bold text-zinc-900 group-hover:text-[#14532D] transition-colors">
                         {char.name} <span className="font-normal text-xs text-zinc-600">({char.subname})</span>
                       </h3>
                       <span className="text-[11px] font-mono font-bold text-[#14532D] bg-[#F1ECE0] px-2 py-0.5 rounded">
@@ -1397,10 +1432,106 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                       <strong className="text-amber-800">{char.skillName}:</strong> {char.skillDesc}
                     </p>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </section>
+
+          {selectedRosterChar && (() => {
+            const currentIdx = ATHLETE_CHARACTERS.findIndex((c) => c.id === selectedRosterChar.id);
+            const goStep = (delta) => {
+              const nextIdx = (currentIdx + delta + ATHLETE_CHARACTERS.length) % ATHLETE_CHARACTERS.length;
+              setSelectedRosterChar(ATHLETE_CHARACTERS[nextIdx]);
+            };
+
+            return (
+              <div
+                className="ath-backdrop-in fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-[2px] flex items-center justify-center p-4"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="ath-char-modal-title"
+                onClick={() => setSelectedRosterChar(null)}
+              >
+                <div
+                  className="ath-modal-pop w-full max-w-md bg-[#FFFDF9] border border-[#DED8CA] rounded-2xl shadow-2xl overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="relative bg-[#F4EFE4] border-b border-[#E5DFD2] px-6 pt-5 pb-6 flex flex-col items-center">
+                    <div className="w-full flex items-center justify-between mb-2">
+                      <span className="text-xs font-mono font-bold text-zinc-600 bg-[#FFFDF9] border border-[#DED8CA] px-2.5 py-1 rounded-lg">
+                        #{String(currentIdx + 1).padStart(2, '0')} / {ATHLETE_CHARACTERS.length}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedRosterChar(null)}
+                        aria-label="Tutup detail karakter"
+                        className="min-w-[44px] min-h-[44px] rounded-xl bg-[#FFFDF9] hover:bg-[#EFE9DC] border border-[#DED8CA] text-zinc-700 font-bold text-lg flex items-center justify-center cursor-pointer transition-colors"
+                      >
+                        &times;
+                      </button>
+                    </div>
+
+                    <div
+                      key={selectedRosterChar.id}
+                      className="ath-mascot-stage w-40 h-40 sm:w-44 sm:h-44 flex items-center justify-center"
+                    >
+                      <AthleteMascot
+                        char={selectedRosterChar}
+                        className="w-36 h-36 sm:w-40 sm:h-40 drop-shadow-[0_14px_18px_rgba(24,24,27,0.16)]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-6 space-y-4">
+                    <div className="text-center space-y-2">
+                      <div>
+                        <h3 id="ath-char-modal-title" className="text-xl sm:text-2xl font-bold text-zinc-900 leading-tight">
+                          {selectedRosterChar.name}
+                        </h3>
+                        <p className="text-sm font-medium text-zinc-600 mt-0.5">
+                          {selectedRosterChar.subname}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5">
+                        <span className="text-xs font-mono font-bold text-[#14532D] bg-[#ECFDF5] border border-[#BBF7D0] px-2.5 py-1 rounded-lg">
+                          {selectedRosterChar.division}
+                        </span>
+                        <span className="text-xs font-mono font-bold text-amber-900 bg-[#FEF7E6] border border-[#F3D38A] px-2.5 py-1 rounded-lg">
+                          {ATHLETE_TYPE_LABELS[selectedRosterChar.type] || selectedRosterChar.type}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#FAF6EE] border border-[#E5DFD2] rounded-xl p-4 space-y-1.5 text-left">
+                      <div className="text-xs font-mono font-bold text-amber-800">
+                        Jurus: {selectedRosterChar.skillName}
+                      </div>
+                      <p className="text-sm text-zinc-800 leading-relaxed">
+                        {selectedRosterChar.skillDesc}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => goStep(-1)}
+                        className="flex-1 min-h-[44px] px-3 py-2.5 rounded-xl bg-[#F4EFE4] hover:bg-[#EAE3D3] border border-[#DED8CA] text-zinc-800 font-bold text-xs sm:text-sm cursor-pointer transition-colors"
+                      >
+                        &larr; Sebelumnya
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => goStep(1)}
+                        className="flex-1 min-h-[44px] px-3 py-2.5 rounded-xl bg-[#14532D] hover:bg-[#166534] text-white font-bold text-xs sm:text-sm cursor-pointer transition-colors"
+                      >
+                        Berikutnya &rarr;
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
     );

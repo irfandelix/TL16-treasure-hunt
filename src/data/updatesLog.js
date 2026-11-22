@@ -1,5 +1,26 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-046',
+    date: '22 November 2026',
+    version: 'v2.9.15',
+    category: 'Tampilan',
+    title: 'Pop-Up Interaktif & Animasi Detail 16 Karakter Magical Athlete TL16',
+    commit: 'latest',
+    summary: 'Daftar 16 tokoh di lobi Magical Athlete TL16 kini bisa diklik untuk membuka pop-up detail beranimasi lengkap dengan tampilan maskot besar, tipe peran, dan navigasi antar tokoh.',
+    changes: [
+      'Menambahkan efek hover dan klik interaktif pada setiap kartu tokoh di daftar 16 karakter lobi Magical Athlete TL16.',
+      'Menambahkan modal pop-up beranimasi spring dan melayang halus untuk melihat maskot besar, divisi, tipe peran, serta deskripsi jurus tiap tokoh.',
+      'Menambahkan tombol Sebelumnya/Berikutnya serta pintasan keyboard panah kiri/kanan dan Escape untuk berpindah atau menutup pop-up.'
+    ],
+    docs: {
+      files: [
+        'src/components/MagicalAthleteGame.jsx',
+        'src/styles/global.css'
+      ],
+      notes: 'Seluruh animasi pop-up dan maskot otomatis dimatikan bila perangkat memakai pengaturan prefers-reduced-motion.'
+    }
+  },
+  {
     id: 'upd-045',
     date: '22 November 2026',
     version: 'v2.9.14',
