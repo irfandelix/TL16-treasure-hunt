@@ -420,7 +420,7 @@
 .ath-shadow-idle { animation: athShadowBreath 1.95s ease-in-out 0.48s infinite; }
 .ath-shadow-burst { animation: athShadowBurst 0.62s ease-out both; }
 .ath-spark { animation: athSparkPop 0.58s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.ath-token-active { transform-origin: 50% 90%; animation: athTokenHop 1.15s ease-in-out infinite; }
+.ath-token-active { transform-origin: 50% 90%; animation: athTokenHop 0.24s ease-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   html {

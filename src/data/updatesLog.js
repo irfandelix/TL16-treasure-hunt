@@ -10,7 +10,7 @@ export const UPDATES_LOG = [
     changes: [
       'Menambahkan 7 profil gerak khusus sesuai karakter masing-masing tokoh (hop memantul, selancar air, hentakan berat, getar mesin truk, nyala api, goyang slime, dan getar sesar/batu) lengkap dengan pendaratan gravitasi dan bayangan tanah tersinkron.',
       'Menjadikan maskot di dalam pop-up bisa diketuk langsung untuk memicu gerakan aksi lompatan dan percikan partikel berwarna sesuai karakter.',
-      'Menambahkan animasi pantulan siap gerak pada bidak pelari yang sedang mendapat giliran di lintasan 24 petak.'
+      'Menambahkan animasi lompatan langkah pada bidak pelari hanya saat karakter sedang berjalan melintasi petak (diam saat menunggu giliran dadu).'
     ],
     docs: {
       files: [

@@ -2508,7 +2508,8 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
           {racersOnThisTile.map(p => {
             const char = ATHLETE_CHARACTERS.find(c => c.id === p.active_character_id);
             const colorConfig = PLAYER_COLORS[p.slot_number - 1];
-            const isMoving = roomData?.status === 'RACING' && roomData?.current_turn_slot === p.slot_number;
+            const isCurrentTurn = roomData?.status === 'RACING' && roomData?.current_turn_slot === p.slot_number;
+            const isStepping = isCurrentTurn && isProcessingMove && !diceRolling;
             const hasFinished = p.position >= 24;
 
             return (
@@ -2516,7 +2517,11 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                 key={p.id}
                 title={`${p.nama} (${char?.name})${hasFinished ? ' - FINISH!' : ''}`}
                 className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-white p-0.5 border-2 shadow-sm transition-transform duration-200 z-10 relative ${colorConfig.border} ${
-                  isMoving ? 'ath-token-active ring-2 ring-amber-400 z-20' : ''
+                  isStepping
+                    ? 'ath-token-active ring-2 ring-amber-400 z-20'
+                    : isCurrentTurn
+                    ? 'ring-2 ring-amber-400 scale-110 z-20'
+                    : ''
                 }`}
               >
                 <AthleteMascot char={char} className="w-6 h-6 sm:w-7 sm:h-7" />
