@@ -312,23 +312,115 @@
   0% { opacity: 0; transform: scale(0.86) translateY(16px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
-@keyframes athMascotEnter {
-  0% { opacity: 0; transform: scale(0.6) translateY(14px) rotate(-6deg); }
-  70% { opacity: 1; transform: scale(1.06) translateY(-4px) rotate(2deg); }
-  100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
+/* Gravity drop-in landing with Disney-style squash & rebound */
+@keyframes athDropIn {
+  0% { opacity: 0; transform: translateY(-30px) scale(0.86, 1.16); }
+  48% { opacity: 1; transform: translateY(4px) scale(1.18, 0.82); }
+  74% { opacity: 1; transform: translateY(-7px) scale(0.95, 1.06); }
+  100% { opacity: 1; transform: translateY(0) scale(1, 1); }
 }
-@keyframes athMascotFloat {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-7px) rotate(2.5deg); }
+/* 7 video-game character idle physics profiles (pivot at feet: 50% 88%) */
+@keyframes athIdleHop {
+  0%, 100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+  14% { transform: translateY(3px) scale(1.1, 0.89) rotate(-1.5deg); }
+  36% { transform: translateY(-15px) scale(0.92, 1.1) rotate(-3.5deg); }
+  54% { transform: translateY(3px) scale(1.13, 0.87) rotate(1.5deg); }
+  68% { transform: translateY(-3px) scale(0.98, 1.03) rotate(0deg); }
+  82% { transform: translateY(0) scale(1.03, 0.97) rotate(0deg); }
+}
+@keyframes athIdleSurf {
+  0%, 100% { transform: translate(0, 0) rotate(-3deg) scale(1, 1); }
+  25% { transform: translate(6px, -9px) rotate(4deg) scale(0.97, 1.04); }
+  50% { transform: translate(2px, -3px) rotate(1.5deg) scale(1.04, 0.96); }
+  75% { transform: translate(-6px, -11px) rotate(-5deg) scale(0.97, 1.04); }
+}
+@keyframes athIdleStomp {
+  0%, 100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+  25% { transform: translateY(-2px) scale(1.04, 1.05) rotate(0deg); }
+  44% { transform: translateY(-8px) scale(0.95, 1.06) rotate(-2.5deg); }
+  58% { transform: translateY(3px) scale(1.14, 0.86) rotate(1deg); }
+  72% { transform: translateY(0) scale(0.98, 1.02) rotate(0deg); }
+}
+@keyframes athIdleEngine {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1, 1); }
+  12% { transform: translateY(-2px) rotate(-1.5deg) scale(1.03, 0.97); }
+  24% { transform: translateY(1px) rotate(1.2deg) scale(0.99, 1.01); }
+  36% { transform: translateY(-2px) rotate(-1.2deg) scale(1.03, 0.97); }
+  48% { transform: translateY(1px) rotate(1deg) scale(1, 1); }
+  64% { transform: translateY(-9px) rotate(-4deg) scale(0.95, 1.07); }
+  78% { transform: translateY(2px) rotate(1.5deg) scale(1.11, 0.89); }
+  90% { transform: translateY(-1px) rotate(0deg) scale(1, 1); }
+}
+@keyframes athIdleFlare {
+  0%, 100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+  22% { transform: translateY(-9px) scale(0.92, 1.11) rotate(-3deg); }
+  45% { transform: translateY(-2px) scale(1.07, 0.93) rotate(2.5deg); }
+  68% { transform: translateY(-12px) scale(0.93, 1.09) rotate(3.5deg); }
+  85% { transform: translateY(2px) scale(1.08, 0.92) rotate(-1deg); }
+}
+@keyframes athIdleSlime {
+  0%, 100% { transform: translateY(0) scale(1, 1) skewX(0deg); }
+  28% { transform: translateY(2px) scale(1.11, 0.89) skewX(3.5deg); }
+  58% { transform: translateY(-4px) scale(0.94, 1.07) skewX(-3deg); }
+  82% { transform: translateY(1px) scale(1.05, 0.95) skewX(1.5deg); }
+}
+@keyframes athIdleQuake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1, 1); }
+  10% { transform: translate(-3px, 1px) rotate(-2.5deg) scale(1.04, 0.96); }
+  18% { transform: translate(3px, 0) rotate(2.5deg) scale(1.04, 0.96); }
+  26% { transform: translate(-2px, 1px) rotate(-2deg) scale(1.05, 0.95); }
+  42% { transform: translate(0, -12px) rotate(5deg) scale(0.94, 1.08); }
+  58% { transform: translate(0, 3px) rotate(-1.5deg) scale(1.13, 0.87); }
+  74% { transform: translate(0, -2px) rotate(0deg) scale(0.99, 1.02); }
+}
+/* Tap/click signature special action jump-flourish */
+@keyframes athActionBurst {
+  0% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+  16% { transform: translateY(5px) scale(1.22, 0.78) rotate(-4deg); }
+  44% { transform: translateY(-28px) scale(0.88, 1.15) rotate(10deg); }
+  64% { transform: translateY(-20px) scale(0.94, 1.08) rotate(-8deg); }
+  82% { transform: translateY(4px) scale(1.18, 0.82) rotate(2deg); }
+  100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+}
+/* Synchronized ground contact shadow */
+@keyframes athShadowBreath {
+  0%, 100% { transform: scaleX(1); opacity: 0.24; }
+  38% { transform: scaleX(0.72); opacity: 0.12; }
+  58% { transform: scaleX(1.16); opacity: 0.3; }
+}
+@keyframes athShadowBurst {
+  0%, 100% { transform: scaleX(1); opacity: 0.24; }
+  16% { transform: scaleX(1.25); opacity: 0.34; }
+  48% { transform: scaleX(0.54); opacity: 0.09; }
+  82% { transform: scaleX(1.22); opacity: 0.32; }
+}
+@keyframes athSparkPop {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+  70% { opacity: 0.95; }
+  100% { transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(1); opacity: 0; }
+}
+@keyframes athTokenHop {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  20% { transform: translateY(1px) scale(1.1, 0.9); }
+  50% { transform: translateY(-5px) scale(0.93, 1.08); }
+  78% { transform: translateY(1px) scale(1.08, 0.92); }
 }
 
 .ath-backdrop-in { animation: athBackdropIn 0.18s ease-out both; }
 .ath-modal-pop { animation: athModalPop 0.34s cubic-bezier(0.22, 1.28, 0.36, 1) both; }
-.ath-mascot-stage {
-  animation:
-    athMascotEnter 0.44s cubic-bezier(0.22, 1.32, 0.36, 1) both,
-    athMascotFloat 2.8s ease-in-out 0.46s infinite;
-}
+.ath-sprite-pivot { transform-origin: 50% 88%; will-change: transform; }
+.ath-idle-hop { animation: athDropIn 0.46s cubic-bezier(0.22, 1, 0.36, 1) both, athIdleHop 1.85s ease-in-out 0.48s infinite; }
+.ath-idle-surf { animation: athDropIn 0.46s cubic-bezier(0.22, 1, 0.36, 1) both, athIdleSurf 2.35s ease-in-out 0.48s infinite; }
+.ath-idle-stomp { animation: athDropIn 0.46s cubic-bezier(0.22, 1, 0.36, 1) both, athIdleStomp 2.15s ease-in-out 0.48s infinite; }
+.ath-idle-engine { animation: athDropIn 0.46s cubic-bezier(0.22, 1, 0.36, 1) both, athIdleEngine 1.45s ease-in-out 0.48s infinite; }
+.ath-idle-flare { animation: athDropIn 0.46s cubic-bezier(0.22, 1, 0.36, 1) both, athIdleFlare 1.6s ease-in-out 0.48s infinite; }
+.ath-idle-slime { animation: athDropIn 0.46s cubic-bezier(0.22, 1, 0.36, 1) both, athIdleSlime 2.25s ease-in-out 0.48s infinite; }
+.ath-idle-quake { animation: athDropIn 0.46s cubic-bezier(0.22, 1, 0.36, 1) both, athIdleQuake 2.05s ease-in-out 0.48s infinite; }
+.ath-action-burst { animation: athActionBurst 0.62s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ath-shadow-idle { animation: athShadowBreath 1.95s ease-in-out 0.48s infinite; }
+.ath-shadow-burst { animation: athShadowBurst 0.62s ease-out both; }
+.ath-spark { animation: athSparkPop 0.58s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.ath-token-active { transform-origin: 50% 90%; animation: athTokenHop 1.15s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -370,7 +462,18 @@
   .cs-sticker-char,
   .ath-backdrop-in,
   .ath-modal-pop,
-  .ath-mascot-stage {
+  .ath-idle-hop,
+  .ath-idle-surf,
+  .ath-idle-stomp,
+  .ath-idle-engine,
+  .ath-idle-flare,
+  .ath-idle-slime,
+  .ath-idle-quake,
+  .ath-action-burst,
+  .ath-shadow-idle,
+  .ath-shadow-burst,
+  .ath-spark,
+  .ath-token-active {
     animation: none !important;
   }
 

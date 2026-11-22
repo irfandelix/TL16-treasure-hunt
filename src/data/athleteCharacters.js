@@ -7,6 +7,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-amber-600 to-orange-500',
     emoji: '🧪',
     image: '/games/athletes/acid_mine.webp',
+    motion: 'hop',
+    sparkColor: '#f59e0b',
     skillName: 'Corrosive Leach',
     skillDesc: 'Sangat korosif! Lawan di petak yang sama terpental mundur 3 petak.',
     type: 'DISRUPTOR'
@@ -19,6 +21,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-amber-600 to-orange-500',
     emoji: '🪨',
     image: '/games/athletes/slurry_tailing.webp',
+    motion: 'stomp',
+    sparkColor: '#8d6e63',
     skillName: 'Viscous Trap',
     skillDesc: 'Pekat & berat! Lawan yang mencoba menyalip harus berhenti di petaknya.',
     type: 'TANK'
@@ -31,6 +35,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-amber-600 to-orange-500',
     emoji: '💧',
     image: '/games/athletes/alum_coagulant.webp',
+    motion: 'surf',
+    sparkColor: '#38bdf8',
     skillName: 'Flash Flocculation',
     skillDesc: 'Menggumpal cepat! Jika dadu 1 atau 2, boleh lempar ulang ambil tertinggi.',
     type: 'SPEED'
@@ -43,6 +49,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-amber-600 to-orange-500',
     emoji: '🌊',
     image: '/games/athletes/groundwater.webp',
+    motion: 'surf',
+    sparkColor: '#06b6d4',
     skillName: 'Subsurface Surge',
     skillDesc: 'Arus bawah tanah! Jika disalip lawan, otomatis ikut terseret maju 2 petak.',
     type: 'PARASITE'
@@ -55,6 +63,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-emerald-600 to-teal-500',
     emoji: '🦠',
     image: '/games/athletes/activated_sludge.webp',
+    motion: 'hop',
+    sparkColor: '#10b981',
     skillName: 'Organic Breakdown',
     skillDesc: 'Makan polutan! Dadu bernilai genap (2, 4, 6) mendapat bonus +1 langkah.',
     type: 'SPEED'
@@ -67,6 +77,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-emerald-600 to-teal-500',
     emoji: '🏞️',
     image: '/games/athletes/clarifier_unit.webp',
+    motion: 'slime',
+    sparkColor: '#0ea5e9',
     skillName: 'Steady Settling',
     skillDesc: 'Aliran terukur! Tiap giliran boleh pilih: lempar dadu 1-6 ATAU maju pasti 3 langkah.',
     type: 'TACTIC'
@@ -79,6 +91,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-emerald-600 to-teal-500',
     emoji: '🌲',
     image: '/games/athletes/phytoremediation.webp',
+    motion: 'stomp',
+    sparkColor: '#22c55e',
     skillName: 'Phyto-Immunity',
     skillDesc: 'Bio-toleran! Kebal terhadap semua petak jebakan & penalti di sepanjang lintasan.',
     type: 'TANK'
@@ -91,6 +105,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-emerald-600 to-teal-500',
     emoji: '🫧',
     image: '/games/athletes/dissolved_oxygen.webp',
+    motion: 'surf',
+    sparkColor: '#60a5fa',
     skillName: 'Oxygen Boost',
     skillDesc: 'Lonjakan oksigen! Khusus di giliran pertama balapan langsung melesat maju +3 petak.',
     type: 'SPEED'
@@ -103,6 +119,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-red-600 to-rose-500',
     emoji: '🚛',
     image: '/games/athletes/waste_compactor.webp',
+    motion: 'engine',
+    sparkColor: '#eab308',
     skillName: 'Hydraulic Crush',
     skillDesc: 'Tekanan hidrolik! Sekali per balapan: paksa SEMUA lawan mundur 1 petak.',
     type: 'DISRUPTOR'
@@ -115,6 +133,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-red-600 to-rose-500',
     emoji: '🔥',
     image: '/games/athletes/biogas_methane.webp',
+    motion: 'flare',
+    sparkColor: '#f97316',
     skillName: 'Methane Flare',
     skillDesc: 'Ledakan gas! Selama berada di posisi paling bontot, hasil dadu otomatis +3 langkah.',
     type: 'COMEBACK'
@@ -127,6 +147,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-red-600 to-rose-500',
     emoji: '☕',
     image: '/games/athletes/leachate.webp',
+    motion: 'slime',
+    sparkColor: '#84cc16',
     skillName: 'Toxic Odor',
     skillDesc: 'Bau pekat! Sekali per balapan: tarik pelari terdepan mundur 2 petak.',
     type: 'DISRUPTOR'
@@ -139,6 +161,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'from-red-600 to-rose-500',
     emoji: '♻️',
     image: '/games/athletes/compost_nutrient.webp',
+    motion: 'hop',
+    sparkColor: '#d97706',
     skillName: 'Bio-Enrichment',
     skillDesc: 'Siklus baru! Setiap kali dadu keluar angka 6, langsung dapat 1x lemparan tambahan.',
     type: 'SPEED'
@@ -151,6 +175,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'bg-amber-400 text-slate-950',
     emoji: '⚡',
     image: '/games/athletes/active_fault.webp',
+    motion: 'quake',
+    sparkColor: '#facc15',
     skillName: 'Tectonic Shift',
     skillDesc: 'Geser bidang! Boleh membalikkan angka dadu (1 jadi 6, 2 jadi 5, 3 jadi 4).',
     type: 'TACTIC'
@@ -163,6 +189,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'bg-amber-400 text-slate-950',
     emoji: '🕳️',
     image: '/games/athletes/karst_conduit.webp',
+    motion: 'slime',
+    sparkColor: '#14b8a6',
     skillName: 'Subterranean Passage',
     skillDesc: 'Lorong goa kapur! Menerobos dan melompati semua rintangan/lawan tanpa hambatan.',
     type: 'SPEED'
@@ -175,6 +203,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'bg-amber-400 text-slate-950',
     emoji: '⛰️',
     image: '/games/athletes/mass_wasting.webp',
+    motion: 'quake',
+    sparkColor: '#b45309',
     skillName: 'Gravity Slide',
     skillDesc: 'Luncuran tebing! Jika ada lawan 1-2 petak di depan, boleh langsung samakan posisi.',
     type: 'PARASITE'
@@ -187,6 +217,8 @@ export const ATHLETE_CHARACTERS = [
     divisionColor: 'bg-amber-400 text-slate-950',
     emoji: '🌋',
     image: '/games/athletes/magma_pressure.webp',
+    motion: 'flare',
+    sparkColor: '#ef4444',
     skillName: 'Magma Burst',
     skillDesc: 'Dapur magma! Setelah melewati petak 12, semua hasil dadu otomatis +2 langkah.',
     type: 'COMEBACK'

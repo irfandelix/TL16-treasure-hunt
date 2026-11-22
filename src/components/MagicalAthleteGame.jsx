@@ -40,6 +40,27 @@ const TRACK_LOOP_COORDS = {
   24: { col: 1, row: 1, dir: 'Finish' },
 };
 
+const ATHLETE_MOTION_CLASS = {
+  hop: 'ath-idle-hop',
+  surf: 'ath-idle-surf',
+  stomp: 'ath-idle-stomp',
+  engine: 'ath-idle-engine',
+  flare: 'ath-idle-flare',
+  slime: 'ath-idle-slime',
+  quake: 'ath-idle-quake'
+};
+
+const ATHLETE_SPARK_OFFSETS = [
+  { sx: '-72px', sy: '-36px', size: 10 },
+  { sx: '74px', sy: '-34px', size: 9 },
+  { sx: '-56px', sy: '24px', size: 8 },
+  { sx: '58px', sy: '22px', size: 10 },
+  { sx: '-32px', sy: '-68px', size: 7 },
+  { sx: '36px', sy: '-66px', size: 8 },
+  { sx: '-80px', sy: '-4px', size: 6 },
+  { sx: '82px', sy: '-6px', size: 7 }
+];
+
 const ATHLETE_TYPE_LABELS = {
   DISRUPTOR: 'Pengganggu Lawan',
   TANK: 'Tahan Banting',
@@ -68,6 +89,9 @@ function AthleteMascot({ char, className = 'w-12 h-12', fallback = '🏃' }) {
 export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
   const [hasPassedPrep, setHasPassedPrep] = useState(() => Boolean(initialRoomCode));
   const [selectedRosterChar, setSelectedRosterChar] = useState(null);
+  const [rosterBurstTick, setRosterBurstTick] = useState(0);
+  const [isRosterBursting, setIsRosterBursting] = useState(false);
+  const rosterBurstTimerRef = useRef(null);
   const [currentUser, setCurrentUser] = useState({
     nim: '',
     nama: '',
@@ -128,8 +152,21 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showAlumniModal]);
 
+  const triggerRosterAction = () => {
+    if (rosterBurstTimerRef.current) clearTimeout(rosterBurstTimerRef.current);
+    setRosterBurstTick((t) => t + 1);
+    setIsRosterBursting(true);
+    rosterBurstTimerRef.current = setTimeout(() => {
+      setIsRosterBursting(false);
+    }, 640);
+  };
+
   useEffect(() => {
-    if (!selectedRosterChar) return;
+    if (!selectedRosterChar) {
+      setIsRosterBursting(false);
+      return;
+    }
+    setIsRosterBursting(false);
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         setSelectedRosterChar(null);
@@ -142,7 +179,10 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (rosterBurstTimerRef.current) clearTimeout(rosterBurstTimerRef.current);
+    };
   }, [selectedRosterChar]);
 
   useEffect(() => {
@@ -1471,15 +1511,54 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                       </button>
                     </div>
 
-                    <div
-                      key={selectedRosterChar.id}
-                      className="ath-mascot-stage w-40 h-40 sm:w-44 sm:h-44 flex items-center justify-center"
+                    <button
+                      type="button"
+                      onClick={triggerRosterAction}
+                      aria-label={`Jalankan aksi ${selectedRosterChar.name}`}
+                      className="relative flex flex-col items-center justify-center pt-2 pb-1 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14532D] rounded-2xl"
                     >
-                      <AthleteMascot
-                        char={selectedRosterChar}
-                        className="w-36 h-36 sm:w-40 sm:h-40 drop-shadow-[0_14px_18px_rgba(24,24,27,0.16)]"
+                      <div className="relative w-40 h-40 sm:w-44 sm:h-44 flex items-center justify-center">
+                        {isRosterBursting && (
+                          <div key={`sparks-${rosterBurstTick}`} className="pointer-events-none absolute inset-0">
+                            {ATHLETE_SPARK_OFFSETS.map((sp, sIdx) => (
+                              <span
+                                key={sIdx}
+                                className="ath-spark absolute left-1/2 top-1/2 rounded-full"
+                                style={{
+                                  width: `${sp.size}px`,
+                                  height: `${sp.size}px`,
+                                  backgroundColor: selectedRosterChar.sparkColor || '#f59e0b',
+                                  '--sx': sp.sx,
+                                  '--sy': sp.sy
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <div
+                          key={`${selectedRosterChar.id}-${isRosterBursting ? `act-${rosterBurstTick}` : 'idle'}`}
+                          className={`ath-sprite-pivot ${
+                            isRosterBursting
+                              ? 'ath-action-burst'
+                              : ATHLETE_MOTION_CLASS[selectedRosterChar.motion] || 'ath-idle-hop'
+                          }`}
+                        >
+                          <AthleteMascot
+                            char={selectedRosterChar}
+                            className="w-36 h-36 sm:w-40 sm:h-40 drop-shadow-[0_10px_14px_rgba(24,24,27,0.14)]"
+                          />
+                        </div>
+                      </div>
+                      <div
+                        aria-hidden="true"
+                        className={`w-28 h-3.5 rounded-full bg-stone-900/30 blur-[3px] -mt-2 ${
+                          isRosterBursting ? 'ath-shadow-burst' : 'ath-shadow-idle'
+                        }`}
                       />
-                    </div>
+                      <span className="mt-2.5 text-[11px] font-medium text-zinc-500">
+                        Ketuk karakter untuk uji gerak jurus
+                      </span>
+                    </button>
                   </div>
 
                   <div className="p-6 space-y-4">
@@ -2437,7 +2516,7 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                 key={p.id}
                 title={`${p.nama} (${char?.name})${hasFinished ? ' - FINISH!' : ''}`}
                 className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-white p-0.5 border-2 shadow-sm transition-transform duration-200 z-10 relative ${colorConfig.border} ${
-                  isMoving ? 'ring-2 ring-amber-400 scale-115 z-20' : ''
+                  isMoving ? 'ath-token-active ring-2 ring-amber-400 z-20' : ''
                 }`}
               >
                 <AthleteMascot char={char} className="w-6 h-6 sm:w-7 sm:h-7" />

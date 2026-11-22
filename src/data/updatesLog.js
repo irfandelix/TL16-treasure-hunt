@@ -1,5 +1,27 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-047',
+    date: '22 November 2026',
+    version: 'v2.9.16',
+    category: 'Tampilan',
+    title: 'Gerak Karakter Fisika Ala Video Game Pada Magical Athlete TL16',
+    commit: 'latest',
+    summary: 'Mengganti animasi mengambang standar pada Magical Athlete TL16 dengan 7 profil gerak natural ala video game (squash-stretch, bayangan tanah tersinkron, lompatan jurus saat diketuk, serta pantulan aktif di papan lintasan).',
+    changes: [
+      'Menambahkan 7 profil gerak khusus sesuai karakter masing-masing tokoh (hop memantul, selancar air, hentakan berat, getar mesin truk, nyala api, goyang slime, dan getar sesar/batu) lengkap dengan pendaratan gravitasi dan bayangan tanah tersinkron.',
+      'Menjadikan maskot di dalam pop-up bisa diketuk langsung untuk memicu gerakan aksi lompatan dan percikan partikel berwarna sesuai karakter.',
+      'Menambahkan animasi pantulan siap gerak pada bidak pelari yang sedang mendapat giliran di lintasan 24 petak.'
+    ],
+    docs: {
+      files: [
+        'src/data/athleteCharacters.js',
+        'src/components/MagicalAthleteGame.jsx',
+        'src/styles/global.css'
+      ],
+      notes: 'Seluruh animasi tetap otomatis dinonaktifkan ketika perangkat mengaktifkan preferensi prefers-reduced-motion.'
+    }
+  },
+  {
     id: 'upd-046',
     date: '22 November 2026',
     version: 'v2.9.15',
