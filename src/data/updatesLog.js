@@ -1,5 +1,30 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-048',
+    date: '24 November 2026',
+    version: 'v2.9.17',
+    category: 'Fitur Baru',
+    title: 'Upgrade UNO Sedulur 16 ke Mode No Mercy (Batas Gugur 20 Kartu)',
+    commit: 'latest',
+    summary: 'Mengubah UNO Sedulur 16 menjadi edisi No Mercy dengan kartu awal 7, tumpukan bom +2/+4/+6, kartu aksi baru (Reverse, Skip Semua, Sapu Bersih, Tukar KTM), tombol teriak UNO/Tangkap, serta gugur otomatis (DO) saat tangan tembus 20 kartu.',
+    changes: [
+      'Menambahkan sistem tumpuk serangan (+2, +4 Revisi Mayor, dan +6 Mengulang MK) yang bisa ditangkis dengan kartu tambah bernilai sama atau lebih besar.',
+      'Menambahkan kartu Reverse (Putar Balik), Skip Semua (Jam Kosong), Sapu Bersih (buang semua kartu satu warna sekaligus), dan Tukar KTM (tukar seluruh isi tangan dengan 1 lawan).',
+      'Menambahkan batas gugur (DO) di 20 kartu sehingga penyintas terakhir otomatis menang meja (+3.000 poin), plus tombol Teriak UNO! dan Tangkap (+2) bila pemain lupa menekan saat sisa 1 kartu.',
+      'Merancang ulang arena meja 2D bergaya kertas hangat dengan kipas punggung kartu lawan, panah arah putar melingkar, kartu seragam 2:3 dengan ikon khusus, animasi terbang kartu, rel geser kartu yang optimal di HP, serta katalog 10 kartu di lobi & ruang tunggu sebelum Host menekan Mulai.'
+    ],
+    docs: {
+      files: [
+        'src/lib/unoBrutalRules.js',
+        'src/components/UnoCard.jsx',
+        'src/components/UnoBrutalGame.jsx',
+        'src/styles/global.css',
+        'src/components/UpdatesPage.jsx'
+      ],
+      notes: 'Seluruh status tambahan (tumpukan bom, daftar pemain gugur, status teriak UNO, dan log aksi) disimpan di JSONB top_card sehingga tidak memerlukan migrasi tabel baru di Supabase.'
+    }
+  },
+  {
     id: 'upd-047',
     date: '22 November 2026',
     version: 'v2.9.16',

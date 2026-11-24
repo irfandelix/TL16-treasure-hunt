@@ -23,7 +23,7 @@ const SECRET_MODE_RULES = [
     key: 'uno',
     widthClass: 'w-20',
     pattern:
-      'public/games/uno\\.webp|UNO Sedulur 16|UNO Seru TL16|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|skor_uno|Juara Kartu UNO|\\bUNO\\b|Titip Absen|4 warna|top_card|current_turn|tumpuk kartu|meja kartu|keluar meja|kartu Skip dan \\+2|IconCards',
+      'public/games/uno\\.webp|unoBrutalRules\\.js|UnoCard(?:\\.jsx)?|UNO Sedulur 16|UNO Seru TL16|UNO No Mercy(?: TL16)?|No Mercy|UnoBrutalGame(?:\\.jsx)?|uno_room_\\{nim\\}|uno_rooms|uno_players|skor_uno|Juara Kartu UNO|\\bUNO\\b|Titip Absen|Tukar KTM|Sapu Bersih|Jam Kosong|Skip Semua|Revisi Mayor|Mengulang MK|4 warna|top_card|current_turn|tumpuk kartu|meja kartu|keluar meja|kartu Skip dan \\+2|IconCards',
   },
   {
     key: 'wheel',
