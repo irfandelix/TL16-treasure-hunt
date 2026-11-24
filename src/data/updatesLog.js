@@ -1,5 +1,49 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-050',
+    date: '24 November 2026',
+    version: 'v2.9.19',
+    category: 'Fitur Baru',
+    title: 'Daftar Alumni Sedang Online Secara Real-Time di Beranda Portal',
+    commit: 'latest',
+    summary: 'Menampilkan daftar alumni TL 2016 yang sedang membuka portal secara langsung di beranda lengkap dengan avatar karakter, jumlah pengguna aktif, serta status halaman yang aman dari bocoran mode terkunci.',
+    changes: [
+      'Menambahkan kanal kehadiran global (portal_presence:global) melalui Supabase Presence yang tetap tersambung lintas halaman tanpa memutus koneksi saat berpindah menu.',
+      'Menampilkan kartu Sedang Online Sekarang di beranda portal berisi avatar, nama, status halaman aktif, dan tombol ringkas/buka semua saat lebih dari 12 alumni online bersamaan.',
+      'Memastikan label aktivitas mode yang belum dirilis otomatis disamarkan menjadi Di Portal bagi peserta non-panitia.'
+    ],
+    docs: {
+      files: [
+        'src/lib/portalPresence.js',
+        'src/components/GameDashboard.jsx'
+      ],
+      notes: 'Menggunakan fitur bawaan Supabase Realtime Presence sehingga tidak memerlukan tabel database baru maupun migrasi skema.'
+    }
+  },
+  {
+    id: 'upd-049',
+    date: '24 November 2026',
+    version: 'v2.9.18',
+    category: 'Tampilan',
+    title: 'Animasi Gerak Bidak Halus di Papan Monopoli TL 2016',
+    commit: 'latest',
+    summary: 'Memindahkan seluruh bidak Monopoli ke lapisan papan persisten sehingga bidak kini meluncur dan melompat halus petak demi petak (baik giliran sendiri maupun pemain lain secara real-time), lengkap dengan gerak melayang lintas papan saat pindah petak atau masuk Ruang Interogasi.',
+    changes: [
+      'Mengganti bidak per-petak dengan lapisan bidak melayang persisten di atas papan 11x11 sehingga perpindahan antar petak meluncur mulus dengan lompatan dan bayangan tanah tersinkron.',
+      'Menambahkan animasi gerak otomatis bagi bidak lawan saat pembaruan posisi masuk dari Supabase Realtime (langkah maju 1-12 petak, mundur 1-6 petak, maupun gerak melayang lintas papan untuk TELEPORT/KE_START/Ruang Interogasi).',
+      'Menambahkan sorotan jejak petak aktif, kilau mendarat di petak tujuan, label nama singkat saat bidak bergerak, serta dukungan prefers-reduced-motion.'
+    ],
+    docs: {
+      files: [
+        'src/lib/monopoliMotion.js',
+        'src/components/MonopoliBoard.jsx',
+        'src/styles/global.css',
+        'src/components/UpdatesPage.jsx'
+      ],
+      notes: 'Koordinat bidak dihitung langsung dari grid 11x11 (40 petak) sehingga tetap presisi di layar HP normal, mode perbesar papan, maupun desktop.'
+    }
+  },
+  {
     id: 'upd-048',
     date: '24 November 2026',
     version: 'v2.9.17',

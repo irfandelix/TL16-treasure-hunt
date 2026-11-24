@@ -9,6 +9,12 @@ import SoloGamePrepScreen from './SoloGamePrepScreen';
 import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { checkShouldSkipRoomScoring } from '../lib/earlyAccess';
 import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
+import {
+  computePawnMovePlan,
+  getPawnSlotOffset,
+  getTileCenterPercent,
+  normalizeTilePos
+} from '../lib/monopoliMotion';
 
 const BOARD_DATA = [
   { id: 0,  name: "START",               type: "corner",   side: 0 },
@@ -82,7 +88,7 @@ const MONO_DICE_PIPS = {
   6: [0, 2, 3, 5, 6, 8]
 };
 
-function MonopoliDice({ value = 1, shaking = false, tiltRight = false }) {
+function MonopoliDice({ value = 1, shaking = false, tiltRight = false, settled = false }) {
   const pips = MONO_DICE_PIPS[value] || MONO_DICE_PIPS[1];
   return (
     <div
@@ -91,6 +97,8 @@ function MonopoliDice({ value = 1, shaking = false, tiltRight = false }) {
           ? tiltRight
             ? 'border-amber-500 rotate-12 -translate-y-1 scale-110'
             : 'border-amber-500 -rotate-12 translate-y-0.5 scale-105'
+          : settled
+          ? 'border-[#14532D] mono-dice-settle'
           : 'border-[#C7BDA8]'
       }`}
     >
@@ -132,10 +140,17 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
   const [myState, setMyState] = useState(null);
   const [properties, setProperties] = useState([]);
   const [myAnimPos, setMyAnimPos] = useState(null);
+  const [playerAnimPos, setPlayerAnimPos] = useState({});
+  const [pawnMotion, setPawnMotion] = useState({});
+  const [stepHighlight, setStepHighlight] = useState(null);
 
   const [journeyLog, setJourneyLog] = useState([]);
   const [journeyIdx, setJourneyIdx] = useState(0);
   const journeyTimer = useRef(null);
+  const prevRemotePosRef = useRef({});
+  const remoteTimersRef = useRef({});
+  const clearPawnMotionTimerRef = useRef({});
+  const stepHighlightTimerRef = useRef(null);
 
   const [isRolling, setIsRolling] = useState(false);
   const [rollTick, setRollTick] = useState(0);
@@ -435,9 +450,108 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
     setAppState('game');
   };
 
+  const prefersReducedMotion = () =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const clearAllMotionTimers = useCallback(() => {
+    Object.values(remoteTimersRef.current).forEach((list) => {
+      if (Array.isArray(list)) list.forEach((id) => clearTimeout(id));
+    });
+    remoteTimersRef.current = {};
+    Object.values(clearPawnMotionTimerRef.current).forEach((id) => clearTimeout(id));
+    clearPawnMotionTimerRef.current = {};
+    if (stepHighlightTimerRef.current) {
+      clearTimeout(stepHighlightTimerRef.current);
+      stepHighlightTimerRef.current = null;
+    }
+  }, []);
+
+  const flashTileHighlight = useCallback((tileId, kind = 'step') => {
+    if (prefersReducedMotion()) return;
+    const normalized = normalizeTilePos(tileId);
+    setStepHighlight({ tileId: normalized, kind, tick: Date.now() + Math.random() });
+    if (stepHighlightTimerRef.current) clearTimeout(stepHighlightTimerRef.current);
+    stepHighlightTimerRef.current = setTimeout(
+      () => setStepHighlight(null),
+      kind === 'land' ? 500 : 280
+    );
+  }, []);
+
+  const triggerPawnStep = useCallback(
+    (nim, nextPos, mode = 'step') => {
+      if (!nim) return;
+      const normalized = normalizeTilePos(nextPos);
+      setPlayerAnimPos((prev) => ({ ...prev, [nim]: normalized }));
+      if (prefersReducedMotion()) return;
+
+      setPawnMotion((prev) => ({
+        ...prev,
+        [nim]: { mode, tick: (prev[nim]?.tick || 0) + 1 }
+      }));
+      flashTileHighlight(normalized, 'step');
+
+      if (clearPawnMotionTimerRef.current[nim]) {
+        clearTimeout(clearPawnMotionTimerRef.current[nim]);
+      }
+      clearPawnMotionTimerRef.current[nim] = setTimeout(
+        () => {
+          setPawnMotion((prev) => {
+            if (!prev[nim]) return prev;
+            const next = { ...prev };
+            delete next[nim];
+            return next;
+          });
+        },
+        mode === 'swoop' ? 550 : 230
+      );
+    },
+    [flashTileHighlight]
+  );
+
+  const animateRemotePlayer = useCallback(
+    (nim, fromPos, toPos) => {
+      const plan = computePawnMovePlan(fromPos, toPos);
+      if (Array.isArray(remoteTimersRef.current[nim])) {
+        remoteTimersRef.current[nim].forEach((id) => clearTimeout(id));
+      }
+      remoteTimersRef.current[nim] = [];
+
+      if (plan.mode === 'none' || prefersReducedMotion()) {
+        setPlayerAnimPos((prev) => ({ ...prev, [nim]: normalizeTilePos(toPos) }));
+        return;
+      }
+
+      if (plan.mode === 'swoop') {
+        triggerPawnStep(nim, toPos, 'swoop');
+        const landId = setTimeout(() => flashTileHighlight(toPos, 'land'), 520);
+        remoteTimersRef.current[nim] = [landId];
+        return;
+      }
+
+      const timers = [];
+      plan.steps.forEach((stepPos, idx) => {
+        const id = setTimeout(() => {
+          triggerPawnStep(nim, stepPos, 'step');
+          if (idx === plan.steps.length - 1) {
+            const landId = setTimeout(() => flashTileHighlight(stepPos, 'land'), 180);
+            timers.push(landId);
+          }
+        }, idx * 215);
+        timers.push(id);
+      });
+      remoteTimersRef.current[nim] = timers;
+    },
+    [flashTileHighlight, triggerPawnStep]
+  );
+
   const exitGame = async () => {
     hasSelectedColor.current = false;
     setSelectedInfo(null);
+    clearAllMotionTimers();
+    prevRemotePosRef.current = {};
+    setPlayerAnimPos({});
+    setPawnMotion({});
+    setStepHighlight(null);
     if (currentUser.nim) {
       localStorage.removeItem(`monopoli_room_${currentUser.nim}`);
     }
@@ -473,6 +587,10 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
     if (!room) {
       if (currentUser.nim) localStorage.removeItem(`monopoli_room_${currentUser.nim}`);
       const missingCode = currentRoom.id;
+      clearAllMotionTimers();
+      prevRemotePosRef.current = {};
+      setPlayerAnimPos({});
+      setPawnMotion({});
       setCurrentRoom(null);
       setMyState(null);
       setPlayers([]);
@@ -488,15 +606,35 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
     const { data: prop } = await supabase.from('monopoli_properties').select('*').eq('room_id', currentRoom.id);
     if (p) {
       setPlayers(p);
+      const initialPosSync = {};
+      p.forEach((pl) => {
+        if (!pl?.nim || pl.nim === currentUser.nim) return;
+        const targetPos = normalizeTilePos(pl.pos ?? 0);
+        const prevPos = prevRemotePosRef.current[pl.nim];
+        if (prevPos === undefined) {
+          prevRemotePosRef.current[pl.nim] = targetPos;
+          initialPosSync[pl.nim] = targetPos;
+        } else if (prevPos !== targetPos) {
+          prevRemotePosRef.current[pl.nim] = targetPos;
+          animateRemotePlayer(pl.nim, prevPos, targetPos);
+        }
+      });
+      if (Object.keys(initialPosSync).length > 0) {
+        setPlayerAnimPos((prev) => ({ ...initialPosSync, ...prev }));
+      }
       const me = p.find(x => x.nim === currentUser.nim);
       if (!isAnimatingRef.current && !isTransacting.current) {
         setMyState(me);
-        if (me) setMyAnimPos(me.pos);
+        if (me) {
+          const myPos = normalizeTilePos(me.pos ?? 0);
+          setMyAnimPos(myPos);
+          setPlayerAnimPos((prev) => ({ ...prev, [me.nim]: myPos }));
+        }
       }
       if (me && !me.color && !hasSelectedColor.current && appState === 'game' && !me.is_bankrupt) setShowColorModal(true);
     }
     if (prop && !isTransacting.current) setProperties(prop);
-  }, [currentRoom, appState, currentUser.nim]);
+  }, [currentRoom, appState, currentUser.nim, animateRemotePlayer, clearAllMotionTimers]);
 
   const { connectionStatus } = useRoomConnection({
     channelName: currentRoom?.id ? `monopoli_presence:${currentRoom.id}` : '',
@@ -532,7 +670,13 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
     };
   }, [currentRoom?.id, appState, loadGameData]);
 
-  useEffect(() => () => clearInterval(journeyTimer.current), []);
+  useEffect(
+    () => () => {
+      clearInterval(journeyTimer.current);
+      clearAllMotionTimers();
+    },
+    [clearAllMotionTimers]
+  );
 
   const updateRoomActivity = async () => {
     if (!currentRoom) return;
@@ -787,6 +931,11 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
     if (tile.id === 30) {
       landedPos = 10;
       setMyAnimPos(10);
+      triggerPawnStep(currentUser.nim, 10, 'swoop');
+      if (!prefersReducedMotion()) {
+        await sleep(540);
+        flashTileHighlight(10, 'land');
+      }
       messages.push('Ketahuan titip absen! Masuk Ruang Interogasi.');
     } else if (tile.type === 'tod') {
       setShowToD(true);
@@ -855,6 +1004,7 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
     const d2 = Math.floor(Math.random() * 6) + 1;
     setDice([d1, d2]); setIsRolling(false); setIsAnimating(true); isAnimatingRef.current = true;
 
+    const reducedMotion = prefersReducedMotion();
     const totalSteps = d1 + d2;
     const startPos = myState.pos || 0;
     let animPos = startPos;
@@ -869,7 +1019,12 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
     for (let i = 0; i < totalSteps; i++) {
       animPos = (animPos + 1) % 40;
       setMyAnimPos(animPos);
-      await sleep(220);
+      triggerPawnStep(currentUser.nim, animPos, 'step');
+      if (!reducedMotion) await sleep(215);
+    }
+    if (!reducedMotion) {
+      flashTileHighlight(animPos, 'land');
+      await sleep(140);
     }
 
     let finalPos = animPos;
@@ -896,15 +1051,25 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
         let movedToNewTile = false;
 
         switch (card.action_type) {
-          case 'MUNDUR':
+          case 'MUNDUR': {
+            const backSteps = [];
+            let cursor = finalPos;
             for (let i = 0; i < card.action_value; i++) {
-              finalPos = (finalPos - 1 + 40) % 40;
-              setMyAnimPos(finalPos);
-              await sleep(220);
+              cursor = (cursor - 1 + 40) % 40;
+              backSteps.push(cursor);
             }
+            if (backSteps.length > 0) startJourney(backSteps);
+            for (const stepPos of backSteps) {
+              finalPos = stepPos;
+              setMyAnimPos(finalPos);
+              triggerPawnStep(currentUser.nim, finalPos, 'step');
+              if (!reducedMotion) await sleep(215);
+            }
+            if (!reducedMotion) flashTileHighlight(finalPos, 'land');
             messages.push(`Mundur ${card.action_value} langkah ke ${BOARD_DATA[finalPos].name}!`);
             movedToNewTile = true;
             break;
+          }
           case 'BAYAR':
             newCash -= card.action_value;
             messages.push(`Bayar denda Rp ${card.action_value}k!`);
@@ -916,6 +1081,11 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
           case 'KE_START':
             finalPos = 0;
             setMyAnimPos(0);
+            triggerPawnStep(currentUser.nim, 0, 'swoop');
+            if (!reducedMotion) {
+              await sleep(540);
+              flashTileHighlight(0, 'land');
+            }
             if (!startBonusPaidThisTurn) {
               newCash += 200;
               startBonusPaidThisTurn = true;
@@ -925,8 +1095,13 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
             }
             break;
           case 'TELEPORT':
-            finalPos = card.action_value;
+            finalPos = normalizeTilePos(card.action_value);
             setMyAnimPos(finalPos);
+            triggerPawnStep(currentUser.nim, finalPos, 'swoop');
+            if (!reducedMotion) {
+              await sleep(540);
+              flashTileHighlight(finalPos, 'land');
+            }
             messages.push(`Pindah ke ${BOARD_DATA[finalPos]?.name || 'petak ' + finalPos}!`);
             movedToNewTile = true;
             break;
@@ -972,9 +1147,12 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
   };
 
   const getDisplayPos = (player) => {
-    if (player.nim === currentUser.nim)
-      return isAnimating ? (myAnimPos ?? myState?.pos ?? 0) : (myState?.pos ?? player.pos);
-    return player.pos;
+    if (player.nim === currentUser.nim) {
+      return normalizeTilePos(
+        isAnimating ? (myAnimPos ?? myState?.pos ?? 0) : (myState?.pos ?? player.pos ?? 0)
+      );
+    }
+    return normalizeTilePos(playerAnimPos[player.nim] ?? player.pos ?? 0);
   };
 
   const getStripColor = (tile) => tile.type === 'property' ? tile.color : (TILE_STRIP_COLOR[tile.type] || 'bg-[#E7DFCE]');
@@ -1447,6 +1625,7 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
           <div className={isBoardZoomed ? 'overflow-x-auto pb-2 rounded-2xl touch-pan-x touch-pan-y' : ''}>
             <div className={`relative aspect-square bg-[#E7DFCE] p-1.5 rounded-2xl border border-[#C7BDA8] ${isBoardZoomed ? 'min-w-[700px] w-[700px]' : 'w-full'}`}>
 
+              <div className="relative h-full w-full">
               <div className="grid grid-cols-11 grid-rows-11 h-full w-full gap-[2px]">
               {BOARD_DATA.map((tile) => {
                 let area;
@@ -1461,10 +1640,15 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
 
                 const prop = properties.find(p=>p.tile_id===tile.id);
                 const owner = players.find(pl=>pl.nim===prop?.owner_nim);
-                const playersOnTile = players.filter(pl=>getDisplayPos(pl)===tile.id);
                 const isCorner = tile.type==='corner';
                 const stripColor = getStripColor(tile);
                 const bgClass = owner ? `${owner.color} bg-opacity-25` : isCorner ? 'bg-[#F3EDE0]' : 'bg-white';
+                const tileHighlight =
+                  stepHighlight && stepHighlight.tileId === tile.id
+                    ? stepHighlight.kind === 'land'
+                      ? 'mono-tile-land'
+                      : 'mono-tile-step'
+                    : '';
 
                 const stripPos =
                   tile.side===1 ? 'top-0 left-0 right-0 h-[5px]' :
@@ -1483,7 +1667,7 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
                     aria-label={`Petak ${tile.id}: ${tile.name}${tile.price ? `, Harga Rp ${tile.price}k` : ''}`}
                     onClick={() => handleTileClick(tile)}
                     style={{gridArea:area}}
-                    className={`relative flex flex-col items-center justify-center cursor-pointer overflow-hidden border border-[#DED6C6] ${bgClass} hover:bg-[#FAF6EE] transition-colors p-0.5 ${selectedInfo?.id === tile.id ? 'ring-2 ring-green-900 z-10' : ''}`}
+                    className={`relative flex flex-col items-center justify-center cursor-pointer overflow-hidden border border-[#DED6C6] ${bgClass} ${tileHighlight} hover:bg-[#FAF6EE] transition-colors p-0.5 ${selectedInfo?.id === tile.id ? 'ring-2 ring-green-900 z-10' : ''}`}
                   >
                     {!isCorner && <div className={`absolute ${stripPos} ${stripColor} pointer-events-none`}/>}
 
@@ -1526,28 +1710,74 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
                         {prop.upgrade_level>=5?'APT':`L${prop.upgrade_level||0}`}
                       </span>
                     )}
+                  </button>
+                );
+              })}
+              </div>
 
-                    {playersOnTile.length>0 && (
-                      <div className="absolute bottom-[2px] left-0 right-0 flex flex-wrap gap-[2px] justify-center">
-                        {playersOnTile.map(p => (
+              {/* Persistent Board-Level Pawn Layer: smooth tile-to-tile hop & cross-board swoop */}
+              <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-30">
+                {(() => {
+                  const tileGroups = new Map();
+                  players.forEach((pl) => {
+                    const pos = getDisplayPos(pl);
+                    if (!tileGroups.has(pos)) tileGroups.set(pos, []);
+                    tileGroups.get(pos).push(pl.nim);
+                  });
+
+                  return players.map((p) => {
+                    const pos = getDisplayPos(p);
+                    const group = tileGroups.get(pos) || [p.nim];
+                    const slotIdx = Math.max(0, group.indexOf(p.nim));
+                    const center = getTileCenterPercent(pos);
+                    const offset = getPawnSlotOffset(slotIdx, group.length);
+                    const motion = pawnMotion[p.nim] || null;
+                    const isSwoop = motion?.mode === 'swoop';
+                    const isStep = motion?.mode === 'step';
+                    const hopParity = (motion?.tick || 0) % 2 === 0 ? 'a' : 'b';
+                    const isMe = p.nim === currentUser.nim;
+
+                    return (
+                      <div
+                        key={p.nim}
+                        title={p.nama}
+                        style={{
+                          left: `${center.x + offset.dx}%`,
+                          top: `${center.y + offset.dy}%`
+                        }}
+                        className={`mono-pawn-wrap ${isSwoop ? 'mono-pawn-wrap-swoop' : ''} ${
+                          motion ? 'z-40' : isMe ? 'z-[35]' : 'z-30'
+                        }`}
+                      >
+                        <div className={`relative flex flex-col items-center ${p.is_bankrupt ? 'opacity-45 grayscale' : ''}`}>
+                          {motion && (
+                            <span className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-stone-900/90 text-[#FAF6EE] font-mono text-[9px] sm:text-[10px] font-bold leading-none whitespace-nowrap shadow-sm">
+                              {p.nama?.split(' ')[0]}
+                            </span>
+                          )}
                           <div
-                            key={p.nim}
-                            title={p.nama}
-                            className={`rounded-full ring-2 ${PLAYER_RING_COLOR[p.color] || 'ring-slate-900'} ${p.nim===currentUser.nim&&isAnimating?'scale-125 shadow-md':''} transition-all duration-150 shrink-0 bg-white`}
+                            className={`rounded-full ring-2 ${PLAYER_RING_COLOR[p.color] || 'ring-slate-900'} border border-white bg-white shadow-sm ${
+                              isSwoop ? 'mono-pawn-swoop' : isStep ? `mono-pawn-hop-${hopParity}` : ''
+                            }`}
                           >
                             <PlayerAvatar
                               config={getPlayerAvatarConfig(p.nim)}
                               seed={p.nim}
-                              className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                              className={isBoardZoomed ? 'w-6 h-6' : 'w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6'}
                               alt={p.nama}
                             />
                           </div>
-                        ))}
+                          <div
+                            className={`mt-[1px] h-[3px] w-3 sm:w-4 rounded-full bg-stone-950/35 ${
+                              isSwoop ? 'mono-shadow-swoop' : isStep ? `mono-shadow-hop-${hopParity}` : ''
+                            }`}
+                          />
+                        </div>
                       </div>
-                    )}
-                  </button>
-                );
-              })}
+                    );
+                  });
+                })()}
+              </div>
               </div>
 
               {/* PANEL TENGAH */}
@@ -1585,8 +1815,8 @@ export default function MonopoliBoard({ myAvatarConfig = null, initialRoomCode =
                     )}
 
                     <div className="flex gap-2.5 mt-1">
-                      <MonopoliDice value={dice[0]} />
-                      <MonopoliDice value={dice[1]} />
+                      <MonopoliDice value={dice[0]} settled={true} />
+                      <MonopoliDice value={dice[1]} settled={true} />
                     </div>
 
                     <div className="w-full max-w-xs px-3 mt-1">

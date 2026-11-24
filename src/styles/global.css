@@ -559,6 +559,150 @@
   }
 }
 
+/* ============================================================
+   MONOPOLI TL 2016: Smooth Pawn Hop, Cross-Board Swoop & Tile Trail
+   ============================================================ */
+@keyframes monoPawnHopA {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1.06, 0.94);
+  }
+  42% {
+    transform: translate3d(0, -13px, 0) scale(0.95, 1.08);
+  }
+  78% {
+    transform: translate3d(0, 1px, 0) scale(1.05, 0.95);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+@keyframes monoPawnHopB {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1.06, 0.94);
+  }
+  42% {
+    transform: translate3d(0, -13px, 0) scale(0.95, 1.08);
+  }
+  78% {
+    transform: translate3d(0, 1px, 0) scale(1.05, 0.95);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+@keyframes monoPawnSwoop {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  45% {
+    transform: translate3d(0, -26px, 0) scale(1.24);
+  }
+  85% {
+    transform: translate3d(0, 2px, 0) scale(1.05, 0.95);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+@keyframes monoShadowHopA {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.34;
+  }
+  42% {
+    transform: scale(0.58);
+    opacity: 0.14;
+  }
+}
+@keyframes monoShadowHopB {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.34;
+  }
+  42% {
+    transform: scale(0.58);
+    opacity: 0.14;
+  }
+}
+@keyframes monoShadowSwoop {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.34;
+  }
+  45% {
+    transform: scale(0.45);
+    opacity: 0.1;
+  }
+}
+@keyframes monoTileStepFlash {
+  0% {
+    box-shadow: inset 0 0 0 2px #d97706;
+    background-color: #fef3c7;
+  }
+  100% {
+    box-shadow: inset 0 0 0 0 rgba(217, 119, 6, 0);
+  }
+}
+@keyframes monoTileLandFlash {
+  0% {
+    box-shadow: inset 0 0 0 3px #14532d;
+  }
+  65% {
+    box-shadow: inset 0 0 0 2px rgba(20, 83, 45, 0.45);
+  }
+  100% {
+    box-shadow: inset 0 0 0 0 rgba(20, 83, 45, 0);
+  }
+}
+@keyframes monoDiceSettle {
+  0% {
+    transform: scale(1.14) rotate(-5deg);
+  }
+  60% {
+    transform: scale(0.95) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.mono-pawn-wrap {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: left 200ms cubic-bezier(0.22, 1, 0.36, 1), top 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: left, top;
+}
+.mono-pawn-wrap-swoop {
+  transition: left 520ms cubic-bezier(0.22, 1, 0.36, 1), top 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mono-pawn-hop-a {
+  animation: monoPawnHopA 200ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+.mono-pawn-hop-b {
+  animation: monoPawnHopB 200ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+.mono-pawn-swoop {
+  animation: monoPawnSwoop 520ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+.mono-shadow-hop-a {
+  animation: monoShadowHopA 200ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+.mono-shadow-hop-b {
+  animation: monoShadowHopB 200ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+.mono-shadow-swoop {
+  animation: monoShadowSwoop 520ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+.mono-tile-step {
+  animation: monoTileStepFlash 260ms ease-out 1;
+}
+.mono-tile-land {
+  animation: monoTileLandFlash 460ms ease-out 1;
+}
+.mono-dice-settle {
+  animation: monoDiceSettle 240ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -617,8 +761,21 @@
   .uno-card-slap,
   .uno-card-receive,
   .uno-deck-kick,
-  .uno-impact-ring {
+  .uno-impact-ring,
+  .mono-pawn-hop-a,
+  .mono-pawn-hop-b,
+  .mono-pawn-swoop,
+  .mono-shadow-hop-a,
+  .mono-shadow-hop-b,
+  .mono-shadow-swoop,
+  .mono-tile-step,
+  .mono-tile-land,
+  .mono-dice-settle {
     animation: none !important;
+  }
+  .mono-pawn-wrap,
+  .mono-pawn-wrap-swoop {
+    transition-duration: 0ms !important;
   }
   .uno-fly-card {
     display: none !important;

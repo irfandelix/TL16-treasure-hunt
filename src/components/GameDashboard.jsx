@@ -27,6 +27,7 @@ import {
   resolveGameStage
 } from '../lib/earlyAccess';
 import { captureInviteFromUrl, readPendingInvite, clearPendingInvite } from '../lib/roomInvite';
+import { getSafePresenceActivityLabel, normalizePresenceUsers } from '../lib/portalPresence';
 
 const TreasureHunt = lazy(() => import('./TreasureHunt'));
 const FaceGame = lazy(() => import('./FaceGame'));
@@ -180,9 +181,124 @@ export default function GameDashboard() {
   const [mysteryBusy, setMysteryBusy] = useState(false);
   const [mysteryNotice, setMysteryNotice] = useState({ type: '', text: '' });
 
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [onlineAvatars, setOnlineAvatars] = useState({});
+  const [showAllOnline, setShowAllOnline] = useState(false);
+  const portalPresenceChannelRef = useRef(null);
+  const fetchedOnlineAvatarsRef = useRef(new Set());
+
   useEffect(() => {
     captureInviteFromUrl();
   }, []);
+
+  // Global portal presence: tracks which alumni are currently online across the website.
+  useEffect(() => {
+    if (!user?.nim) {
+      setOnlineUsers([]);
+      portalPresenceChannelRef.current = null;
+      return;
+    }
+
+    let active = true;
+    const channel = supabase.channel('portal_presence:global', {
+      config: { presence: { key: user.nim } }
+    });
+    portalPresenceChannelRef.current = channel;
+
+    const syncOnline = () => {
+      if (!active) return;
+      setOnlineUsers(
+        normalizePresenceUsers(channel.presenceState(), {
+          nim: user.nim,
+          nama: user.nama,
+          view: activeViewRef.current
+        })
+      );
+    };
+
+    const trackSelf = async () => {
+      try {
+        await channel.track({
+          nim: user.nim,
+          nama: user.nama,
+          view: activeViewRef.current,
+          online_at: new Date().toISOString()
+        });
+      } catch {
+        // Presence retries automatically on reconnect or tab focus
+      }
+    };
+
+    channel
+      .on('presence', { event: 'sync' }, syncOnline)
+      .on('presence', { event: 'join' }, syncOnline)
+      .on('presence', { event: 'leave' }, syncOnline)
+      .subscribe((status) => {
+        if (!active) return;
+        if (status === 'SUBSCRIBED') {
+          trackSelf();
+        }
+      });
+
+    const handleReconnect = () => {
+      if (document.visibilityState === 'visible') trackSelf();
+    };
+
+    window.addEventListener('online', handleReconnect);
+    document.addEventListener('visibilitychange', handleReconnect);
+
+    return () => {
+      active = false;
+      window.removeEventListener('online', handleReconnect);
+      document.removeEventListener('visibilitychange', handleReconnect);
+      if (portalPresenceChannelRef.current === channel) {
+        portalPresenceChannelRef.current = null;
+      }
+      supabase.removeChannel(channel);
+    };
+  }, [user?.nim, user?.nama]);
+
+  useEffect(() => {
+    const channel = portalPresenceChannelRef.current;
+    if (!channel || !user?.nim) return;
+    channel
+      .track({
+        nim: user.nim,
+        nama: user.nama,
+        view: activeView,
+        online_at: new Date().toISOString()
+      })
+      .catch(() => {});
+  }, [activeView, user?.nim, user?.nama]);
+
+  useEffect(() => {
+    const missingNims = onlineUsers
+      .map((u) => u.nim)
+      .filter((nim) => nim && nim !== user?.nim && !fetchedOnlineAvatarsRef.current.has(nim));
+    if (missingNims.length === 0) return;
+
+    missingNims.forEach((nim) => fetchedOnlineAvatarsRef.current.add(nim));
+    let active = true;
+    supabase
+      .from('alumni')
+      .select('nim, avatar_config')
+      .in('nim', missingNims)
+      .then(({ data, error }) => {
+        if (!active || error || !data) return;
+        const patch = {};
+        data.forEach((row) => {
+          if (row.avatar_config) patch[row.nim] = row.avatar_config;
+        });
+        if (Object.keys(patch).length > 0) {
+          setOnlineAvatars((prev) => ({ ...prev, ...patch }));
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, [onlineUsers, user?.nim]);
 
   useEffect(() => {
     let active = true;
@@ -1233,6 +1349,99 @@ export default function GameDashboard() {
               </article>
             </div>
           </section>
+
+          {/* SEDANG ONLINE DI PORTAL */}
+          {(() => {
+            const visibleLimit = 12;
+            const visibleOnline = showAllOnline ? onlineUsers : onlineUsers.slice(0, visibleLimit);
+            const hiddenCount = Math.max(0, onlineUsers.length - visibleOnline.length);
+            const visibilityFlags = {
+              hasTestAccess,
+              isKapsulUnlocked,
+              isMonopoliUnlocked,
+              isWerewolfUnlocked,
+              isUnoUnlocked,
+              isAthleteUnlocked,
+              wheelUnlocked
+            };
+
+            return (
+              <section
+                aria-labelledby="online-now-heading"
+                className="bg-[#FFFDF9] border border-[#DED8CA] rounded-2xl p-4 sm:p-5 space-y-3.5"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full bg-[#14532D] shrink-0" />
+                    <h2 id="online-now-heading" className="text-base sm:text-lg font-bold text-zinc-900">
+                      Sedang Online Sekarang
+                    </h2>
+                  </div>
+                  <span className="font-mono text-xs font-bold text-[#14532D] bg-[#ECFDF5] border border-[#BBF7D0] px-2.5 py-1 rounded-lg tabular-nums">
+                    {onlineUsers.length} alumni aktif
+                  </span>
+                </div>
+
+                {onlineUsers.length === 0 ? (
+                  <p className="text-xs sm:text-sm text-zinc-600">
+                    Menyambungkan daftar alumni yang sedang aktif...
+                  </p>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      {visibleOnline.map((person) => {
+                        const isMe = person.nim === user.nim;
+                        const personAvatar = isMe
+                          ? avatarConfig
+                          : onlineAvatars[person.nim] || generateSeedAvatarConfig(person.nim);
+                        const activityLabel = getSafePresenceActivityLabel(person.view, visibilityFlags);
+                        const firstTwo = person.nama.split(' ').slice(0, 2).join(' ');
+
+                        return (
+                          <div
+                            key={person.nim}
+                            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border max-w-full ${
+                              isMe
+                                ? 'bg-[#ECFDF5] border-[#BBF7D0]'
+                                : 'bg-[#FAF6EE] border-[#DED8CA]'
+                            }`}
+                          >
+                            <PlayerAvatar
+                              config={personAvatar}
+                              seed={person.nim}
+                              className="w-8 h-8 border border-[#C7BDA8] shrink-0"
+                              alt={`Karakter ${person.nama}`}
+                            />
+                            <div className="min-w-0 leading-tight">
+                              <div className="text-xs sm:text-sm font-bold text-zinc-900 truncate max-w-[160px] sm:max-w-[200px]">
+                                {firstTwo}
+                                {isMe && <span className="text-[#14532D] font-semibold ml-1">(Kamu)</span>}
+                              </div>
+                              <div className="text-[11px] font-mono text-zinc-600 truncate">
+                                {activityLabel}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {onlineUsers.length > visibleLimit && (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setShowAllOnline((prev) => !prev)}
+                          className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F1ECE0] hover:bg-[#E5DFD2] border border-[#DED8CA] text-xs font-bold text-zinc-900 transition-colors cursor-pointer"
+                        >
+                          {showAllOnline ? 'Tampilkan Lebih Ringkas' : `Lihat ${hiddenCount} Alumni Lainnya`}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </section>
+            );
+          })()}
 
           {/* TOMBOL MISTERI SEKALI PAKAI */}
           <section aria-labelledby="mystery-button-heading" className="bg-[#FFFDF9] border border-[#DED8CA] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
