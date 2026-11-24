@@ -41,7 +41,12 @@ export function normalizePresenceUsers(presenceState = {}, selfUser = null) {
 
   Object.entries(presenceState || {}).forEach(([key, entries]) => {
     if (!Array.isArray(entries) || entries.length === 0) return;
-    const latest = entries[entries.length - 1] || {};
+    const latest = entries.reduce((best, cur) => {
+      if (!best) return cur;
+      const bestTime = Date.parse(best.online_at || '') || 0;
+      const curTime = Date.parse(cur?.online_at || '') || 0;
+      return curTime >= bestTime ? cur : best;
+    }, null) || {};
     const nim = String(latest.nim || key || '').trim();
     if (!nim) return;
     const nama = String(latest.nama || '').trim() || `Alumni ${nim}`;

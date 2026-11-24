@@ -453,6 +453,137 @@
 .ath-shadow-burst { animation: athShadowBurst 0.62s ease-out both; }
 .ath-spark { animation: athSparkPop 0.58s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .ath-token-active { transform-origin: 50% 90%; animation: athTokenHop 0.24s ease-out infinite; }
+
+/* Magical Athlete track runner: freestanding sprint stride, legs, dust puffs & trap knockback */
+@keyframes athRunStrideA {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(5deg) skewX(-4deg) scale(1.07, 0.93);
+  }
+  42% {
+    transform: translate3d(0, -10px, 0) rotate(11deg) skewX(-6deg) scale(0.94, 1.08);
+  }
+  80% {
+    transform: translate3d(0, 1px, 0) rotate(4deg) skewX(-2deg) scale(1.05, 0.95);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) skewX(0deg) scale(1);
+  }
+}
+@keyframes athRunStrideB {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(5deg) skewX(-4deg) scale(1.07, 0.93);
+  }
+  42% {
+    transform: translate3d(0, -10px, 0) rotate(11deg) skewX(-6deg) scale(0.94, 1.08);
+  }
+  80% {
+    transform: translate3d(0, 1px, 0) rotate(4deg) skewX(-2deg) scale(1.05, 0.95);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) skewX(0deg) scale(1);
+  }
+}
+@keyframes athRunKnockbackA {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  38% {
+    transform: translate3d(0, -9px, 0) rotate(-14deg) scale(0.95, 1.06);
+  }
+  78% {
+    transform: translate3d(0, 2px, 0) rotate(6deg) scale(1.06, 0.93);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+}
+@keyframes athRunKnockbackB {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  38% {
+    transform: translate3d(0, -9px, 0) rotate(-14deg) scale(0.95, 1.06);
+  }
+  78% {
+    transform: translate3d(0, 2px, 0) rotate(6deg) scale(1.06, 0.93);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+}
+@keyframes athSprintLegL {
+  0%, 100% {
+    transform: rotate(-34deg);
+  }
+  50% {
+    transform: rotate(34deg);
+  }
+}
+@keyframes athSprintLegR {
+  0%, 100% {
+    transform: rotate(34deg);
+  }
+  50% {
+    transform: rotate(-34deg);
+  }
+}
+@keyframes athDustPuffA {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.55);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(-14px, -4px, 0) scale(1.35);
+    opacity: 0;
+  }
+}
+@keyframes athDustPuffB {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.55);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(-14px, -4px, 0) scale(1.35);
+    opacity: 0;
+  }
+}
+
+.ath-runner-wrap {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: left 210ms cubic-bezier(0.22, 1, 0.36, 1), top 210ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: left, top;
+}
+.ath-run-stride-a {
+  transform-origin: 50% 90%;
+  animation: athRunStrideA 210ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+.ath-run-stride-b {
+  transform-origin: 50% 90%;
+  animation: athRunStrideB 210ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+.ath-run-back-a {
+  transform-origin: 50% 90%;
+  animation: athRunKnockbackA 210ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+.ath-run-back-b {
+  transform-origin: 50% 90%;
+  animation: athRunKnockbackB 210ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+.ath-sprint-leg-l {
+  transform-origin: 50% 0%;
+  animation: athSprintLegL 190ms linear infinite;
+}
+.ath-sprint-leg-r {
+  transform-origin: 50% 0%;
+  animation: athSprintLegR 190ms linear infinite;
+}
+.ath-dust-a {
+  animation: athDustPuffA 220ms ease-out 1 both;
+}
+.ath-dust-b {
+  animation: athDustPuffB 220ms ease-out 1 both;
+}
 .uno-stack-alert { animation: unoStackPulse 0.9s ease-in-out infinite; }
 .uno-ring-cw { animation: unoSpinCW 14s linear infinite; }
 .uno-ring-ccw { animation: unoSpinCCW 14s linear infinite; }
@@ -755,6 +886,14 @@
   .ath-shadow-burst,
   .ath-spark,
   .ath-token-active,
+  .ath-run-stride-a,
+  .ath-run-stride-b,
+  .ath-run-back-a,
+  .ath-run-back-b,
+  .ath-sprint-leg-l,
+  .ath-sprint-leg-r,
+  .ath-dust-a,
+  .ath-dust-b,
   .uno-stack-alert,
   .uno-ring-cw,
   .uno-ring-ccw,
@@ -774,7 +913,8 @@
     animation: none !important;
   }
   .mono-pawn-wrap,
-  .mono-pawn-wrap-swoop {
+  .mono-pawn-wrap-swoop,
+  .ath-runner-wrap {
     transition-duration: 0ms !important;
   }
   .uno-fly-card {

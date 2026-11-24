@@ -232,7 +232,7 @@ export const TRACK_TILES = [
   { index: 3, label: '3', type: 'normal' },
   { index: 4, label: '4', type: 'boost', desc: 'Arus Deras (+2 Langkah)' },
   { index: 5, label: '5', type: 'normal' },
-  { index: 6, label: '6', type: 'trap', desc: 'Lumpur Limbah (-2 Langkah)' },
+  { index: 6, label: '6', type: 'trap', penalty: 2, desc: 'Lumpur Limbah (-2 Langkah)' },
   { index: 7, label: '7', type: 'normal' },
   { index: 8, label: '8', type: 'normal' },
   { index: 9, label: '9', type: 'normal' },
@@ -240,16 +240,16 @@ export const TRACK_TILES = [
   { index: 11, label: '11', type: 'boost', desc: 'Turbulensi Oksigen (+2 Langkah)' },
   { index: 12, label: '12', type: 'halfway', desc: 'Titik Tengah (Halfway)' },
   { index: 13, label: '13', type: 'normal' },
-  { index: 14, label: '14', type: 'trap', desc: 'Gas Beracun (-2 Langkah)' },
+  { index: 14, label: '14', type: 'trap', penalty: 2, desc: 'Gas Beracun (-2 Langkah)' },
   { index: 15, label: '15', type: 'normal' },
   { index: 16, label: '16', type: 'normal' },
   { index: 17, label: '17', type: 'boost', desc: 'Sesar Gravitasi (+2 Langkah)' },
   { index: 18, label: '18', type: 'normal' },
-  { index: 19, label: '19', type: 'trap', desc: 'Retakan Tanah (-2 Langkah)' },
+  { index: 19, label: '19', type: 'trap', penalty: 2, desc: 'Retakan Tanah (-2 Langkah)' },
   { index: 20, label: '20', type: 'normal' },
   { index: 21, label: '21', type: 'normal' },
   { index: 22, label: '22', type: 'normal' },
-  { index: 23, label: '23', type: 'normal' },
+  { index: 23, label: '23', type: 'trap', penalty: 4, desc: 'Revisi Bab 5 (-4 Langkah)' },
   { index: 24, label: 'START / FINISH', type: 'start_finish', desc: 'Garis Akhir' }
 ];
 

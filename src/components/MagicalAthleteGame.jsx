@@ -3,6 +3,13 @@ import { supabase } from '../lib/supabaseClient';
 import { isAdminSession, verifyAdminPassword, setAdminSessionVerified } from '../lib/adminAuth';
 import { useRoomConnection, pickActiveCoordinator, shouldBotControlPlayer } from '../lib/useRoomConnection';
 import { ATHLETE_CHARACTERS, TRACK_TILES, PLAYER_COLORS } from '../data/athleteCharacters';
+import {
+  ATHLETE_LOOP_COORDS,
+  clampAthletePos,
+  computeAthleteStepPlan,
+  getAthleteSlotOffset,
+  getAthleteTilePercent
+} from '../lib/athleteTrackMotion';
 import confetti from 'canvas-confetti';
 import StoryShareButton from './StoryShareButton';
 import InviteLinkButton from './InviteLinkButton';
@@ -12,33 +19,7 @@ import { getLocalAvatarConfig } from '../lib/avatarHelper';
 import { cleanupFinishedRooms, isFinishedRoomExpired } from '../lib/roomCleanup';
 import { checkShouldSkipRoomScoring, awardAlumniPoints, extractEarlyAccessConfig, hasActiveEarlyAccess } from '../lib/earlyAccess';
 
-const TRACK_LOOP_COORDS = {
-  0:  { col: 1, row: 1, dir: 'Kanan' },
-  1:  { col: 2, row: 1, dir: 'Kanan' },
-  2:  { col: 3, row: 1, dir: 'Kanan' },
-  3:  { col: 4, row: 1, dir: 'Kanan' },
-  4:  { col: 5, row: 1, dir: 'Kanan' },
-  5:  { col: 6, row: 1, dir: 'Kanan' },
-  6:  { col: 7, row: 1, dir: 'Kanan' },
-  7:  { col: 8, row: 1, dir: 'Turun' },
-  8:  { col: 8, row: 2, dir: 'Turun' },
-  9:  { col: 8, row: 3, dir: 'Turun' },
-  10: { col: 8, row: 4, dir: 'Turun' },
-  11: { col: 8, row: 5, dir: 'Turun' },
-  12: { col: 8, row: 6, dir: 'Kiri' },
-  13: { col: 7, row: 6, dir: 'Kiri' },
-  14: { col: 6, row: 6, dir: 'Kiri' },
-  15: { col: 5, row: 6, dir: 'Kiri' },
-  16: { col: 4, row: 6, dir: 'Kiri' },
-  17: { col: 3, row: 6, dir: 'Kiri' },
-  18: { col: 2, row: 6, dir: 'Kiri' },
-  19: { col: 1, row: 6, dir: 'Naik' },
-  20: { col: 1, row: 5, dir: 'Naik' },
-  21: { col: 1, row: 4, dir: 'Naik' },
-  22: { col: 1, row: 3, dir: 'Naik' },
-  23: { col: 1, row: 2, dir: 'Naik' },
-  24: { col: 1, row: 1, dir: 'Finish' },
-};
+const TRACK_LOOP_COORDS = ATHLETE_LOOP_COORDS;
 
 const ATHLETE_MOTION_CLASS = {
   hop: 'ath-idle-hop',
@@ -86,6 +67,80 @@ function AthleteMascot({ char, className = 'w-12 h-12', fallback = '🏃' }) {
   );
 }
 
+function RunnerSprite({
+  char,
+  colorConfig,
+  slotNumber,
+  playerName,
+  motion = null,
+  facingLeft = false,
+  isCurrentTurn = false,
+  hasFinished = false,
+  compact = false
+}) {
+  const isRunning = Boolean(motion);
+  const isBack = motion?.dir === 'back';
+  const parity = (motion?.tick || 0) % 2 === 0 ? 'a' : 'b';
+  const strideClass = isRunning
+    ? isBack
+      ? `ath-run-back-${parity}`
+      : `ath-run-stride-${parity}`
+    : '';
+
+  return (
+    <div
+      title={`${playerName} (${char?.name || 'Atlet'})${hasFinished ? ' - FINISH!' : ''}`}
+      className="relative flex flex-col items-center select-none"
+    >
+      {/* Facing direction flips cleanly without interfering with stride transform */}
+      <div className={`relative flex flex-col items-center ${facingLeft ? '-scale-x-100' : ''}`}>
+        {/* Dust puffs trailing behind the feet while sprinting */}
+        {isRunning && !isBack && (
+          <div aria-hidden="true" className="pointer-events-none absolute bottom-1 -left-2 flex items-end gap-0.5">
+            <span className={`w-2 h-2 rounded-full bg-amber-200/90 border border-amber-400/50 ath-dust-${parity}`} />
+            <span className={`w-1.5 h-1.5 rounded-full bg-[#FFFDF9]/90 ath-dust-${parity}`} />
+          </div>
+        )}
+
+        {/* Freestanding cutout character sprite + animated sprint legs */}
+        <div className={`relative flex flex-col items-center ${strideClass}`}>
+          <AthleteMascot
+            char={char}
+            className={
+              compact
+                ? 'w-9 h-9 drop-shadow-[0_3px_3px_rgba(24,24,27,0.22)]'
+                : 'w-12 h-12 drop-shadow-[0_5px_5px_rgba(24,24,27,0.24)]'
+            }
+          />
+          {isRunning && (
+            <div aria-hidden="true" className="flex items-start justify-center gap-1.5 -mt-1.5 h-2.5">
+              <span className="w-[3px] h-2.5 rounded-full bg-stone-900 ath-sprint-leg-l" />
+              <span className="w-[3px] h-2.5 rounded-full bg-stone-900 ath-sprint-leg-r" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Ground shadow + compact player slot tag (no circle enclosing the character) */}
+      <div
+        aria-hidden="true"
+        className={`rounded-full bg-stone-950/30 transition-transform duration-150 ${
+          compact ? 'w-7 h-1.5 -mt-0.5' : 'w-9 h-2 -mt-0.5'
+        } ${isRunning ? 'scale-x-75 opacity-60' : ''}`}
+      />
+      <span
+        className={`mt-0.5 px-1.5 py-[1px] rounded font-mono font-bold leading-none shadow-sm ${
+          compact ? 'text-[8px]' : 'text-[9px]'
+        } ${colorConfig?.badge || 'bg-stone-900 text-white'} ${
+          isCurrentTurn ? 'ring-2 ring-amber-400' : ''
+        }`}
+      >
+        P{slotNumber}
+      </span>
+    </div>
+  );
+}
+
 export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
   const [hasPassedPrep, setHasPassedPrep] = useState(() => Boolean(initialRoomCode));
   const [selectedRosterChar, setSelectedRosterChar] = useState(null);
@@ -125,12 +180,93 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
   const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [isTrialSession, setIsTrialSession] = useState(false);
   const [accessCheckState, setAccessCheckState] = useState('checking');
+  const [runnerPositions, setRunnerPositions] = useState({});
+  const [runnerMotion, setRunnerMotion] = useState({});
 
   const roomDataRef = useRef(null);
   const playersRef = useRef([]);
   const isBotThinkingRef = useRef(false);
   const bonusRollsRef = useRef({ slot: null, count: 0 });
   const autoJoinedRef = useRef(false);
+  const prevRunnerPosRef = useRef({});
+  const localMovingIdsRef = useRef(new Set());
+  const remoteStepTimersRef = useRef({});
+  const clearRunnerMotionTimerRef = useRef({});
+
+  const triggerRunnerStep = useCallback((playerId, nextPos, dir = 'forward') => {
+    if (!playerId) return;
+    const safePos = clampAthletePos(nextPos);
+    setRunnerPositions((prev) => ({ ...prev, [playerId]: safePos }));
+    prevRunnerPosRef.current[playerId] = safePos;
+
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    setRunnerMotion((prev) => ({
+      ...prev,
+      [playerId]: { dir, tick: (prev[playerId]?.tick || 0) + 1 }
+    }));
+
+    if (clearRunnerMotionTimerRef.current[playerId]) {
+      clearTimeout(clearRunnerMotionTimerRef.current[playerId]);
+    }
+    clearRunnerMotionTimerRef.current[playerId] = setTimeout(() => {
+      setRunnerMotion((prev) => {
+        if (!prev[playerId]) return prev;
+        const next = { ...prev };
+        delete next[playerId];
+        return next;
+      });
+    }, 260);
+  }, []);
+
+  useEffect(() => {
+    const reduced =
+      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isRacing = roomData?.status === 'RACING';
+
+    players.forEach((p) => {
+      if (!p?.id || localMovingIdsRef.current.has(p.id)) return;
+      const targetPos = clampAthletePos(p.position);
+      const prevPos = prevRunnerPosRef.current[p.id];
+
+      if (prevPos === undefined || !isRacing || reduced || (targetPos === 0 && prevPos > 4)) {
+        if (Array.isArray(remoteStepTimersRef.current[p.id])) {
+          remoteStepTimersRef.current[p.id].forEach((id) => clearTimeout(id));
+          remoteStepTimersRef.current[p.id] = [];
+        }
+        prevRunnerPosRef.current[p.id] = targetPos;
+        setRunnerPositions((prev) => (prev[p.id] === targetPos ? prev : { ...prev, [p.id]: targetPos }));
+        return;
+      }
+
+      if (prevPos !== targetPos) {
+        prevRunnerPosRef.current[p.id] = targetPos;
+        if (Array.isArray(remoteStepTimersRef.current[p.id])) {
+          remoteStepTimersRef.current[p.id].forEach((id) => clearTimeout(id));
+        }
+        const plan = computeAthleteStepPlan(prevPos, targetPos);
+        const timers = [];
+        plan.steps.forEach((stepPos, idx) => {
+          const id = setTimeout(() => {
+            triggerRunnerStep(p.id, stepPos, plan.direction);
+          }, idx * 215);
+          timers.push(id);
+        });
+        remoteStepTimersRef.current[p.id] = timers;
+      }
+    });
+  }, [players, roomData?.status, triggerRunnerStep]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(remoteStepTimersRef.current).forEach((list) => {
+        if (Array.isArray(list)) list.forEach((id) => clearTimeout(id));
+      });
+      Object.values(clearRunnerMotionTimerRef.current).forEach((id) => clearTimeout(id));
+    };
+  }, []);
 
   useEffect(() => {
     roomDataRef.current = roomData;
@@ -913,81 +1049,99 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
 
     let currentPos = playerToMove.position;
     const tailingPlayer = players.find(p => p.active_character_id === 'slurry_tailing' && p.id !== playerToMove.id);
+    localMovingIdsRef.current.add(playerToMove.id);
 
-    const stepTo = async (newPos) => {
-      currentPos = newPos;
-      setPlayers(prev => prev.map(p => p.id === playerToMove.id ? { ...p, position: newPos } : p));
+    const stepTo = async (newPos, dir = 'forward') => {
+      currentPos = clampAthletePos(newPos);
+      triggerRunnerStep(playerToMove.id, currentPos, dir);
+      setPlayers(prev => prev.map(p => p.id === playerToMove.id ? { ...p, position: currentPos } : p));
       await new Promise(r => setTimeout(r, 220));
     };
 
-    for (let s = 1; s <= steps; s++) {
-      if (currentPos >= 24) break;
-      await stepTo(currentPos + 1);
+    try {
+      for (let s = 1; s <= steps; s++) {
+        if (currentPos >= 24) break;
+        await stepTo(currentPos + 1, 'forward');
 
-      if (tailingPlayer && currentPos === tailingPlayer.position) {
-        skillNote += ` [Terjebak Viscous Trap dari ${tailingPlayer.nama}!]`;
-        setToastMessage(`${playerToMove.nama} terhenti di petak Slurry Tailing milik ${tailingPlayer.nama}!`);
-        await new Promise(r => setTimeout(r, 350));
-        break;
-      }
-    }
-
-    const targetTile = TRACK_TILES.find(t => t.index === currentPos);
-    if (targetTile && currentPos < 24) {
-      if (targetTile.type === 'boost') {
-        skillNote += ` [Meluncur di petak Boost +2!]`;
-        setToastMessage(`${playerToMove.nama} menginjak petak Boost! Meluncur +2 langkah maju!`);
-        await new Promise(r => setTimeout(r, 350));
-        for (let b = 0; b < 2; b++) {
-          if (currentPos >= 24) break;
-          await stepTo(currentPos + 1);
+        if (tailingPlayer && currentPos === tailingPlayer.position) {
+          skillNote += ` [Terjebak Viscous Trap dari ${tailingPlayer.nama}!]`;
+          setToastMessage(`${playerToMove.nama} terhenti di petak Slurry Tailing milik ${tailingPlayer.nama}!`);
+          await new Promise(r => setTimeout(r, 350));
+          break;
         }
-      } else if (targetTile.type === 'trap') {
-        if (charData?.id === 'phytoremediation') {
-          skillNote += ` [Phyto-Immunity: Kebal jebakan!]`;
-          setToastMessage(`${playerToMove.nama} kebal terhadap jebakan!`);
-          await new Promise(r => setTimeout(r, 300));
-        } else {
-          skillNote += ` [Terperosok jebakan -2!]`;
-          setToastMessage(`${playerToMove.nama} terperosok jebakan! Melangkah mundur 2 petak!`);
-          await new Promise(r => setTimeout(r, 400));
-          for (let t = 0; t < 2; t++) {
-            if (currentPos <= 0) break;
-            await stepTo(currentPos - 1);
+      }
+
+      const targetTile = TRACK_TILES.find(t => t.index === currentPos);
+      if (targetTile && currentPos < 24) {
+        if (targetTile.type === 'boost') {
+          skillNote += ` [Meluncur di petak Boost +2!]`;
+          setToastMessage(`${playerToMove.nama} menginjak petak Boost! Meluncur +2 langkah maju!`);
+          await new Promise(r => setTimeout(r, 350));
+          for (let b = 0; b < 2; b++) {
+            if (currentPos >= 24) break;
+            await stepTo(currentPos + 1, 'forward');
+          }
+        } else if (targetTile.type === 'trap') {
+          const trapPenalty = targetTile.penalty || 2;
+          if (charData?.id === 'phytoremediation') {
+            skillNote += ` [Phyto-Immunity: Kebal jebakan!]`;
+            setToastMessage(`${playerToMove.nama} kebal terhadap jebakan!`);
+            await new Promise(r => setTimeout(r, 300));
+          } else {
+            const trapLabel = targetTile.desc || `jebakan -${trapPenalty}`;
+            skillNote += ` [Terperosok ${trapLabel}!]`;
+            setToastMessage(
+              trapPenalty >= 4
+                ? `NAAS! ${playerToMove.nama} kena ${trapLabel} tepat sebelum Finish! Mundur ${trapPenalty} kotak!`
+                : `${playerToMove.nama} terperosok ${trapLabel}! Melangkah mundur ${trapPenalty} petak!`
+            );
+            await new Promise(r => setTimeout(r, 400));
+            for (let t = 0; t < trapPenalty; t++) {
+              if (currentPos <= 0) break;
+              await stepTo(currentPos - 1, 'back');
+            }
           }
         }
       }
-    }
 
-    const livePlayersBeforeEnd = playersRef.current.length > 0 ? playersRef.current : players;
-    const acidPlayer = livePlayersBeforeEnd.find(p => p.active_character_id === 'acid_mine' && p.id !== playerToMove.id);
-    if (acidPlayer && acidPlayer.position === currentPos && currentPos < 24) {
-      skillNote += ` [Terpental Corrosive Leach mundur 3 petak!]`;
-      setToastMessage(`${playerToMove.nama} mendarat di petak Acid Mine! Terpental mundur 3 petak!`);
-      await new Promise(r => setTimeout(r, 400));
-      for (let a = 0; a < 3; a++) {
-        if (currentPos <= 0) break;
-        await stepTo(currentPos - 1);
+      const livePlayersBeforeEnd = playersRef.current.length > 0 ? playersRef.current : players;
+      const acidPlayer = livePlayersBeforeEnd.find(p => p.active_character_id === 'acid_mine' && p.id !== playerToMove.id);
+      if (acidPlayer && acidPlayer.position === currentPos && currentPos < 24) {
+        skillNote += ` [Terpental Corrosive Leach mundur 3 petak!]`;
+        setToastMessage(`${playerToMove.nama} mendarat di petak Acid Mine! Terpental mundur 3 petak!`);
+        await new Promise(r => setTimeout(r, 400));
+        for (let a = 0; a < 3; a++) {
+          if (currentPos <= 0) break;
+          await stepTo(currentPos - 1, 'back');
+        }
       }
-    }
 
-    await supabase.from('athlete_players').update({
-      position: currentPos
-    }).eq('id', playerToMove.id);
+      await supabase.from('athlete_players').update({
+        position: currentPos
+      }).eq('id', playerToMove.id);
 
-    const gwPlayer = livePlayersBeforeEnd.find(p => p.active_character_id === 'groundwater' && p.id !== playerToMove.id);
-    if (gwPlayer && playerToMove.position < gwPlayer.position && currentPos > gwPlayer.position) {
-      let gwPos = gwPlayer.position;
-      setToastMessage(`${gwPlayer.nama} terseret Subsurface Surge maju +2 petak!`);
-      await new Promise(r => setTimeout(r, 350));
-      for (let g = 0; g < 2; g++) {
-        if (gwPos >= 24) break;
-        gwPos += 1;
-        setPlayers(prev => prev.map(p => p.id === gwPlayer.id ? { ...p, position: gwPos } : p));
-        await new Promise(r => setTimeout(r, 220));
+      const gwPlayer = livePlayersBeforeEnd.find(p => p.active_character_id === 'groundwater' && p.id !== playerToMove.id);
+      if (gwPlayer && playerToMove.position < gwPlayer.position && currentPos > gwPlayer.position) {
+        localMovingIdsRef.current.add(gwPlayer.id);
+        try {
+          let gwPos = gwPlayer.position;
+          setToastMessage(`${gwPlayer.nama} terseret Subsurface Surge maju +2 petak!`);
+          await new Promise(r => setTimeout(r, 350));
+          for (let g = 0; g < 2; g++) {
+            if (gwPos >= 24) break;
+            gwPos += 1;
+            triggerRunnerStep(gwPlayer.id, gwPos, 'forward');
+            setPlayers(prev => prev.map(p => p.id === gwPlayer.id ? { ...p, position: gwPos } : p));
+            await new Promise(r => setTimeout(r, 220));
+          }
+          await supabase.from('athlete_players').update({ position: gwPos }).eq('id', gwPlayer.id);
+          skillNote += ` [${gwPlayer.nama} terseret Subsurface Surge +2!]`;
+        } finally {
+          localMovingIdsRef.current.delete(gwPlayer.id);
+        }
       }
-      await supabase.from('athlete_players').update({ position: gwPos }).eq('id', gwPlayer.id);
-      skillNote += ` [${gwPlayer.nama} terseret Subsurface Surge +2!]`;
+    } finally {
+      localMovingIdsRef.current.delete(playerToMove.id);
     }
 
     if (currentPos >= 24) {
@@ -1407,7 +1561,7 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                   </span>
                   <div>
                     <strong className="text-zinc-900 block">Adu Dadu di Lintasan 24 Petak</strong>
-                    <span>Lempar dadu bergantian menuju petak 24. Manfaatkan petak dorongan (+2 langkah: Arus Deras, Turbulensi Oksigen, Sesar Gravitasi) dan waspadai petak jebakan (-2 langkah: Lumpur Limbah, Gas Beracun, Retakan Tanah).</span>
+                    <span>Lempar dadu bergantian menuju petak 24. Manfaatkan petak dorongan (+2 langkah: Arus Deras, Turbulensi Oksigen, Sesar Gravitasi) dan waspadai petak jebakan (-2 langkah: Lumpur Limbah, Gas Beracun, Retakan Tanah) serta jebakan pamungkas <strong>-4 langkah tepat di petak 23</strong> sebelum garis Finish!</span>
                   </div>
                 </li>
               </ol>
@@ -2091,6 +2245,56 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
                 >
                   {renderInfieldControl()}
                 </div>
+
+                {/* Persistent Freestanding Runner Overlay: characters sprint smoothly tile-to-tile */}
+                <div className="pointer-events-none absolute inset-0 z-20">
+                  {(() => {
+                    const tileGroups = new Map();
+                    players.forEach((p) => {
+                      const pos = clampAthletePos(runnerPositions[p.id] ?? p.position);
+                      const groupKey = pos >= 24 ? 0 : pos;
+                      if (!tileGroups.has(groupKey)) tileGroups.set(groupKey, []);
+                      tileGroups.get(groupKey).push(p.id);
+                    });
+
+                    return players.map((p) => {
+                      const pos = clampAthletePos(runnerPositions[p.id] ?? p.position);
+                      const groupKey = pos >= 24 ? 0 : pos;
+                      const group = tileGroups.get(groupKey) || [p.id];
+                      const slotIdx = Math.max(0, group.indexOf(p.id));
+                      const tilePct = getAthleteTilePercent(pos);
+                      const offset = getAthleteSlotOffset(slotIdx, group.length);
+                      const char = ATHLETE_CHARACTERS.find((c) => c.id === p.active_character_id);
+                      const colorConfig = PLAYER_COLORS[p.slot_number - 1];
+                      const isCurrentTurn =
+                        roomData?.status === 'RACING' && roomData?.current_turn_slot === p.slot_number;
+                      const motion = runnerMotion[p.id] || null;
+                      const hasFinished = pos >= 24;
+
+                      return (
+                        <div
+                          key={p.id}
+                          style={{
+                            left: `${tilePct.x + offset.dx}%`,
+                            top: `${tilePct.y + offset.dy}%`
+                          }}
+                          className={`ath-runner-wrap ${motion ? 'z-30' : isCurrentTurn ? 'z-[25]' : 'z-20'}`}
+                        >
+                          <RunnerSprite
+                            char={char}
+                            colorConfig={colorConfig}
+                            slotNumber={p.slot_number}
+                            playerName={p.nama}
+                            motion={motion}
+                            facingLeft={tilePct.facingLeft}
+                            isCurrentTurn={isCurrentTurn}
+                            hasFinished={hasFinished}
+                          />
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
             </div>
           </div>
@@ -2464,12 +2668,15 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
 
   function renderTile(tile, isCompactMobile = false) {
     const isStartFinish = tile.index === 0 || tile.type === 'start_finish';
-    const racersOnThisTile = players.filter(p => {
-      if (isStartFinish) {
-        return p.position === 0 || p.position >= 24;
-      }
-      return p.position === tile.index;
-    });
+    const isHeavyTrap = tile.type === 'trap' && (tile.penalty || 2) >= 4;
+    const trapPenalty = tile.penalty || 2;
+    const racersOnThisTile = isCompactMobile
+      ? players.filter(p => {
+          const pos = clampAthletePos(runnerPositions[p.id] ?? p.position);
+          if (isStartFinish) return pos === 0 || pos >= 24;
+          return pos === tile.index;
+        })
+      : [];
     const coord = TRACK_LOOP_COORDS[tile.index] || { col: 1, row: 1, dir: 'Kanan' };
 
     return (
@@ -2488,6 +2695,8 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
             ? 'bg-[#FAF6EE] border-2 border-amber-400'
             : tile.type === 'boost'
             ? 'bg-green-50 border-emerald-400/70'
+            : isHeavyTrap
+            ? 'bg-rose-100 border-2 border-rose-600'
             : tile.type === 'trap'
             ? 'bg-rose-50 border-rose-400/70'
             : tile.type === 'halfway'
@@ -2496,44 +2705,50 @@ export default function MagicalAthleteGame({ onBack, initialRoomCode = '' }) {
         }`}
       >
         <div className="flex items-center justify-between">
-          <span className={`text-[10px] sm:text-xs font-mono font-bold ${isStartFinish ? 'text-amber-800' : 'text-stone-800'}`}>
+          <span className={`text-[10px] sm:text-xs font-mono font-bold ${isStartFinish ? 'text-amber-800' : isHeavyTrap ? 'text-rose-900' : 'text-stone-800'}`}>
             {isStartFinish ? '0/24' : `#${tile.label}`}
           </span>
           {tile.type === 'boost' && <span className="text-[10px] font-mono font-bold text-green-900">+2</span>}
-          {tile.type === 'trap' && <span className="text-[10px] font-mono font-bold text-rose-700">-2</span>}
+          {tile.type === 'trap' && (
+            <span className={`text-[10px] font-mono font-bold ${isHeavyTrap ? 'text-rose-900 bg-rose-200 px-1 rounded' : 'text-rose-700'}`}>
+              -{trapPenalty}
+            </span>
+          )}
           {tile.type === 'halfway' && <span className="text-[10px] font-mono font-bold text-amber-800">Tengah</span>}
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-1 my-auto">
-          {racersOnThisTile.map(p => {
-            const char = ATHLETE_CHARACTERS.find(c => c.id === p.active_character_id);
-            const colorConfig = PLAYER_COLORS[p.slot_number - 1];
-            const isCurrentTurn = roomData?.status === 'RACING' && roomData?.current_turn_slot === p.slot_number;
-            const isStepping = isCurrentTurn && isProcessingMove && !diceRolling;
-            const hasFinished = p.position >= 24;
+        {isCompactMobile && (
+          <div className="flex flex-wrap items-end justify-center gap-1 my-auto">
+            {racersOnThisTile.map(p => {
+              const char = ATHLETE_CHARACTERS.find(c => c.id === p.active_character_id);
+              const colorConfig = PLAYER_COLORS[p.slot_number - 1];
+              const isCurrentTurn = roomData?.status === 'RACING' && roomData?.current_turn_slot === p.slot_number;
+              const motion = runnerMotion[p.id] || null;
+              const pos = clampAthletePos(runnerPositions[p.id] ?? p.position);
+              const hasFinished = pos >= 24;
 
-            return (
-              <div
-                key={p.id}
-                title={`${p.nama} (${char?.name})${hasFinished ? ' - FINISH!' : ''}`}
-                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-white p-0.5 border-2 shadow-sm transition-transform duration-200 z-10 relative ${colorConfig.border} ${
-                  isStepping
-                    ? 'ath-token-active ring-2 ring-amber-400 z-20'
-                    : isCurrentTurn
-                    ? 'ring-2 ring-amber-400 scale-110 z-20'
-                    : ''
-                }`}
-              >
-                <AthleteMascot char={char} className="w-6 h-6 sm:w-7 sm:h-7" />
-              </div>
-            );
-          })}
-        </div>
+              return (
+                <RunnerSprite
+                  key={p.id}
+                  char={char}
+                  colorConfig={colorConfig}
+                  slotNumber={p.slot_number}
+                  playerName={p.nama}
+                  motion={motion}
+                  facingLeft={false}
+                  isCurrentTurn={isCurrentTurn}
+                  hasFinished={hasFinished}
+                  compact
+                />
+              );
+            })}
+          </div>
+        )}
 
-        <div className="text-[9px] font-mono text-stone-600 truncate text-center">
+        <div className={`text-[9px] font-mono truncate text-center ${isHeavyTrap ? 'text-rose-900 font-bold' : 'text-stone-600'}`}>
           {isStartFinish && <span className="text-amber-800 font-bold">START/FINISH</span>}
           {tile.type === 'boost' && 'Maju +2'}
-          {tile.type === 'trap' && 'Mundur -2'}
+          {tile.type === 'trap' && (isHeavyTrap ? 'Jebakan -4!' : `Mundur -${trapPenalty}`)}
           {tile.type === 'halfway' && 'Petak 12'}
         </div>
       </div>

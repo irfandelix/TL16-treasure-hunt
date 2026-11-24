@@ -1,5 +1,29 @@
 export const UPDATES_LOG = [
   {
+    id: 'upd-051',
+    date: '24 November 2026',
+    version: 'v2.9.20',
+    category: 'Fitur Baru',
+    title: 'Jebakan -4 Sebelum Finish & Karakter Lari di Magical Athlete TL 2016',
+    commit: 'latest',
+    summary: 'Menambahkan jebakan mundur 4 kotak tepat 1 langkah sebelum Finish (petak 23: Revisi Bab 5) serta mengganti bidak lingkaran dengan karakter maskot bebas yang berlari mulus di sepanjang lintasan stadion.',
+    changes: [
+      'Mengubah petak 23 menjadi jebakan berat Revisi Bab 5 (-4 langkah, mundur ke petak 19) dengan sorotan peringatan merah tegas tepat sebelum garis Finish.',
+      'Menghapus lingkaran putih di sekeliling token lintasan dan memindahkan pelari ke lapisan lintasan persisten agar karakter berlari mulus petak demi petak lengkap dengan condong lari, gerak kaki, kepulan debu, arah hadap mengikuti jalur, dan hentakan mundur saat kena jebakan.',
+      'Menyinkronkan animasi lari langkah demi langkah untuk pemain lain via Supabase Realtime serta tetap menghormati prefers-reduced-motion.'
+    ],
+    docs: {
+      files: [
+        'src/data/athleteCharacters.js',
+        'src/lib/athleteTrackMotion.js',
+        'src/components/MagicalAthleteGame.jsx',
+        'src/styles/global.css',
+        'src/components/UpdatesPage.jsx'
+      ],
+      notes: 'Phytoremediation tetap kebal terhadap jebakan -4 petak 23 sehingga menjadi pilihan strategis pada fase Draft.'
+    }
+  },
+  {
     id: 'upd-050',
     date: '24 November 2026',
     version: 'v2.9.19',

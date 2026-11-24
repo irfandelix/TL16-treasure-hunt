@@ -184,7 +184,9 @@ export default function GameDashboard() {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [onlineAvatars, setOnlineAvatars] = useState({});
   const [showAllOnline, setShowAllOnline] = useState(false);
+  const [presenceStatus, setPresenceStatus] = useState('connecting');
   const portalPresenceChannelRef = useRef(null);
+  const portalPresenceSubscribedRef = useRef(false);
   const fetchedOnlineAvatarsRef = useRef(new Set());
 
   useEffect(() => {
@@ -195,11 +197,16 @@ export default function GameDashboard() {
   useEffect(() => {
     if (!user?.nim) {
       setOnlineUsers([]);
+      setPresenceStatus('connecting');
       portalPresenceChannelRef.current = null;
+      portalPresenceSubscribedRef.current = false;
       return;
     }
 
     let active = true;
+    portalPresenceSubscribedRef.current = false;
+    setPresenceStatus(navigator.onLine === false ? 'offline' : 'connecting');
+
     const channel = supabase.channel('portal_presence:global', {
       config: { presence: { key: user.nim } }
     });
@@ -217,6 +224,7 @@ export default function GameDashboard() {
     };
 
     const trackSelf = async () => {
+      if (!active || !portalPresenceSubscribedRef.current) return;
       try {
         await channel.track({
           nim: user.nim,
@@ -224,6 +232,7 @@ export default function GameDashboard() {
           view: activeViewRef.current,
           online_at: new Date().toISOString()
         });
+        syncOnline();
       } catch {
         // Presence retries automatically on reconnect or tab focus
       }
@@ -236,23 +245,47 @@ export default function GameDashboard() {
       .subscribe((status) => {
         if (!active) return;
         if (status === 'SUBSCRIBED') {
+          portalPresenceSubscribedRef.current = true;
+          setPresenceStatus('live');
           trackSelf();
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          portalPresenceSubscribedRef.current = false;
+          setPresenceStatus('offline');
         }
       });
 
     const handleReconnect = () => {
-      if (document.visibilityState === 'visible') trackSelf();
+      if (navigator.onLine === false) {
+        setPresenceStatus('offline');
+        return;
+      }
+      if (document.visibilityState === 'visible') {
+        syncOnline();
+        trackSelf();
+      }
     };
 
+    const handleOffline = () => setPresenceStatus('offline');
+
+    const heartbeatTimer = setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine !== false) {
+        syncOnline();
+      }
+    }, 10000);
+
     window.addEventListener('online', handleReconnect);
+    window.addEventListener('offline', handleOffline);
     document.addEventListener('visibilitychange', handleReconnect);
 
     return () => {
       active = false;
+      clearInterval(heartbeatTimer);
       window.removeEventListener('online', handleReconnect);
+      window.removeEventListener('offline', handleOffline);
       document.removeEventListener('visibilitychange', handleReconnect);
       if (portalPresenceChannelRef.current === channel) {
         portalPresenceChannelRef.current = null;
+        portalPresenceSubscribedRef.current = false;
       }
       supabase.removeChannel(channel);
     };
@@ -260,13 +293,22 @@ export default function GameDashboard() {
 
   useEffect(() => {
     const channel = portalPresenceChannelRef.current;
-    if (!channel || !user?.nim) return;
+    if (!channel || !portalPresenceSubscribedRef.current || !user?.nim) return;
     channel
       .track({
         nim: user.nim,
         nama: user.nama,
         view: activeView,
         online_at: new Date().toISOString()
+      })
+      .then(() => {
+        setOnlineUsers(
+          normalizePresenceUsers(channel.presenceState(), {
+            nim: user.nim,
+            nama: user.nama,
+            view: activeView
+          })
+        );
       })
       .catch(() => {});
   }, [activeView, user?.nim, user?.nama]);
@@ -1372,13 +1414,34 @@ export default function GameDashboard() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full bg-[#14532D] shrink-0" />
+                    <span
+                      aria-hidden="true"
+                      className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                        presenceStatus === 'live'
+                          ? 'bg-[#14532D]'
+                          : presenceStatus === 'offline'
+                          ? 'bg-rose-600'
+                          : 'bg-amber-500'
+                      }`}
+                    />
                     <h2 id="online-now-heading" className="text-base sm:text-lg font-bold text-zinc-900">
                       Sedang Online Sekarang
                     </h2>
                   </div>
-                  <span className="font-mono text-xs font-bold text-[#14532D] bg-[#ECFDF5] border border-[#BBF7D0] px-2.5 py-1 rounded-lg tabular-nums">
-                    {onlineUsers.length} alumni aktif
+                  <span
+                    className={`font-mono text-xs font-bold px-2.5 py-1 rounded-lg border tabular-nums ${
+                      presenceStatus === 'offline'
+                        ? 'text-rose-800 bg-rose-50 border-rose-200'
+                        : presenceStatus === 'connecting'
+                        ? 'text-amber-900 bg-amber-50 border-amber-200'
+                        : 'text-[#14532D] bg-[#ECFDF5] border-[#BBF7D0]'
+                    }`}
+                  >
+                    {presenceStatus === 'offline'
+                      ? 'Koneksi terputus'
+                      : presenceStatus === 'connecting'
+                      ? 'Menyambungkan...'
+                      : `Live · ${onlineUsers.length} alumni aktif`}
                   </span>
                 </div>
 
@@ -1425,6 +1488,12 @@ export default function GameDashboard() {
                         );
                       })}
                     </div>
+
+                    {presenceStatus === 'live' && onlineUsers.length <= 1 && (
+                      <p className="text-xs text-zinc-600">
+                        Belum ada teman lain yang terdeteksi online saat ini. Teman yang membuka portal sebelum pembaruan terbaru perlu memuat ulang halaman agar muncul di sini.
+                      </p>
+                    )}
 
                     {onlineUsers.length > visibleLimit && (
                       <div>
