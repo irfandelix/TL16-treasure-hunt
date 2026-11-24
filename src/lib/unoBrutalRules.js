@@ -1,5 +1,12 @@
 export const MERCY_LIMIT = 20;
 export const INITIAL_HAND_SIZE = 7;
+export const UNO_RANK_REWARDS = [4000, 2500, 1500, 750, 500];
+
+export const getUnoRankReward = (rankIndex) =>
+  Number.isInteger(rankIndex) && rankIndex >= 0 ? UNO_RANK_REWARDS[rankIndex] || 0 : 0;
+
+export const formatUnoPoints = (points) =>
+  String(Math.max(0, Number(points) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
 export const CARD_COLORS = [
   { name: 'Merah', bg: 'bg-rose-700', border: 'border-rose-400', text: 'text-white' },
@@ -77,6 +84,8 @@ export const generateInitialTopCard = () => {
       pendingDraw: 0,
       pendingMinPower: 0,
       eliminatedNims: [],
+      finishedNims: [],
+      finishedNames: {},
       unoVulnerableNim: null,
       lastEvent: 'Mode No Mercy dimulai! Batas gugur (DO): 20 kartu.'
     }
@@ -89,10 +98,15 @@ export const getRoomMeta = (topCard) => {
     pendingDraw: Number(raw.pendingDraw) || 0,
     pendingMinPower: Number(raw.pendingMinPower) || 0,
     eliminatedNims: Array.isArray(raw.eliminatedNims) ? raw.eliminatedNims : [],
+    finishedNims: Array.isArray(raw.finishedNims) ? raw.finishedNims : [],
+    finishedNames: raw.finishedNames && typeof raw.finishedNames === 'object' ? raw.finishedNames : {},
     unoVulnerableNim: raw.unoVulnerableNim || null,
     lastEvent: raw.lastEvent || ''
   };
 };
+
+export const isPlayerFinished = (player, finishedNims = []) =>
+  Boolean(player && Array.isArray(finishedNims) && finishedNims.includes(player.nim));
 
 export const isPlayerEliminated = (player, eliminatedNims = []) => {
   if (!player) return true;
@@ -101,17 +115,18 @@ export const isPlayerEliminated = (player, eliminatedNims = []) => {
   return handLen >= MERCY_LIMIT;
 };
 
-export const getActivePlayers = (players = [], eliminatedNims = []) =>
-  players.filter((p) => !isPlayerEliminated(p, eliminatedNims));
+export const getActivePlayers = (players = [], eliminatedNims = [], finishedNims = []) =>
+  players.filter((p) => !isPlayerEliminated(p, eliminatedNims) && !isPlayerFinished(p, finishedNims));
 
 export const getNextActivePlayerNim = (
   players = [],
   currentNim,
   direction = 1,
   stepCount = 1,
-  eliminatedNims = []
+  eliminatedNims = [],
+  finishedNims = []
 ) => {
-  const active = getActivePlayers(players, eliminatedNims);
+  const active = getActivePlayers(players, eliminatedNims, finishedNims);
   if (active.length === 0) return currentNim || players[0]?.nim || null;
   if (active.length === 1) return active[0].nim;
 
@@ -122,7 +137,7 @@ export const getNextActivePlayerNim = (
     return active[nextIdx].nim;
   }
 
-  // Fallback if current player was just eliminated: walk from their seat in full roster
+  // Fallback if current player was just eliminated or finished: walk from their seat in full roster
   const fullIdx = players.findIndex((p) => p.nim === currentNim);
   if (fullIdx < 0) return active[0].nim;
 
@@ -131,12 +146,76 @@ export const getNextActivePlayerNim = (
   for (let i = 0; i < players.length * 3; i++) {
     cursor = (cursor + dir + players.length) % players.length;
     const candidate = players[cursor];
-    if (!isPlayerEliminated(candidate, eliminatedNims)) {
+    if (!isPlayerEliminated(candidate, eliminatedNims) && !isPlayerFinished(candidate, finishedNims)) {
       remainingSteps -= 1;
       if (remainingSteps === 0) return candidate.nim;
     }
   }
   return active[0].nim;
+};
+
+export const buildUnoStandings = (
+  players = [],
+  finishedNims = [],
+  eliminatedNims = [],
+  finishedNames = {}
+) => {
+  const byNim = new Map(players.map((p) => [p.nim, p]));
+  const standings = [];
+  const seen = new Set();
+
+  finishedNims.forEach((nim, idx) => {
+    if (!nim || seen.has(nim)) return;
+    seen.add(nim);
+    const player = byNim.get(nim);
+    standings.push({
+      nim,
+      nama: player?.nama || finishedNames[nim] || 'Sedulur 16',
+      rank: standings.length + 1,
+      points: getUnoRankReward(idx),
+      status: 'finished',
+      cardCount: Array.isArray(player?.hand) ? player.hand.length : 0
+    });
+  });
+
+  const remainingActive = players
+    .filter((p) => p && !seen.has(p.nim) && !isPlayerEliminated(p, eliminatedNims))
+    .sort((a, b) => (Array.isArray(a.hand) ? a.hand.length : 99) - (Array.isArray(b.hand) ? b.hand.length : 99));
+
+  remainingActive.forEach((p) => {
+    seen.add(p.nim);
+    standings.push({
+      nim: p.nim,
+      nama: p.nama || 'Sedulur 16',
+      rank: standings.length + 1,
+      points: 0,
+      status: 'last',
+      cardCount: Array.isArray(p.hand) ? p.hand.length : 0
+    });
+  });
+
+  const eliminatedPlayers = players
+    .filter((p) => p && !seen.has(p.nim))
+    .sort((a, b) => {
+      const idxA = eliminatedNims.indexOf(a.nim);
+      const idxB = eliminatedNims.indexOf(b.nim);
+      if (idxA !== idxB) return idxB - idxA;
+      return (Array.isArray(a.hand) ? a.hand.length : 99) - (Array.isArray(b.hand) ? b.hand.length : 99);
+    });
+
+  eliminatedPlayers.forEach((p) => {
+    seen.add(p.nim);
+    standings.push({
+      nim: p.nim,
+      nama: p.nama || 'Sedulur 16',
+      rank: standings.length + 1,
+      points: 0,
+      status: 'eliminated',
+      cardCount: Array.isArray(p.hand) ? p.hand.length : 0
+    });
+  });
+
+  return standings;
 };
 
 export const isCardPlayable = (card, topCard, meta = null) => {

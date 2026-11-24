@@ -14,14 +14,18 @@ import {
   CARD_SUBLABELS,
   INITIAL_HAND_SIZE,
   MERCY_LIMIT,
+  buildUnoStandings,
+  formatUnoPoints,
   generateInitialTopCard,
   generateRandomCard,
   getActivePlayers,
   getDrawPower,
   getNextActivePlayerNim,
   getRoomMeta,
+  getUnoRankReward,
   isCardPlayable,
   isPlayerEliminated,
+  isPlayerFinished,
   isWildCard,
   normalizeCardColor,
   pickBestWildColor,
@@ -132,10 +136,14 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
 
   const roomMeta = getRoomMeta(topCard);
   const eliminatedNims = roomMeta.eliminatedNims;
-  const activePlayers = getActivePlayers(players, eliminatedNims);
+  const finishedNims = roomMeta.finishedNims;
+  const finishedNames = roomMeta.finishedNames;
+  const activePlayers = getActivePlayers(players, eliminatedNims, finishedNims);
   const mePlayer = players.find((p) => p.nim === user?.nim);
   const amIEliminated = Boolean(mePlayer && isPlayerEliminated(mePlayer, eliminatedNims));
-  const isMyTurn = roomStatus === 'playing' && !amIEliminated && currentTurn === user?.nim;
+  const myFinishRankIdx = user?.nim ? finishedNims.indexOf(user.nim) : -1;
+  const amIFinished = myFinishRankIdx >= 0;
+  const isMyTurn = roomStatus === 'playing' && !amIEliminated && !amIFinished && currentTurn === user?.nim;
 
   useEffect(() => {
     cleanupFinishedRooms('unobrutal');
@@ -253,14 +261,15 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
     };
   }, [currentRoom, fetchRoomState]);
 
-  const finishWithWinner = useCallback(
-    async (winnerNim, finalTopCard, winEventText, nextDirection = direction) => {
-      const roomNims = players.map((p) => p.nim).filter(Boolean);
+  const finishMatch = useCallback(
+    async (finalFinishedNims, finalFinishedNames, finalTopCard, winEventText, nextDirection = direction) => {
+      const uniqueFinishedNims = Array.from(new Set(finalFinishedNims.filter(Boolean)));
+      const roomNims = Array.from(
+        new Set([...players.map((p) => p.nim), ...uniqueFinishedNims].filter(Boolean))
+      );
       const skipDb = await checkShouldSkipRoomScoring('uno', roomNims);
       setIsTrialSession(skipDb);
-      if (!skipDb && winnerNim) {
-        await awardAlumniPoints(winnerNim, 'skor_uno', 3000);
-      }
+      const winnerNim = uniqueFinishedNims[0] || currentTurn || null;
 
       const cardWithMeta = {
         ...normalizeCardColor(finalTopCard),
@@ -269,12 +278,14 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
           ...getRoomMeta(finalTopCard),
           pendingDraw: 0,
           pendingMinPower: 0,
+          finishedNims: uniqueFinishedNims,
+          finishedNames: finalFinishedNames,
           unoVulnerableNim: null,
           lastEvent: skipDb ? `${winEventText} (Mode Uji Coba: poin tidak dicatat)` : winEventText
         }
       };
 
-      await supabase
+      const { data: closedRows } = await supabase
         .from('uno_rooms')
         .update({
           top_card: cardWithMeta,
@@ -282,7 +293,19 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
           current_turn: winnerNim,
           direction: nextDirection
         })
-        .eq('room_code', currentRoom);
+        .eq('room_code', currentRoom)
+        .eq('status', 'playing')
+        .select('room_code');
+
+      // Only the client that atomically closes the room awards leaderboard points to prevent duplicates.
+      if (!skipDb && closedRows && closedRows.length > 0) {
+        await Promise.all(
+          uniqueFinishedNims.map((nim, idx) => {
+            const reward = getUnoRankReward(idx);
+            return reward > 0 ? awardAlumniPoints(nim, 'skor_uno', reward) : Promise.resolve();
+          })
+        );
+      }
 
       setTopCard(cardWithMeta);
       setCurrentTurn(winnerNim);
@@ -290,7 +313,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
       setRoomStatus('finished');
       setStatusNotice(cardWithMeta.meta.lastEvent);
     },
-    [currentRoom, direction, players]
+    [currentRoom, currentTurn, direction, players]
   );
 
   const applyDrawForPlayer = useCallback(
@@ -319,15 +342,29 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
         nextEliminated.add(targetPlayer.nim);
       }
       const nextEliminatedList = Array.from(nextEliminated);
-      const survivors = getActivePlayers(updatedPlayers, nextEliminatedList);
+      const survivors = getActivePlayers(updatedPlayers, nextEliminatedList, meta.finishedNims);
 
       const actorFirst = shortName(targetPlayer.nama);
 
-      if (justEliminated && survivors.length === 1) {
-        const winner = survivors[0];
-        const winText = `${actorFirst} tembus ${updatedHand.length} kartu dan GUGUR (DO)! ${shortName(winner.nama)} bertahan paling akhir dan menang +3.000 poin!`;
-        await finishWithWinner(
-          winner.nim,
+      if (justEliminated && survivors.length <= 1) {
+        const nextFinishedNims = [...meta.finishedNims];
+        const nextFinishedNames = { ...meta.finishedNames };
+        let winText = `${actorFirst} tembus ${updatedHand.length} kartu dan GUGUR (DO)! Permainan selesai.`;
+
+        if (survivors.length === 1) {
+          const survivor = survivors[0];
+          if (!nextFinishedNims.includes(survivor.nim)) {
+            nextFinishedNims.push(survivor.nim);
+          }
+          nextFinishedNames[survivor.nim] = survivor.nama;
+          const rankNum = nextFinishedNims.indexOf(survivor.nim) + 1;
+          const reward = getUnoRankReward(rankNum - 1);
+          winText = `${actorFirst} tembus ${updatedHand.length} kartu dan GUGUR (DO)! ${shortName(survivor.nama)} bertahan paling akhir di peringkat #${rankNum} (+${formatUnoPoints(reward)} poin)!`;
+        }
+
+        await finishMatch(
+          nextFinishedNims,
+          nextFinishedNames,
           { ...topCard, meta: { ...meta, eliminatedNims: nextEliminatedList } },
           winText,
           direction
@@ -336,7 +373,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
       }
 
       const nextTurnNim = advanceTurn
-        ? getNextActivePlayerNim(updatedPlayers, targetPlayer.nim, direction, 1, nextEliminatedList)
+        ? getNextActivePlayerNim(updatedPlayers, targetPlayer.nim, direction, 1, nextEliminatedList, meta.finishedNims)
         : currentTurn;
 
       const eventText = justEliminated
@@ -371,7 +408,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
         })
         .eq('room_code', currentRoom);
     },
-    [currentRoom, currentTurn, direction, finishWithWinner, players, topCard, user?.nim]
+    [currentRoom, currentTurn, direction, finishMatch, players, topCard, user?.nim]
   );
 
   const executeCardPlay = useCallback(
@@ -402,25 +439,106 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
         .update({ hand: remaining })
         .match({ room_code: currentRoom, nim: actorPlayer.nim });
 
-      // Immediate victory if hand hits 0 cards
+      const power = getDrawPower(card);
+
+      // Handle player emptying their hand: rank them and either end match or continue if 2+ active remain.
       if (remaining.length === 0) {
-        const winText =
-          card.value === 'Sapu Bersih' && dumpedExtraCount > 0
-            ? `${actorFirst} menyapu bersih ${dumpedExtraCount + 1} kartu ${playedColor.name} dan MENANG +3.000 poin!`
-            : `UNO Habis! ${actorFirst} keluar sebagai pemenang meja No Mercy (+3.000 poin)!`;
-        await finishWithWinner(actorPlayer.nim, playedBase, winText, direction);
+        const nextFinishedNims = meta.finishedNims.includes(actorPlayer.nim)
+          ? [...meta.finishedNims]
+          : [...meta.finishedNims, actorPlayer.nim];
+        const nextFinishedNames = { ...meta.finishedNames, [actorPlayer.nim]: actorPlayer.nama };
+        const rankNum = nextFinishedNims.indexOf(actorPlayer.nim) + 1;
+        const reward = getUnoRankReward(rankNum - 1);
+        const rewardTag = `+${formatUnoPoints(reward)} poin`;
+        const remainingActive = getActivePlayers(updatedPlayers, meta.eliminatedNims, nextFinishedNims);
+
+        if (remainingActive.length <= 1) {
+          const finishReason =
+            card.value === 'Sapu Bersih' && dumpedExtraCount > 0
+              ? `${actorFirst} menyapu bersih ${dumpedExtraCount + 1} kartu ${playedColor.name} dan finis #${rankNum} (${rewardTag})!`
+              : `Habis ke-${rankNum}! ${actorFirst} menyelesaikan kartu (${rewardTag})! Permainan meja selesai.`;
+          await finishMatch(
+            nextFinishedNims,
+            nextFinishedNames,
+            { ...playedBase, meta: { ...meta, eliminatedNims: meta.eliminatedNims } },
+            finishReason,
+            direction
+          );
+          return;
+        }
+
+        let nextDirection = direction;
+        let nextPendingDraw = meta.pendingDraw;
+        let nextPendingMinPower = meta.pendingMinPower;
+        let stepCount = 1;
+
+        if (power > 0) {
+          nextPendingDraw = meta.pendingDraw + power;
+          nextPendingMinPower = Math.max(meta.pendingMinPower, power);
+        } else if (card.value === 'Reverse') {
+          nextDirection = direction === 1 ? -1 : 1;
+        } else if (card.value === 'Skip') {
+          stepCount = 2;
+        }
+
+        const nextTurnNim = getNextActivePlayerNim(
+          updatedPlayers,
+          actorPlayer.nim,
+          nextDirection,
+          stepCount,
+          meta.eliminatedNims,
+          nextFinishedNims
+        );
+        const nextPlayer = updatedPlayers.find((p) => p.nim === nextTurnNim);
+        const eventText =
+          power > 0
+            ? `Peringkat #${rankNum}! ${actorFirst} habis kartu (${rewardTag}) sambil lempar bom +${nextPendingDraw} ke ${shortName(nextPlayer?.nama)}! Lanjut cari #${rankNum + 1}.`
+            : `Peringkat #${rankNum}! ${actorFirst} habis kartu (${rewardTag})! Permainan lanjut memperebutkan #${rankNum + 1}.`;
+
+        const nextTopCard = {
+          ...playedBase,
+          meta: {
+            pendingDraw: nextPendingDraw,
+            pendingMinPower: nextPendingMinPower,
+            eliminatedNims: meta.eliminatedNims,
+            finishedNims: nextFinishedNims,
+            finishedNames: nextFinishedNames,
+            unoVulnerableNim: null,
+            lastEvent: eventText
+          }
+        };
+
+        setTopCard(nextTopCard);
+        setDirection(nextDirection);
+        setCurrentTurn(nextTurnNim);
+        setStatusNotice(eventText);
+
+        await supabase
+          .from('uno_rooms')
+          .update({
+            top_card: nextTopCard,
+            current_turn: nextTurnNim,
+            direction: nextDirection
+          })
+          .eq('room_code', currentRoom);
         return;
       }
 
       let nextDirection = direction;
       let nextPendingDraw = meta.pendingDraw;
       let nextPendingMinPower = meta.pendingMinPower;
-      let nextTurnNim = getNextActivePlayerNim(updatedPlayers, actorPlayer.nim, nextDirection, 1, meta.eliminatedNims);
+      let nextTurnNim = getNextActivePlayerNim(
+        updatedPlayers,
+        actorPlayer.nim,
+        nextDirection,
+        1,
+        meta.eliminatedNims,
+        meta.finishedNims
+      );
       let nextUnoVulnerable = remaining.length === 1 ? actorPlayer.nim : null;
       let eventText = `${actorFirst} menurunkan ${playedColor.name} (${card.value}).`;
 
-      const power = getDrawPower(card);
-      const activeCount = getActivePlayers(updatedPlayers, meta.eliminatedNims).length;
+      const activeCount = getActivePlayers(updatedPlayers, meta.eliminatedNims, meta.finishedNims).length;
 
       if (power > 0) {
         nextPendingDraw = meta.pendingDraw + power;
@@ -432,7 +550,14 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
             : `Serangan ${card.value} (${playedColor.name}) dari ${actorFirst}! ${shortName(targetPlayer?.nama)} harus tangkis >= +${power} atau telan +${nextPendingDraw} kartu!`;
       } else if (card.value === 'Skip') {
         const skipped = updatedPlayers.find((p) => p.nim === nextTurnNim);
-        nextTurnNim = getNextActivePlayerNim(updatedPlayers, actorPlayer.nim, nextDirection, 2, meta.eliminatedNims);
+        nextTurnNim = getNextActivePlayerNim(
+          updatedPlayers,
+          actorPlayer.nim,
+          nextDirection,
+          2,
+          meta.eliminatedNims,
+          meta.finishedNims
+        );
         eventText = `Skip! Giliran ${shortName(skipped?.nama)} dilewati oleh ${actorFirst}.`;
       } else if (card.value === 'Skip Semua') {
         nextTurnNim = actorPlayer.nim;
@@ -441,9 +566,16 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
         nextDirection = direction === 1 ? -1 : 1;
         if (activeCount <= 2) {
           nextTurnNim = actorPlayer.nim;
-          eventText = `Putar Balik! Karena tinggal 2 pemain, ${actorFirst} langsung jalan lagi!`;
+          eventText = `Putar Balik! Karena tinggal 2 pemain aktif, ${actorFirst} langsung jalan lagi!`;
         } else {
-          nextTurnNim = getNextActivePlayerNim(updatedPlayers, actorPlayer.nim, nextDirection, 1, meta.eliminatedNims);
+          nextTurnNim = getNextActivePlayerNim(
+            updatedPlayers,
+            actorPlayer.nim,
+            nextDirection,
+            1,
+            meta.eliminatedNims,
+            meta.finishedNims
+          );
           eventText = `Putar Balik! ${actorFirst} membalik arah giliran meja.`;
         }
       } else if (card.value === 'Sapu Bersih') {
@@ -452,7 +584,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
             ? `Sapu Bersih ${playedColor.name}! ${actorFirst} membuang ${dumpedExtraCount + 1} kartu sekaligus!`
             : `${actorFirst} menurunkan Sapu Bersih ${playedColor.name}.`;
       } else if (card.value === 'Tukar KTM') {
-        const opponents = getActivePlayers(updatedPlayers, meta.eliminatedNims).filter(
+        const opponents = getActivePlayers(updatedPlayers, meta.eliminatedNims, meta.finishedNims).filter(
           (p) => p.nim !== actorPlayer.nim
         );
         const swapTarget =
@@ -485,12 +617,52 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
           });
 
           if (actorNewHand.length === 0) {
-            await finishWithWinner(
+            const nextFinishedNims = meta.finishedNims.includes(actorPlayer.nim)
+              ? [...meta.finishedNims]
+              : [...meta.finishedNims, actorPlayer.nim];
+            const nextFinishedNames = { ...meta.finishedNames, [actorPlayer.nim]: actorPlayer.nama };
+            const rankNum = nextFinishedNims.indexOf(actorPlayer.nim) + 1;
+            const reward = getUnoRankReward(rankNum - 1);
+            const remainingActiveAfterSwap = getActivePlayers(updatedPlayers, meta.eliminatedNims, nextFinishedNims);
+            if (remainingActiveAfterSwap.length <= 1) {
+              await finishMatch(
+                nextFinishedNims,
+                nextFinishedNames,
+                { ...playedBase, meta: { ...meta, eliminatedNims: meta.eliminatedNims } },
+                `${actorFirst} menukar KTM dengan ${shortName(swapTarget.nama)} dan finis #${rankNum} (+${formatUnoPoints(reward)} poin)!`,
+                nextDirection
+              );
+              return;
+            }
+            const nextTurnAfterSwap = getNextActivePlayerNim(
+              updatedPlayers,
               actorPlayer.nim,
-              playedBase,
-              `${actorFirst} menukar KTM dengan ${shortName(swapTarget.nama)} dan langsung habis kartu!`,
-              nextDirection
+              nextDirection,
+              1,
+              meta.eliminatedNims,
+              nextFinishedNims
             );
+            const swapFinishEvent = `Peringkat #${rankNum}! ${actorFirst} menukar KTM dengan ${shortName(swapTarget.nama)} dan langsung habis kartu (+${formatUnoPoints(reward)} poin)! Lanjut cari #${rankNum + 1}.`;
+            const nextTopAfterSwap = {
+              ...playedBase,
+              meta: {
+                pendingDraw: nextPendingDraw,
+                pendingMinPower: nextPendingMinPower,
+                eliminatedNims: meta.eliminatedNims,
+                finishedNims: nextFinishedNims,
+                finishedNames: nextFinishedNames,
+                unoVulnerableNim: targetNewHand.length === 1 ? swapTarget.nim : null,
+                lastEvent: swapFinishEvent
+              }
+            };
+            setTopCard(nextTopAfterSwap);
+            setDirection(nextDirection);
+            setCurrentTurn(nextTurnAfterSwap);
+            setStatusNotice(swapFinishEvent);
+            await supabase
+              .from('uno_rooms')
+              .update({ top_card: nextTopAfterSwap, current_turn: nextTurnAfterSwap, direction: nextDirection })
+              .eq('room_code', currentRoom);
             return;
           }
 
@@ -513,6 +685,8 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
           pendingDraw: nextPendingDraw,
           pendingMinPower: nextPendingMinPower,
           eliminatedNims: meta.eliminatedNims,
+          finishedNims: meta.finishedNims,
+          finishedNames: meta.finishedNames,
           unoVulnerableNim: nextUnoVulnerable,
           lastEvent: eventText
         }
@@ -532,7 +706,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
         })
         .eq('room_code', currentRoom);
     },
-    [currentRoom, direction, finishWithWinner, players, topCard, user?.nim]
+    [currentRoom, direction, finishMatch, players, topCard, user?.nim]
   );
 
   const originalHostNim = players.find((p) => p.is_host)?.nim;
@@ -548,7 +722,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
     if (roomStatus !== 'playing' || !currentRoom || !currentTurn || actingHostNim !== user?.nim) return;
     const turnPlayer = players.find((p) => p.nim === currentTurn);
     if (!turnPlayer || turnPlayer.nim === user?.nim || !shouldBotControlPlayer(turnPlayer, onlineNims)) return;
-    if (isPlayerEliminated(turnPlayer, eliminatedNims)) return;
+    if (isPlayerEliminated(turnPlayer, eliminatedNims) || isPlayerFinished(turnPlayer, finishedNims)) return;
 
     const timer = setTimeout(async () => {
       const targetHand = Array.isArray(turnPlayer.hand) ? turnPlayer.hand.map(normalizeCardColor) : [];
@@ -566,7 +740,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
       }
 
       const chosenColor = isWildCard(chosenCard) ? pickBestWildColor(targetHand.filter((c) => c.id !== chosenCard.id)) : null;
-      const opponents = getActivePlayers(players, eliminatedNims).filter((p) => p.nim !== turnPlayer.nim);
+      const opponents = getActivePlayers(players, eliminatedNims, finishedNims).filter((p) => p.nim !== turnPlayer.nim);
       const swapTarget = [...opponents].sort((a, b) => (a.hand?.length || 99) - (b.hand?.length || 99))[0];
       await executeCardPlay(turnPlayer, chosenCard, chosenColor, swapTarget?.nim || null);
     }, 5000);
@@ -582,6 +756,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
     topCard,
     onlineNims,
     eliminatedNims,
+    finishedNims,
     roomMeta,
     applyDrawForPlayer,
     executeCardPlay
@@ -805,7 +980,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
   };
 
   const handlePlayCard = async (card, chosenColor = null, chosenSwapNim = null, sourceEl = null) => {
-    if (roomStatus !== 'playing' || actionBusy || !mePlayer || amIEliminated) return;
+    if (roomStatus !== 'playing' || actionBusy || !mePlayer || amIEliminated || amIFinished) return;
     if (currentTurn && currentTurn !== user?.nim) {
       const activePlayer = players.find((p) => p.nim === currentTurn);
       setStatusNotice(`Tunggu giliranmu! Saat ini giliran ${shortName(activePlayer?.nama)}.`);
@@ -865,7 +1040,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
   };
 
   const handleDrawCard = async () => {
-    if (roomStatus !== 'playing' || actionBusy || !mePlayer || amIEliminated) return;
+    if (roomStatus !== 'playing' || actionBusy || !mePlayer || amIEliminated || amIFinished) return;
     if (currentTurn && currentTurn !== user?.nim) {
       const activePlayer = players.find((p) => p.nim === currentTurn);
       setStatusNotice(`Bukan giliranmu! Sekarang giliran ${shortName(activePlayer?.nama)}.`);
@@ -929,7 +1104,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
 
   const handleCatchUno = async () => {
     const culpritNim = roomMeta.unoVulnerableNim;
-    if (roomStatus !== 'playing' || actionBusy || !culpritNim || culpritNim === user?.nim || amIEliminated) return;
+    if (roomStatus !== 'playing' || actionBusy || !culpritNim || culpritNim === user?.nim || amIEliminated || amIFinished) return;
     const culprit = players.find((p) => p.nim === culpritNim);
     if (!culprit) return;
 
@@ -950,7 +1125,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
     if (roomStatus !== 'playing' || !currentTurn || !currentRoom) return;
     if (onlineNims.size === 0 || onlineNims.has(currentTurn)) return;
 
-    const candidateNext = getNextActivePlayerNim(players, currentTurn, direction, 1, eliminatedNims);
+    const candidateNext = getNextActivePlayerNim(players, currentTurn, direction, 1, eliminatedNims, finishedNims);
     const onlineFallback = activePlayers.find((p) => p.nim !== currentTurn && onlineNims.has(p.nim))?.nim;
     const resolvedNext = onlineNims.has(candidateNext) ? candidateNext : onlineFallback || candidateNext;
 
@@ -974,7 +1149,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
   const leaveRoom = async () => {
     if (currentRoom && user) {
       if (roomStatus === 'playing' && currentTurn === user.nim && activePlayers.length > 1) {
-        const nextTurnNim = getNextActivePlayerNim(players, user.nim, direction, 1, eliminatedNims);
+        const nextTurnNim = getNextActivePlayerNim(players, user.nim, direction, 1, eliminatedNims, finishedNims);
         if (nextTurnNim && nextTurnNim !== user.nim) {
           await supabase
             .from('uno_rooms')
@@ -1033,7 +1208,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
           stats={[
             { value: '7', label: 'Kartu Awal' },
             { value: `${MERCY_LIMIT} Kartu`, label: 'Batas Gugur (DO)' },
-            { value: '+3.000', label: 'Poin Menang' }
+            { value: '+4.000', label: 'Juara #1' }
           ]}
           steps={[
             'Buat meja baru lalu bagikan kode atau link undangan, atau masukkan kode meja dari temanmu.',
@@ -1041,10 +1216,14 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
             'Manfaatkan Reverse, Jam Kosong (Skip Semua), Sapu Bersih (buang 1 warna), Tukar KTM (tukar tangan), dan jangan lupa tekan UNO saat kartu tinggal 1!'
           ]}
           scoringTiers={[
-            { condition: 'Habis Kartu / Penyintas Akhir', points: '+3.000 poin' },
-            { condition: 'Tembus 20 Kartu', points: 'Gugur (DO)' }
+            { condition: 'Habis ke-1 (Juara #1)', points: '+4.000 poin' },
+            { condition: 'Habis ke-2 (Juara #2)', points: '+2.500 poin' },
+            { condition: 'Habis ke-3 (Juara #3)', points: '+1.500 poin' },
+            { condition: 'Habis ke-4 (Juara #4)', points: '+750 poin' },
+            { condition: 'Habis ke-5 (Juara #5)', points: '+500 poin' },
+            { condition: 'Ke-6 s.d. Terakhir / Gugur (DO)', points: '+0 poin' }
           ]}
-          scoringNote="Kamu menang jika kartu habis paling duluan ATAU jadi satu-satunya pemain yang selamat dari batas DO 20 kartu."
+          scoringNote="Ronde berjalan terus sampai tersisa 1 pemain di meja agar urutan habis ke-1 sampai ke-5 masing-masing memperoleh poin klasemen."
           startLabel="Masuk ke Lobi UNO No Mercy"
           onStart={() => setHasPassedPrep(true)}
           onBack={onBack}
@@ -1150,9 +1329,9 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
               </p>
             </div>
             <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-5">
-              <strong className="sm:w-52 shrink-0 text-zinc-900">Teriak UNO! &amp; Batas DO</strong>
+              <strong className="sm:w-52 shrink-0 text-zinc-900">Teriak UNO!, Batas DO &amp; Poin</strong>
               <p className="leading-relaxed">
-                Saat kartu tinggal 1, segera klik <strong>Teriak UNO!</strong> sebelum lawan menekan <strong>Tangkap (+2)</strong>. Siapa pun yang tangannya tembus <strong>{MERCY_LIMIT} kartu</strong> langsung gugur (DO), dan pemenang meja meraih <strong>+3.000 poin</strong>.
+                Saat kartu tinggal 1, segera klik <strong>Teriak UNO!</strong> sebelum lawan menekan <strong>Tangkap (+2)</strong>. Tangan yang tembus <strong>{MERCY_LIMIT} kartu</strong> langsung gugur (DO). Ronde terus berjalan sampai tersisa 1 pemain: <strong>Habis ke-1 (+4.000)</strong>, <strong>ke-2 (+2.500)</strong>, <strong>ke-3 (+1.500)</strong>, <strong>ke-4 (+750)</strong>, <strong>ke-5 (+500)</strong>, dan ke-6 sampai terakhir/DO <strong>(+0)</strong>.
               </p>
             </div>
           </div>
@@ -1180,20 +1359,25 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
 
   const renderOpponentPod = (op, compact = false) => {
     if (!op) return null;
-    const isElim = roomStatus !== 'waiting' && isPlayerEliminated(op, eliminatedNims);
-    const isTurn = roomStatus === 'playing' && !isElim && currentTurn === op.nim;
+    const finishIdx = roomStatus !== 'waiting' ? finishedNims.indexOf(op.nim) : -1;
+    const isFinished = finishIdx >= 0;
+    const finishReward = isFinished ? getUnoRankReward(finishIdx) : 0;
+    const isElim = roomStatus !== 'waiting' && !isFinished && isPlayerEliminated(op, eliminatedNims);
+    const isTurn = roomStatus === 'playing' && !isElim && !isFinished && currentTurn === op.nim;
     const isDisconnected = onlineNims.size > 0 && !onlineNims.has(op.nim);
     const count = Array.isArray(op.hand) ? op.hand.length : 0;
     const maxVisible = compact ? 4 : 8;
-    const visibleCards = isElim ? 0 : Math.min(count, maxVisible);
-    const extraCount = isElim ? 0 : Math.max(0, count - visibleCards);
-    const isDanger = !isElim && count >= MERCY_LIMIT - 4;
+    const visibleCards = isElim || isFinished ? 0 : Math.min(count, maxVisible);
+    const extraCount = isElim || isFinished ? 0 : Math.max(0, count - visibleCards);
+    const isDanger = !isElim && !isFinished && count >= MERCY_LIMIT - 4;
 
     return (
       <div key={op.nim} className="flex flex-col items-center">
         <div
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors ${
-            isElim
+            isFinished
+              ? 'bg-[#ECFDF5] text-[#14532D] border-[#14532D]/40'
+              : isElim
               ? 'bg-rose-50 text-rose-800 border-rose-300 opacity-75'
               : isTurn
               ? 'bg-[#14532D] text-white border-[#14532D]'
@@ -1206,7 +1390,9 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
           </span>
           <span
             className={`font-mono text-[11px] font-bold tabular-nums shrink-0 ${
-              isElim
+              isFinished
+                ? 'text-[#14532D]'
+                : isElim
                 ? 'text-rose-800'
                 : isTurn
                 ? 'text-[#FEF3C7]'
@@ -1215,7 +1401,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
                 : 'text-[#57534E]'
             }`}
           >
-            {isElim ? 'DO' : `${count}/${MERCY_LIMIT}`}
+            {isFinished ? `#${finishIdx + 1}` : isElim ? 'DO' : `${count}/${MERCY_LIMIT}`}
           </span>
         </div>
 
@@ -1224,7 +1410,11 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
             isTurn ? '-translate-y-1' : ''
           }`}
         >
-          {isElim ? (
+          {isFinished ? (
+            <span className="text-[10px] font-mono font-bold text-[#14532D] bg-[#ECFDF5] border border-[#BBF7D0] px-2 py-0.5 rounded tabular-nums">
+              {compact ? `Habis #${finishIdx + 1}` : `Habis #${finishIdx + 1} (+${formatUnoPoints(finishReward)})`}
+            </span>
+          ) : isElim ? (
             <span className="text-[10px] font-mono font-bold text-[#BE123C] bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
               Gugur ({count})
             </span>
@@ -1437,7 +1627,7 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
                   >
                     TERIAK UNO! (Kartu Tinggal 1)
                   </button>
-                ) : !amIEliminated ? (
+                ) : !amIEliminated && !amIFinished ? (
                   <button
                     type="button"
                     onClick={handleCatchUno}
@@ -1518,81 +1708,136 @@ export default function UnoBrutalGame({ initialRoomCode = '', onBack }) {
         )}
       </div>
 
-      {/* Bottom Area: Finished Summary, Eliminated Banner, or 4-Way Scrollable Hand */}
+      {/* Bottom Area: Finished Summary, Finished-Early Banner, Eliminated Banner, or 4-Way Scrollable Hand */}
       {roomStatus === 'finished' ? (
-        <div className="bg-[#FFFDF9] p-6 text-center space-y-3">
-          <h2 className="text-2xl font-bold text-[#14532D]">Permainan Selesai!</h2>
-          <p className="text-[#1C1917] text-sm">
-            Pemenang meja No Mercy:{' '}
-            <strong className="text-amber-800">
-              {players.find((p) => p.nim === currentTurn)?.nama ||
-                players.find((p) => Array.isArray(p.hand) && p.hand.length === 0)?.nama ||
-                'Sedulur 16'}
-            </strong>
-          </p>
-          <p className="text-xs font-mono font-bold text-[#14532D]">
-            {isTrialSession
-              ? 'Mode Uji Coba: poin tidak masuk papan klasemen.'
-              : 'Hadiah pemenang meja: +3.000 Poin Klasemen'}
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
-            <StoryShareButton
-              label="Bagikan Hasil Meja ke IG Story"
-              variant="primary"
-              getPayload={() => {
-                const ordered = [...players].sort((a, b) => {
-                  const aWin = a.nim === currentTurn ? -1 : 0;
-                  const bWin = b.nim === currentTurn ? -1 : 0;
-                  if (aWin !== bWin) return aWin - bWin;
-                  const lenA = Array.isArray(a.hand) ? a.hand.length : 99;
-                  const lenB = Array.isArray(b.hand) ? b.hand.length : 99;
-                  return lenA - lenB;
-                });
-                const winner = ordered[0];
-                const isMeWinner = winner?.nim === user?.nim;
-                return {
-                  variant: 'session',
-                  badge: 'UNO NO MERCY TL 2016',
-                  name: user?.nama || 'Alumni TL 2016',
-                  subtitle: `Meja ${currentRoom || '-'}  |  ${players.length} Pemain`,
-                  nim: user?.nim || '',
-                  avatarConfig: getLocalAvatarConfig(user?.nim),
-                  accent: isMeWinner ? '#B45309' : '#14532D',
-                  ringColor: isMeWinner ? '#D97706' : '#14532D',
-                  scoreText: isMeWinner ? 'JUARA MEJA NO MERCY!' : `PEMENANG: ${shortName(winner?.nama)}`,
-                  scoreLabel: amIEliminated
-                    ? `Gugur (DO) di ${myHand.length} kartu`
-                    : `Kartu tersisa di tanganmu: ${myHand.length} kartu`,
-                  sessionTitle: 'PEMAIN DI MEJA INI',
-                  sessionPlayers: ordered.map((p, idx) => {
-                    const count = Array.isArray(p.hand) ? p.hand.length : 0;
-                    const won = p.nim === winner?.nim;
-                    const elim = isPlayerEliminated(p, eliminatedNims);
+        (() => {
+          const standings = buildUnoStandings(players, finishedNims, eliminatedNims, finishedNames);
+          const champion = standings[0];
+          const myStanding = standings.find((s) => s.nim === user?.nim);
+          return (
+            <div className="bg-[#FFFDF9] p-5 sm:p-6 text-center space-y-4">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold text-[#14532D]">Permainan Selesai!</h2>
+                <p className="text-[#1C1917] text-sm">
+                  Juara #1 Meja No Mercy:{' '}
+                  <strong className="text-amber-800">{champion?.nama || 'Sedulur 16'}</strong>
+                </p>
+                <p className="text-xs font-mono font-bold text-[#57534E]">
+                  {isTrialSession
+                    ? 'Mode Uji Coba: poin peringkat tidak masuk papan klasemen.'
+                    : 'Poin peringkat otomatis ditambahkan ke papan klasemen.'}
+                </p>
+              </div>
+
+              <div className="max-w-lg mx-auto border border-[#DED6C6] rounded-xl overflow-hidden text-left divide-y divide-[#EDE6D8] bg-[#FAF6EE]">
+                {standings.map((entry) => {
+                  const isMe = entry.nim === user?.nim;
+                  const statusLabel =
+                    entry.status === 'finished'
+                      ? `Habis ke-${entry.rank}`
+                      : entry.status === 'eliminated'
+                      ? `Gugur DO (${entry.cardCount} kartu)`
+                      : `Terakhir (${entry.cardCount} kartu)`;
+                  return (
+                    <div
+                      key={entry.nim}
+                      className={`px-3.5 py-2.5 flex items-center justify-between gap-3 ${
+                        isMe ? 'bg-[#ECFDF5]' : 'bg-[#FFFDF9]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className={`font-mono text-xs font-bold px-2 py-0.5 rounded shrink-0 tabular-nums ${
+                            entry.rank === 1
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                              : entry.points > 0
+                              ? 'bg-[#ECFDF5] text-[#14532D] border border-[#BBF7D0]'
+                              : 'bg-stone-100 text-stone-600 border border-stone-200'
+                          }`}
+                        >
+                          #{entry.rank}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="text-sm font-bold text-[#1C1917] truncate">
+                            {entry.nama} {isMe ? '(Kamu)' : ''}
+                          </div>
+                          <div className="text-[11px] font-mono text-[#57534E]">{statusLabel}</div>
+                        </div>
+                      </div>
+                      <span
+                        className={`font-mono text-xs sm:text-sm font-bold shrink-0 tabular-nums ${
+                          entry.points > 0 ? 'text-[#14532D]' : 'text-[#78716C]'
+                        }`}
+                      >
+                        {isTrialSession ? 'Uji Coba' : `+${formatUnoPoints(entry.points)}`}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                <StoryShareButton
+                  label="Bagikan Hasil Meja ke IG Story"
+                  variant="primary"
+                  getPayload={() => {
+                    const isMeWinner = champion?.nim === user?.nim;
                     return {
-                      rank: `#${idx + 1}`,
-                      nama: p.nama,
-                      meta: won ? 'Pemenang meja' : elim ? 'Gugur (DO)' : 'Peserta meja',
-                      scoreText: won ? 'Juara' : elim ? `DO (${count})` : `${count} kartu`,
-                      isMe: p.nim === user?.nim
+                      variant: 'session',
+                      badge: 'UNO NO MERCY TL 2016',
+                      name: user?.nama || 'Alumni TL 2016',
+                      subtitle: `Meja ${currentRoom || '-'}  |  ${standings.length} Pemain`,
+                      nim: user?.nim || '',
+                      avatarConfig: getLocalAvatarConfig(user?.nim),
+                      accent: isMeWinner ? '#B45309' : '#14532D',
+                      ringColor: isMeWinner ? '#D97706' : '#14532D',
+                      scoreText: myStanding
+                        ? `PERINGKAT #${myStanding.rank} (+${formatUnoPoints(myStanding.points)})`
+                        : `JUARA #1: ${shortName(champion?.nama)}`,
+                      scoreLabel: isMeWinner
+                        ? 'Juara #1 Meja UNO No Mercy'
+                        : `Juara #1: ${shortName(champion?.nama)} (+4.000 poin)`,
+                      sessionTitle: 'KLASEMEN AKHIR MEJA',
+                      sessionPlayers: standings.map((entry) => ({
+                        rank: `#${entry.rank}`,
+                        nama: entry.nama,
+                        meta:
+                          entry.status === 'finished'
+                            ? `Habis ke-${entry.rank}`
+                            : entry.status === 'eliminated'
+                            ? `Gugur DO (${entry.cardCount})`
+                            : `Terakhir (${entry.cardCount} kartu)`,
+                        scoreText: `+${formatUnoPoints(entry.points)}`,
+                        isMe: entry.nim === user?.nim
+                      })),
+                      filename: `uno-nomercy-tl16-${currentRoom || 'meja'}.png`,
+                      shareTitle: 'Hasil Meja UNO No Mercy TL 2016',
+                      shareText: `Selesai main UNO No Mercy TL 2016 di meja ${currentRoom} bareng ${standings.length} teman angkatan!`
                     };
-                  }),
-                  filename: `uno-nomercy-tl16-${currentRoom || 'meja'}.png`,
-                  shareTitle: 'Hasil Meja UNO No Mercy TL 2016',
-                  shareText: `Selesai main UNO No Mercy TL 2016 di meja ${currentRoom} bareng ${players.length} teman angkatan!`
-                };
-              }}
-            />
-            {isHost && (
-              <button
-                type="button"
-                onClick={startGame}
-                disabled={loading}
-                className="min-h-[48px] bg-[#14532D] hover:bg-[#166534] text-white font-bold px-8 py-3 rounded-xl text-sm transition-colors cursor-pointer"
-              >
-                Main Lagi di Meja Ini
-              </button>
-            )}
-          </div>
+                  }}
+                />
+                {isHost && (
+                  <button
+                    type="button"
+                    onClick={startGame}
+                    disabled={loading}
+                    className="min-h-[48px] bg-[#14532D] hover:bg-[#166534] text-white font-bold px-8 py-3 rounded-xl text-sm transition-colors cursor-pointer"
+                  >
+                    Main Lagi di Meja Ini
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })()
+      ) : amIFinished ? (
+        <div className="bg-[#ECFDF5] px-5 py-6 text-center space-y-1.5">
+          <h2 className="text-lg font-bold text-[#14532D]">
+            Kartumu Habis! Kamu di Peringkat #{myFinishRankIdx + 1} (+{formatUnoPoints(getUnoRankReward(myFinishRankIdx))} poin)
+          </h2>
+          <p className="text-xs sm:text-sm text-[#166534]">
+            Menunggu pemain lain menyelesaikan ronde sampai tersisa 1 pemain di meja.
+          </p>
         </div>
       ) : amIEliminated ? (
         <div className="bg-rose-50 px-5 py-6 text-center space-y-1.5">

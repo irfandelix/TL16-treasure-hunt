@@ -10,7 +10,7 @@ export const UPDATES_LOG = [
     changes: [
       'Menambahkan sistem tumpuk serangan (+2, +4 Revisi Mayor, dan +6 Mengulang MK) yang bisa ditangkis dengan kartu tambah bernilai sama atau lebih besar.',
       'Menambahkan kartu Reverse (Putar Balik), Skip Semua (Jam Kosong), Sapu Bersih (buang semua kartu satu warna sekaligus), dan Tukar KTM (tukar seluruh isi tangan dengan 1 lawan).',
-      'Menambahkan batas gugur (DO) di 20 kartu sehingga penyintas terakhir otomatis menang meja (+3.000 poin), plus tombol Teriak UNO! dan Tangkap (+2) bila pemain lupa menekan saat sisa 1 kartu.',
+      'Menambahkan batas gugur (DO) di 20 kartu dan sistem klasemen peringkat berlanjut sampai tersisa 1 pemain: Habis ke-1 (+4.000), ke-2 (+2.500), ke-3 (+1.500), ke-4 (+750), ke-5 (+500), dan ke-6 sampai terakhir/DO (+0), plus tombol Teriak UNO! dan Tangkap (+2).',
       'Merancang ulang arena meja 2D bergaya kertas hangat dengan kipas punggung kartu lawan, panah arah putar melingkar, kartu seragam 2:3 dengan ikon khusus, animasi terbang kartu, rel geser kartu yang optimal di HP, serta katalog 10 kartu di lobi & ruang tunggu sebelum Host menekan Mulai.'
     ],
     docs: {
